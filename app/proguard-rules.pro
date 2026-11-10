@@ -1,0 +1,2 @@
+-keep class com.maisonchahyn.app.** { *; }
+-dontwarn org.jetbrains.annotations.**

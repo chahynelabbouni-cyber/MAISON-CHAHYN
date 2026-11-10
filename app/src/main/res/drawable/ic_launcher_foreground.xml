@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Bulle de verre -->
+    <path
+        android:fillColor="#40FFFFFF"
+        android:strokeColor="#B3FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M54,28 C68.4,28 80,39.6 80,54 C80,68.4 68.4,80 54,80 C39.6,80 28,68.4 28,54 C28,39.6 39.6,28 54,28 Z" />
+    <!-- Maison -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,39 L68,51 L68,67 C68,68.1 67.1,69 66,69 L59,69 L59,59 L49,59 L49,69 L42,69 C40.9,69 40,68.1 40,67 L40,51 Z" />
+</vector>
