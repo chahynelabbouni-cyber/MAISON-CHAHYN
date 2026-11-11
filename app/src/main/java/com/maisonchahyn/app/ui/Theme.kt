@@ -5,7 +5,8 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-val Accent = Color(0xFF0A84FF)
+/** Couleur d'accent de l'interface (change avec les modèles). */
+val Accent: Color get() = Color(com.maisonchahyn.app.Prefs.uiAccent.value)
 val AccentPurple = Color(0xFFAF52DE)
 val IosGreen = Color(0xFF34C759)
 val IosOrange = Color(0xFFFF9F0A)

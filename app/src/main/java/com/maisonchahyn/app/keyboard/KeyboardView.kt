@@ -219,7 +219,7 @@ class KeyboardView(context: Context, private val ime: MaisonKeyboardService) : V
             for (k in row) {
                 val pressed = k === active && !cursorMode
                 var keyColor = when {
-                    k.type == KType.ENTER && enterAccent -> 0xFF0A84FF.toInt()
+                    k.type == KType.ENTER && enterAccent -> Prefs.uiAccent.value
                     k.type == KType.SHIFT && (shift || caps) -> if (t.dark) 0xFFFFFFFF.toInt() else 0xFFFFFFFF.toInt()
                     k.isSpecial -> t.special
                     else -> t.key
@@ -350,7 +350,7 @@ class KeyboardView(context: Context, private val ime: MaisonKeyboardService) : V
             val l = accentRect.left + i * accentCell
             tmp.set(l + 3 * dp, accentRect.top + 4 * dp, l + accentCell - 3 * dp, accentRect.bottom - 4 * dp)
             if (i == accentSel) {
-                fill.color = 0xFF0A84FF.toInt()
+                fill.color = Prefs.uiAccent.value
                 canvas.drawRoundRect(tmp, radius(), radius(), fill)
             }
             text.color = if (i == accentSel) 0xFFFFFFFF.toInt() else if (t.dark) 0xFFFFFFFF.toInt() else 0xFF000000.toInt()

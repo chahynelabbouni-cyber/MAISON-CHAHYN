@@ -151,7 +151,6 @@ class LauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        lifecycleScope.launch { AppRepository.load(applicationContext) }
         try {
             getSystemService(LauncherApps::class.java).registerCallback(laCallback)
         } catch (_: Throwable) {
@@ -254,7 +253,10 @@ fun LauncherScreen(homePressed: Int) {
     val dockApps = if (dockOn) dockKeys.mapNotNull { k -> apps.firstOrNull { it.key == k } } else emptyList()
     val gridApps = apps.filter { it.key !in hidden && (!dockOn || it.key !in dockKeys) }
     val backdrop = rememberLauncherBackdrop()
-    val scope = rememberCoroutineScope()
+    LaunchedEffect(Prefs.lIconPack.value) {
+        IconPacks.invalidate()
+        AppRepository.load(ctx.applicationContext)
+    }
 
     var searchOpen by remember { mutableStateOf(false) }
     var homeMenu by remember { mutableStateOf(false) }
@@ -393,6 +395,10 @@ fun LauncherScreen(homePressed: Int) {
                 } else Spacer(Modifier.height(12.dp))
             }
 
+            LauncherUi.customize.value?.let { app ->
+                AppCustomizeDialog(app) { LauncherUi.customize.value = null }
+            }
+
             AnimatedVisibility(
                 visible = searchOpen,
                 enter = fadeIn() + scaleIn(initialScale = 0.96f),
@@ -446,8 +452,6 @@ fun AppPage(apps: List<AppEntry>, cols: Int, showClock: Boolean, cellH: Dp, icon
     }
 }
 
-private val grayFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppIcon(app: AppEntry, size: Dp, showLabel: Boolean, allApps: List<AppEntry>, inDock: Boolean = false) {
@@ -458,8 +462,7 @@ fun AppIcon(app: AppEntry, size: Dp, showLabel: Boolean, allApps: List<AppEntry>
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val shape = IconShapes.of(Prefs.lIconShape.value)
-    val tinted = Prefs.lIconStyle.value == "teinte"
-    val tint = Color(Prefs.lTintColor.value)
+    val style = Prefs.lIconStyle.value
 
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(size + 22.dp)) {
         Box {
@@ -468,7 +471,7 @@ fun AppIcon(app: AppEntry, size: Dp, showLabel: Boolean, allApps: List<AppEntry>
                     .size(size)
                     .scale(if (pressed) 0.92f else 1f)
                     .onGloballyPositioned { bounds = it.boundsInWindow() }
-                    .shadow(if (tinted) 0.dp else 5.dp, shape)
+                    .shadow(if (IconStyles.hasShadow(style)) 5.dp else 0.dp, shape)
                     .clip(shape)
                     .combinedClickable(
                         interactionSource = interaction,
@@ -480,19 +483,13 @@ fun AppIcon(app: AppEntry, size: Dp, showLabel: Boolean, allApps: List<AppEntry>
                         }
                     )
             ) {
-                if (tinted) {
-                    Box(Modifier.matchParentSize().background(Color(0xFF1C1C1E).copy(alpha = 0.82f)))
-                    if (app.mono != null) {
-                        Image(app.mono, null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(tint))
-                    } else {
-                        Image(app.icon, null, Modifier.matchParentSize().padding(size / 5).clip(RoundedCornerShape(30)), colorFilter = grayFilter)
-                    }
-                } else {
-                    Image(app.icon, app.label, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-                }
+                StyledIcon(app, size, shape = shape, style = style)
                 if (pressed) Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.25f)))
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(text = { Text("Personnaliser l'icône et le nom") }, onClick = {
+                    menu = false; LauncherUi.customize.value = app
+                })
                 val dockKeys = Dock.keys(allApps)
                 if (app.key in dockKeys) {
                     DropdownMenuItem(text = { Text("Retirer du Dock") }, onClick = {
@@ -508,7 +505,7 @@ fun AppIcon(app: AppEntry, size: Dp, showLabel: Boolean, allApps: List<AppEntry>
                     DropdownMenuItem(text = { Text("Masquer l'appli") }, onClick = {
                         menu = false
                         Prefs.lHidden.value = Prefs.lHidden.value + app.key
-                        ctx.toast("${app.label} masquée — réaffiche-la dans Maison › Écran")
+                        ctx.toast("${IconOverrides.label(app)} masquée — réaffiche-la dans Maison › Écran")
                     })
                 }
                 DropdownMenuItem(text = { Text("Infos sur l'appli") }, onClick = {
@@ -521,7 +518,7 @@ fun AppIcon(app: AppEntry, size: Dp, showLabel: Boolean, allApps: List<AppEntry>
         }
         if (showLabel) {
             Text(
-                app.label,
+                IconOverrides.label(app),
                 color = Color.White,
                 fontSize = Prefs.lLabelSize.value.sp,
                 maxLines = 1,
@@ -616,7 +613,7 @@ fun SearchOverlay(apps: List<AppEntry>, onClose: () -> Unit) {
     }
     val results = remember(q, apps) {
         if (q.isBlank()) apps.take(8)
-        else apps.filter { it.label.contains(q.trim(), ignoreCase = true) }
+        else apps.filter { IconOverrides.label(it).contains(q.trim(), ignoreCase = true) || it.label.contains(q.trim(), ignoreCase = true) }
     }
     LiquidGlass(
         Modifier.fillMaxSize(),

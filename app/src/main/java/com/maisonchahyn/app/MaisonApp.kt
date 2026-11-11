@@ -11,6 +11,7 @@ class MaisonApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Prefs.init(this)
+        com.maisonchahyn.app.launcher.IconOverrides.init(this)
     }
 }
 

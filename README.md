@@ -7,9 +7,10 @@
 | Onglet | Ce que tu peux faire |
 |---|---|
 | **Accueil** | « ✨ Tout appliquer » : style iPhone complet en 1 clic + liste de progression |
-| **Écran** | Écran d'accueil iPhone : icônes squircle, dock en verre liquide, widget horloge, recherche, bibliothèque d'apps, icônes teintées (iOS 18), applis masquées |
+| **Modèles** | 12 modèles prêts (iPhone Liquid Glass, iOS 18 teinté, Néon, Pastel, Luxe or…) qui changent tout d’un coup : fond, logos, couleurs, verre, clavier ; enregistre tes propres modèles |
+| **Écran** | Écran d'accueil iPhone : icônes squircle, dock en verre liquide, widget horloge, recherche, bibliothèque d'apps, 7 styles d’icônes, packs d’icônes du Play Store, logo et nom personnalisés par appli (emoji, lettre, photo), applis masquées |
 | **Clavier** | Clavier AZERTY façon iPhone : thèmes en verre, accents (appui long), emojis, curseur en glissant sur l'espace, majuscules auto, « . » double espace |
-| **Style** | 12 fonds d'écran « verre liquide » générés, ta galerie, ton propre dégradé ; réglages du verre liquide (flou, opacité, bordure, reflets) |
+| **Fonds** | 12 fonds d'écran « verre liquide » générés, ta galerie, ton propre dégradé ; réglages du verre liquide (flou, opacité, bordure, reflets) |
 | **Système** | Luminosité, mise en veille, rotation, sonnerie… directement ; raccourcis Good Lock (QuickStar, LockStar, NavStar, Theme Park…) ; mode avancé ADB |
 
 ## Installer sur le téléphone

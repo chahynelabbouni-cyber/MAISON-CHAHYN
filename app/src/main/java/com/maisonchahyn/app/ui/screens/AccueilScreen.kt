@@ -75,6 +75,8 @@ fun applyIphonePreset() {
     Prefs.kAutoCap.value = true
     Prefs.kDoubleSpace.value = true
     Prefs.kPreview.value = true
+    Prefs.uiAccent.value = 0xFF0A84FF.toInt()
+    Prefs.currentModel.value = "iphone"
 }
 
 @Composable
@@ -154,7 +156,7 @@ fun AccueilScreen(onTab: (String) -> Unit) {
                 SecondaryButton("🏠 Voir l'accueil", Modifier.weight(1f)) {
                     ctx.startActivity(Intent(ctx, LauncherActivity::class.java))
                 }
-                SecondaryButton("🎨 Fonds", Modifier.weight(1f)) { onTab("style") }
+                SecondaryButton("✨ Modèles", Modifier.weight(1f)) { onTab("modeles") }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SecondaryButton("⌨️ Clavier", Modifier.weight(1f)) { onTab("clavier") }

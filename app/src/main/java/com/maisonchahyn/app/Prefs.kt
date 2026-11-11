@@ -100,6 +100,12 @@ object Prefs {
     val kRealBlur = Pref("k_real_blur", false)
     val kToolbar = Pref("k_toolbar", true)
 
+    // ---------- Interface & modèles ----------
+    val uiAccent = Pref("ui_accent", 0xFF0A84FF.toInt())
+    val lIconPack = Pref("l_icon_pack", "")
+    val currentModel = Pref("current_model", "")
+    val customModels = Pref("custom_models", "[]")
+
     // ---------- Fond d'écran ----------
     val wallpaperPath = Pref("w_path", "")
     val wallpaperVersion = Pref("w_version", 0)

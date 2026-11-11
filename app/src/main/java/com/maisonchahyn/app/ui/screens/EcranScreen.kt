@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -27,10 +28,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Dock
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -51,6 +57,12 @@ import com.maisonchahyn.app.Prefs
 import com.maisonchahyn.app.launcher.AppRepository
 import com.maisonchahyn.app.launcher.Dock
 import com.maisonchahyn.app.launcher.IconShapes
+import com.maisonchahyn.app.launcher.IconStyles
+import com.maisonchahyn.app.launcher.IconOverrides
+import com.maisonchahyn.app.launcher.IconPacks
+import com.maisonchahyn.app.launcher.StyledIcon
+import com.maisonchahyn.app.launcher.AppEntry
+import com.maisonchahyn.app.launcher.AppCustomizeDialog
 import com.maisonchahyn.app.launcher.LauncherActivity
 import com.maisonchahyn.app.system.SystemTools
 import com.maisonchahyn.app.toast
@@ -68,6 +80,7 @@ import com.maisonchahyn.app.ui.ScreenColumn
 import com.maisonchahyn.app.ui.SecondaryButton
 import com.maisonchahyn.app.ui.SettingSlider
 import com.maisonchahyn.app.ui.SettingSwitch
+import com.maisonchahyn.app.ui.TextDim
 import com.maisonchahyn.app.widget.ClockWidget
 
 val tintColors = listOf(
@@ -95,19 +108,12 @@ fun EcranScreen() {
                 Spacer(Modifier.height(10.dp))
                 val shape = IconShapes.of(Prefs.lIconShape.value)
                 val size = (Prefs.lIconSize.value * 0.85f).dp
-                val tinted = Prefs.lIconStyle.value == "teinte"
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     apps.take(Prefs.lColumns.value.coerceIn(3, 6)).forEach { app ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(size + 8.dp)) {
-                            Box(Modifier.size(size).clip(shape).background(Color(0xFF1C1C1E))) {
-                                if (tinted && app.mono != null) {
-                                    Image(app.mono, null, Modifier.size(size), colorFilter = ColorFilter.tint(Color(Prefs.lTintColor.value)))
-                                } else {
-                                    Image(app.icon, null, Modifier.size(size), contentScale = ContentScale.Crop)
-                                }
-                            }
+                            StyledIcon(app, size, shape = shape)
                             if (Prefs.lShowLabels.value) {
-                                Text(app.label, color = Color.White, fontSize = (Prefs.lLabelSize.value * 0.85f).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(IconOverrides.label(app), color = Color.White, fontSize = (Prefs.lLabelSize.value * 0.85f).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     }
@@ -139,11 +145,8 @@ fun EcranScreen() {
             Text("Forme", color = Color.White, fontSize = 16.sp)
             Chips(IconShapes.options, Prefs.lIconShape.value) { Prefs.lIconShape.value = it }
             Text("Style", color = Color.White, fontSize = 16.sp)
-            Chips(
-                listOf("couleur" to "En couleur", "teinte" to "Teintées (iOS 18)"),
-                Prefs.lIconStyle.value
-            ) { Prefs.lIconStyle.value = it }
-            if (Prefs.lIconStyle.value == "teinte") {
+            Chips(IconStyles.options, Prefs.lIconStyle.value) { Prefs.lIconStyle.value = it }
+            if (IconStyles.usesTint(Prefs.lIconStyle.value)) {
                 Text("Couleur de teinte", color = Color.White, fontSize = 16.sp)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     tintColors.forEach { c ->
@@ -193,6 +196,9 @@ fun EcranScreen() {
             }
         }
 
+        IconPacksCard()
+        CustomizeAppsCard(apps)
+
         val hidden = Prefs.lHidden.value
         GlassCard(title = "Applis masquées (${hidden.size})", icon = Icons.Rounded.VisibilityOff, iconColor = IosOrange) {
             if (hidden.isEmpty()) BodyText("Aucune. Appui long sur une icône de l'écran d'accueil → « Masquer l'appli ».")
@@ -200,10 +206,10 @@ fun EcranScreen() {
                 val app = apps.firstOrNull { it.key == key }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     if (app != null) {
-                        Image(app.icon, null, Modifier.size(34.dp).clip(RoundedCornerShape(9.dp)))
+                        StyledIcon(app, 34.dp)
                         Spacer(Modifier.width(10.dp))
                     }
-                    Text(app?.label ?: key, color = Color.White, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(app?.let { IconOverrides.label(it) } ?: key, color = Color.White, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     SecondaryButton("Afficher") { Prefs.lHidden.value = Prefs.lHidden.value - key }
                 }
             }
@@ -225,4 +231,78 @@ fun EcranScreen() {
                 .background(Brush.horizontalGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.2f), Color.Transparent)))
         )
     }
+}
+
+@Composable
+private fun IconPacksCard() {
+    val ctx = LocalContext.current
+    val tick = AppState.resumeTick.intValue
+    val packs = remember(tick) { IconPacks.list(ctx) }
+    val cur = Prefs.lIconPack.value
+    GlassCard(title = "Packs d'icônes (logos)", icon = Icons.Rounded.Apps, iconColor = Color(0xFF5E5CE6)) {
+        BodyText(
+            "Change les logos de toutes tes applis d'un coup avec un pack d'icônes du Play Store " +
+                "(cherche « iOS icon pack », « Liquid Glass icon pack »…). Les packs installés apparaissent ici."
+        )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { Prefs.lIconPack.value = "" }
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text((if (cur.isEmpty()) "✅  " else "⬜  ") + "Icônes d'origine", color = Color.White, fontSize = 15.sp)
+        }
+        packs.forEach { p ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { Prefs.lIconPack.value = p.pkg; ctx.toast("Pack « ${p.label} » appliqué ✓") }
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(if (cur == p.pkg) "✅  " else "⬜  ", color = Color.White, fontSize = 15.sp)
+                p.icon?.let { Image(it, null, Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))) }
+                Spacer(Modifier.width(10.dp))
+                Text(p.label, color = Color.White, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        if (packs.isEmpty()) BodyText("Aucun pack installé pour l'instant.")
+        SecondaryButton("🔎 Trouver des packs d'icônes iOS", Modifier.fillMaxWidth()) {
+            SystemTools.safeStart(
+                ctx,
+                Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=ios%20icon%20pack&c=apps")),
+                Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=ios%20icon%20pack&c=apps"))
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomizeAppsCard(apps: List<AppEntry>) {
+    var q by remember { mutableStateOf("") }
+    var editing by remember { mutableStateOf<AppEntry?>(null) }
+    GlassCard(title = "Personnaliser une appli", icon = Icons.Rounded.Edit, iconColor = IosPink) {
+        BodyText("Change le nom et le logo d'une appli : emoji ou lettre sur la couleur de ton choix, ou une photo. Astuce : appui long sur une icône de l'écran d'accueil.")
+        OutlinedTextField(value = q, onValueChange = { q = it }, singleLine = true, label = { Text("Rechercher une appli") }, modifier = Modifier.fillMaxWidth())
+        val list = if (q.isBlank()) apps.take(12) else apps.filter { IconOverrides.label(it).contains(q, true) || it.label.contains(q, true) }.take(30)
+        list.forEach { app ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { editing = app }
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StyledIcon(app, 38.dp)
+                Spacer(Modifier.width(12.dp))
+                Text(IconOverrides.label(app), color = Color.White, fontSize = 15.sp, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(if (IconOverrides.map.containsKey(app.key)) "✏️ modifié" else "›", color = TextDim, fontSize = 14.sp)
+            }
+        }
+    }
+    editing?.let { AppCustomizeDialog(it) { editing = null } }
 }

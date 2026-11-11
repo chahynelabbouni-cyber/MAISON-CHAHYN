@@ -28,8 +28,10 @@ data class AppEntry(
     val cls: String,
     val user: UserHandle,
     val icon: ImageBitmap,
+    /** Pictogramme seul (couche monochrome, ou premier plan de l'icône) pour les styles teinté/verre/néon. */
     val mono: ImageBitmap?,
-    val category: Int
+    val category: Int,
+    val fromPack: Boolean = false
 )
 
 object AppRepository {
@@ -42,6 +44,7 @@ object AppRepository {
             val um = ctx.getSystemService(UserManager::class.java)
             val me = Process.myUserHandle()
             val dpi = ctx.resources.displayMetrics.densityDpi
+            val pack = Prefs.lIconPack.value.takeIf { it.isNotEmpty() && it != ctx.packageName }
             val out = mutableListOf<AppEntry>()
             val users = try { um.userProfiles } catch (e: Exception) { listOf(me) }
             for (user in users) {
@@ -51,16 +54,19 @@ object AppRepository {
                         val cn = info.componentName
                         val key = cn.flattenToShortString() + if (user == me) "" else "@" + user.hashCode()
                         val raw = info.getIcon(dpi)
-                        val icon = if (user != me) ctx.packageManager.getUserBadgedIcon(raw, user) else raw
+                        val packIcon = pack?.let { IconPacks.drawableFor(ctx, it, cn) }
+                        val base = packIcon ?: raw
+                        val icon = if (user != me) ctx.packageManager.getUserBadgedIcon(base, user) else base
                         out += AppEntry(
                             key = key,
                             label = info.label?.toString() ?: cn.packageName,
                             pkg = cn.packageName,
                             cls = cn.className,
                             user = user,
-                            icon = renderIcon(icon, ICON_PX).asImageBitmap(),
+                            icon = (if (packIcon != null) renderPack(icon, ICON_PX) else renderIcon(icon, ICON_PX)).asImageBitmap(),
                             mono = renderMono(raw, ICON_PX)?.asImageBitmap(),
-                            category = info.applicationInfo?.category ?: ApplicationInfo.CATEGORY_UNDEFINED
+                            category = info.applicationInfo?.category ?: ApplicationInfo.CATEGORY_UNDEFINED,
+                            fromPack = packIcon != null
                         )
                     } catch (_: Throwable) {
                     }
@@ -94,15 +100,35 @@ object AppRepository {
         return bmp
     }
 
-    fun renderMono(d: Drawable, size: Int): Bitmap? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
-        if (d !is AdaptiveIconDrawable) return null
-        val m = d.monochrome ?: return null
+    /** Icône d'un pack : dessinée telle quelle, plein cadre. */
+    fun renderPack(d: Drawable, size: Int): Bitmap {
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val inset = size / 4
-        m.setBounds(-inset, -inset, size + inset, size + inset)
-        m.draw(Canvas(bmp))
+        d.setBounds(0, 0, size, size)
+        d.draw(Canvas(bmp))
         return bmp
+    }
+
+    fun renderMono(d: Drawable, size: Int): Bitmap? {
+        if (d !is AdaptiveIconDrawable) return null
+        val inset = size / 4
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val m = d.monochrome
+            if (m != null) {
+                val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+                m.setBounds(-inset, -inset, size + inset, size + inset)
+                m.draw(Canvas(bmp))
+                return bmp
+            }
+        }
+        // Repli : la silhouette du premier plan (si ce n'est pas un carré plein)
+        val fg = d.foreground ?: return null
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        fg.setBounds(-inset, -inset, size + inset, size + inset)
+        fg.draw(Canvas(bmp))
+        val small = Bitmap.createScaledBitmap(bmp, 32, 32, true)
+        var filled = 0
+        for (y in 0 until 32) for (x in 0 until 32) if ((small.getPixel(x, y) ushr 24) > 40) filled++
+        return if (filled > 32 * 32 * 0.80 || filled < 8) null else bmp
     }
 
     fun categoryName(cat: Int): String = when (cat) {

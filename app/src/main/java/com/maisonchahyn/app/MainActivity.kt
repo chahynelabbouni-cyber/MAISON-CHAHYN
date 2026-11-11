@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Palette
@@ -50,6 +51,7 @@ import com.maisonchahyn.app.ui.hubBackdrop
 import com.maisonchahyn.app.ui.screens.AccueilScreen
 import com.maisonchahyn.app.ui.screens.ClavierScreen
 import com.maisonchahyn.app.ui.screens.EcranScreen
+import com.maisonchahyn.app.ui.screens.ModelesScreen
 import com.maisonchahyn.app.ui.screens.StyleScreen
 import com.maisonchahyn.app.ui.screens.SystemeScreen
 
@@ -79,9 +81,10 @@ data class TabDef(val id: String, val label: String, val icon: ImageVector)
 
 val tabs = listOf(
     TabDef("accueil", "Accueil", Icons.Rounded.Home),
+    TabDef("modeles", "Modèles", Icons.Rounded.AutoAwesome),
     TabDef("ecran", "Écran", Icons.Rounded.PhoneIphone),
     TabDef("clavier", "Clavier", Icons.Rounded.Keyboard),
-    TabDef("style", "Style", Icons.Rounded.Palette),
+    TabDef("style", "Fonds", Icons.Rounded.Palette),
     TabDef("systeme", "Système", Icons.Rounded.Tune),
 )
 
@@ -101,6 +104,7 @@ fun HubApp(requested: String?, consumed: () -> Unit) {
     BackdropHost(backdrop, Modifier.fillMaxSize()) {
         Crossfade(targetState = tab, label = "onglets") { t ->
             when (t) {
+                "modeles" -> ModelesScreen()
                 "ecran" -> EcranScreen()
                 "clavier" -> ClavierScreen()
                 "style" -> StyleScreen()
@@ -135,12 +139,12 @@ fun HubApp(requested: String?, consumed: () -> Unit) {
                         ) {
                             Icon(
                                 t.icon, t.label,
-                                tint = if (sel) Color(0xFF64D2FF) else Color.White,
-                                modifier = Modifier.size(24.dp)
+                                tint = if (sel) com.maisonchahyn.app.ui.Accent else Color.White,
+                                modifier = Modifier.size(22.dp)
                             )
                             Text(
-                                t.label, fontSize = 11.sp,
-                                color = if (sel) Color(0xFF64D2FF) else Color.White,
+                                t.label, fontSize = 10.sp, maxLines = 1,
+                                color = if (sel) com.maisonchahyn.app.ui.Accent else Color.White,
                                 fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal
                             )
                         }
