@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Boîtier en verre -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M36,40 L44,40 L48,34 L60,34 L64,40 L72,40 C75.3,40 78,42.7 78,46 L78,70 C78,73.3 75.3,76 72,76 L36,76 C32.7,76 30,73.3 30,70 L30,46 C30,42.7 32.7,40 36,40 Z" />
+    <!-- Objectif -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,45 C61.7,45 68,51.3 68,59 C68,66.7 61.7,73 54,73 C46.3,73 40,66.7 40,59 C40,51.3 46.3,45 54,45 Z" />
+    <path
+        android:fillColor="#FF2B1F4F"
+        android:pathData="M54,50 C59,50 63,54 63,59 C63,64 59,68 54,68 C49,68 45,64 45,59 C45,54 49,50 54,50 Z" />
+    <path
+        android:fillColor="#99FFFFFF"
+        android:pathData="M51,53 C52.7,53 54,54.3 54,56 C54,57.7 52.7,59 51,59 C49.3,59 48,57.7 48,56 C48,54.3 49.3,53 51,53 Z" />
+    <!-- Étincelle « auto » -->
+    <path
+        android:fillColor="#FFFFD60A"
+        android:pathData="M72,26 L74,32 L80,34 L74,36 L72,42 L70,36 L64,34 L70,32 Z" />
+</vector>
