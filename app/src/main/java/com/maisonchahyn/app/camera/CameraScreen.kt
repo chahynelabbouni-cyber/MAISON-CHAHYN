@@ -63,6 +63,7 @@ import androidx.compose.material.icons.rounded.GridOff
 import androidx.compose.material.icons.rounded.GridOn
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.Timer10
 import androidx.compose.material.icons.rounded.Timer3
 import androidx.compose.material.icons.rounded.TimerOff
@@ -271,6 +272,10 @@ fun CameraScreen(engine: CameraEngine, motion: MotionSensor, activity: CameraAct
     // ---------- Interface ----------
     var tab by rememberSaveable { mutableStateOf("situations") }
     var showSettings by remember { mutableStateOf(false) }
+    var showGuide by remember {
+        mutableStateOf(!Prefs.cOnboarded.value || activity.intent?.getBooleanExtra("guide", false) == true)
+    }
+    val firstTime = remember { !Prefs.cOnboarded.value }
     var showTip by remember { mutableStateOf(false) }
     var focusAt by remember { mutableStateOf<Offset?>(null) }
     val focusAlpha = remember { Animatable(0f) }
@@ -284,7 +289,8 @@ fun CameraScreen(engine: CameraEngine, motion: MotionSensor, activity: CameraAct
             TopBar(
                 hasFlash = ci?.hasFlash == true,
                 rawCapable = ci?.rawCapable == true,
-                onSettings = { showSettings = true }
+                onSettings = { showSettings = true },
+                onGuide = { showGuide = true }
             )
             Box(
                 Modifier
@@ -447,7 +453,22 @@ fun CameraScreen(engine: CameraEngine, motion: MotionSensor, activity: CameraAct
             }
         }
 
+        // Fiche de la dernière photo
+        ShotCard(
+            shot = engine.lastShot.value,
+            onView = { openGallery(ctx, lastUri) },
+            onEdit = { EditActivity.open(ctx, lastUri) },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 130.dp, start = 16.dp, end = 16.dp)
+        )
+
         if (showSettings) SettingsSheet(ci) { showSettings = false }
+        if (showGuide && granted) GuideSheet(firstTime) {
+            showGuide = false
+            Prefs.cOnboarded.value = true
+        }
 
         // Autorisation / erreur
         if (!granted) {
@@ -485,7 +506,7 @@ private fun openGallery(ctx: android.content.Context, uri: Uri?) {
 // ======================================================================
 
 @Composable
-private fun TopBar(hasFlash: Boolean, rawCapable: Boolean, onSettings: () -> Unit) {
+private fun TopBar(hasFlash: Boolean, rawCapable: Boolean, onSettings: () -> Unit, onGuide: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -528,6 +549,7 @@ private fun TopBar(hasFlash: Boolean, rawCapable: Boolean, onSettings: () -> Uni
         TopIcon(if (Prefs.cGrid.value) Icons.Rounded.GridOn else Icons.Rounded.GridOff, active = Prefs.cGrid.value) {
             Prefs.cGrid.value = !Prefs.cGrid.value
         }
+        TopIcon(Icons.Rounded.HelpOutline, active = false, onClick = onGuide)
         TopIcon(Icons.Rounded.Settings, active = false, onClick = onSettings)
     }
 }
@@ -1017,6 +1039,67 @@ private fun MessageOverlay(title: String, body: String, button: String, onClick:
             Text(title, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(body, color = TextDim, fontSize = 15.sp, textAlign = TextAlign.Center)
             PrimaryButton(button, onClick = onClick)
+        }
+    }
+}
+
+// ======================================================================
+// Fiche après la photo
+// ======================================================================
+
+@Composable
+private fun ShotCard(shot: ShotInfo?, onView: () -> Unit, onEdit: () -> Unit, modifier: Modifier) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(shot?.at) {
+        if (shot == null) return@LaunchedEffect
+        visible = true
+        delay(6000)
+        visible = false
+    }
+    AnimatedVisibility(visible && shot != null, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
+        val s = shot ?: return@AnimatedVisibility
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(Color(0xE6141418))
+                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(18.dp))
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("📸 Photo enregistrée", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Situation : ${s.meta.scene}  ·  Style : ${Looks.byId(s.meta.look).name}" +
+                    if (s.meta.look != "naturel") " ${(s.meta.lookAmount * 100).roundToInt()} %" else "",
+                color = TextDim, fontSize = 12.sp
+            )
+            Text(
+                buildString {
+                    append("ISO ${s.iso} · ${Fmt.shutter(s.exposureNs)} · f/${"%.1f".format(s.aperture)}")
+                    if (abs(s.zoom - 1f) > 0.05f) append(" · ${fmtZoom(s.zoom)}×")
+                    if (s.flash) append(" · flash")
+                    if (s.raw) append(" · + RAW")
+                },
+                color = Color.White, fontSize = 13.sp
+            )
+            s.meta.plan?.let { Text("✨ $it", color = Yellow, fontSize = 12.sp) }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 4.dp)) {
+                Text(
+                    "Voir", color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clip(CircleShape).background(Color.White).clickable(onClick = onView)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+                Text(
+                    "✏️ Retoucher", color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clip(CircleShape).background(Yellow).clickable(onClick = onEdit)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+                Text(
+                    "OK", color = Color.White, fontSize = 13.sp,
+                    modifier = Modifier.clip(CircleShape).clickable { visible = false }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
         }
     }
 }

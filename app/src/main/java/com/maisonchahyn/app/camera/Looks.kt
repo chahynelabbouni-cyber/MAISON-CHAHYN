@@ -17,6 +17,7 @@ data class Look(
     val tint: Float = 0f,       // -1..1 : vert ↔ magenta
     val fade: Float = 0f,       // 0..1 : noirs relevés (effet film)
     val teal: Float = 0f,       // 0..1 : ombres bleu-vert (cinéma)
+    val desc: String = "",
 ) {
     val isNeutral: Boolean
         get() = saturation == 1f && contrast == 1f && brightness == 0f && warmth == 0f &&
@@ -96,19 +97,19 @@ object Looks {
     const val AUTO = "auto"
 
     val all: List<Look> = listOf(
-        Look("naturel", "Naturel", 0xFF8E8E93),
-        Look("eclatant", "Éclatant", 0xFF34C759, saturation = 1.22f, contrast = 1.07f),
-        Look("peau", "Peau douce", 0xFFFFB199, saturation = 0.96f, contrast = 0.95f, brightness = 0.02f, warmth = 0.18f, tint = 0.10f),
-        Look("dore", "Heure dorée", 0xFFFFB340, saturation = 1.12f, contrast = 1.04f, warmth = 0.55f),
-        Look("cinema", "Cinéma", 0xFF2E8C8C, saturation = 0.86f, contrast = 1.12f, warmth = 0.20f, teal = 1f),
-        Look("film", "Film mat", 0xFFC8B79E, saturation = 0.88f, contrast = 0.94f, warmth = 0.15f, fade = 0.10f),
-        Look("froid", "Nordique", 0xFF64D2FF, saturation = 0.90f, contrast = 1.04f, warmth = -0.45f),
-        Look("pop", "Pop", 0xFFFF375F, saturation = 1.40f, contrast = 1.12f),
-        Look("gourmand", "Gourmand", 0xFFFF9F0A, saturation = 1.22f, contrast = 1.05f, brightness = 0.02f, warmth = 0.22f),
-        Look("net", "Net & précis", 0xFFBFC7D5, saturation = 1.02f, contrast = 1.12f),
-        Look("nb", "Noir & blanc", 0xFF3A3A3C, saturation = 0f, contrast = 1.16f),
-        Look("nbdoux", "N&B doux", 0xFF9A9A9E, saturation = 0f, contrast = 0.94f, fade = 0.06f),
-        Look("document", "Document", 0xFFFFFFFF, saturation = 0.55f, contrast = 1.32f, brightness = 0.04f),
+        Look("naturel", "Naturel", 0xFF8E8E93, desc = "Aucune retouche : la photo la plus fidèle et la plus propre. Idéal si tu retouches ensuite."),
+        Look("eclatant", "Éclatant", 0xFF34C759, saturation = 1.22f, contrast = 1.07f, desc = "Couleurs plus vives et un peu plus de punch : paysages, voyages, ciel bleu."),
+        Look("peau", "Peau douce", 0xFFFFB199, saturation = 0.96f, contrast = 0.95f, brightness = 0.02f, warmth = 0.18f, tint = 0.10f, desc = "Contraste adouci et teint légèrement réchauffé : portraits et selfies flatteurs."),
+        Look("dore", "Heure dorée", 0xFFFFB340, saturation = 1.12f, contrast = 1.04f, warmth = 0.55f, desc = "Lumière dorée de fin de journée : couchers de soleil, ambiances chaleureuses."),
+        Look("cinema", "Cinéma", 0xFF2E8C8C, saturation = 0.86f, contrast = 1.12f, warmth = 0.20f, teal = 1f, desc = "Ombres bleu-vert, tons chauds, couleurs retenues : rendu de film, ville, nuit."),
+        Look("film", "Film mat", 0xFFC8B79E, saturation = 0.88f, contrast = 0.94f, warmth = 0.15f, fade = 0.10f, desc = "Noirs relevés et couleurs douces, façon argentique : lifestyle, mode, café."),
+        Look("froid", "Nordique", 0xFF64D2FF, saturation = 0.90f, contrast = 1.04f, warmth = -0.45f, desc = "Tons froids et purs : neige, mer, architecture moderne."),
+        Look("pop", "Pop", 0xFFFF375F, saturation = 1.40f, contrast = 1.12f, desc = "Couleurs très saturées : street art, fêtes, objets colorés."),
+        Look("gourmand", "Gourmand", 0xFFFF9F0A, saturation = 1.22f, contrast = 1.05f, brightness = 0.02f, warmth = 0.22f, desc = "Plus lumineux, chaud et appétissant : plats, desserts, boissons."),
+        Look("net", "Net & précis", 0xFFBFC7D5, saturation = 1.02f, contrast = 1.12f, desc = "Contraste renforcé, couleurs justes : architecture, produits, détails."),
+        Look("nb", "Noir & blanc", 0xFF3A3A3C, saturation = 0f, contrast = 1.16f, desc = "Noir et blanc contrasté : portraits de caractère, rue, graphisme."),
+        Look("nbdoux", "N&B doux", 0xFF9A9A9E, saturation = 0f, contrast = 0.94f, fade = 0.06f, desc = "Noir et blanc doux et mat : ambiance poétique, mariages."),
+        Look("document", "Document", 0xFFFFFFFF, saturation = 0.55f, contrast = 1.32f, brightness = 0.04f, desc = "Fond blanc et texte bien noir : feuilles, tickets, tableaux."),
     )
 
     private val map = all.associateBy { it.id }

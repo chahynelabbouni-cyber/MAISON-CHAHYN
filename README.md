@@ -27,6 +27,10 @@ Installé avec Maison, il a **sa propre icône « Chahyn Photo »** (et un bouto
 | **Pro** | EV, ISO, vitesse (jusqu'à 30 s), mise au point manuelle, balance des blancs. |
 | **Aides** | Toucher = mise au point + exposition, pincer = zoom (0,6× → 10× selon les modules exposés), grille, niveau à bulle (ligne et vue de dessus), histogramme, retardateur 3/10 s, volume = déclencheur, conseils pour chaque situation. |
 
+| **Guide intégré** | Bouton ❓ : mode d'emploi complet (chaque situation, chaque style, chaque bouton, conseils S26 Ultra). Affiché au premier lancement. |
+| **Fiche après chaque photo** | ISO, vitesse, ouverture, zoom, situation, style et réglage automatique appliqué — avec « Voir » et « Retoucher ». |
+| **Retouche Chahyn** | Améliore n'importe quelle photo de la Galerie : Partager › « Retouche Chahyn ». Amélioration auto (niveaux, dominantes, éclat), 13 styles, luminosité, contraste, saturation, chaleur, teinte, fondu ; maintenir = avant/après. Une copie est créée, l'original n'est jamais modifié. |
+
 Photos enregistrées dans **Galerie › Albums › Chahyn Photo**.
 
 > Honnêtement : Samsung réserve certains traitements (fusion multi-images IA, capteur 200 MP natif, certains téléobjectifs) à son appli Appareil photo et à **Expert RAW**. Chahyn Photo exploite tout ce qu'Android expose (Camera2) et le règle au mieux pour chaque situation.

@@ -138,10 +138,19 @@ fun AccueilScreen(onTab: (String) -> Unit) {
             BodyText(
                 "L'appareil photo qui se règle tout seul : il reconnaît la situation (nuit, portrait, contre-jour, " +
                     "paysage, coucher de soleil, sport, nourriture, macro…) et choisit l'ISO, la vitesse, la mise au point " +
-                    "et la balance des blancs pour la meilleure qualité. 13 styles en direct, mode Pro et RAW."
+                    "et la balance des blancs pour la meilleure qualité. 13 styles en direct, mode Pro et RAW. " +
+                    "La Retouche améliore aussi les photos de ta Galerie (Partager › Retouche Chahyn)."
             )
             PrimaryButton("📷 Ouvrir Chahyn Photo") {
                 ctx.startActivity(Intent(ctx, CameraActivity::class.java))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SecondaryButton("✏️ Retoucher une photo", Modifier.weight(1f)) {
+                    com.maisonchahyn.app.camera.EditActivity.open(ctx)
+                }
+                SecondaryButton("❓ Guide complet", Modifier.weight(1f)) {
+                    ctx.startActivity(Intent(ctx, CameraActivity::class.java).putExtra("guide", true))
+                }
             }
         }
 

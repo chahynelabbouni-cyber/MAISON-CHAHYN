@@ -118,6 +118,8 @@ class CameraEngine(private val ctx: Context) {
     val info = mutableStateOf<CamInfo?>(null)
     val rawActive = mutableStateOf(false)
     val front = mutableStateOf(false)
+    /** Réglages réellement utilisés pour la dernière photo (fiche affichée après le déclenchement). */
+    val lastShot = mutableStateOf<ShotInfo?>(null)
 
     var textureView: TextureView? = null
         private set
@@ -815,6 +817,17 @@ class CameraEngine(private val ctx: Context) {
             main.post { captureNote.value = plan?.note ?: if (longMs > 300) "Ne bouge pas…" else null }
             s.capture(b.build(), object : CameraCaptureSession.CaptureCallback() {
                 override fun onCaptureCompleted(ss: CameraCaptureSession, r: CaptureRequest, result: TotalCaptureResult) {
+                    val info = ShotInfo(
+                        iso = result.get(CaptureResult.SENSOR_SENSITIVITY) ?: 0,
+                        exposureNs = result.get(CaptureResult.SENSOR_EXPOSURE_TIME) ?: 0L,
+                        aperture = result.get(CaptureResult.LENS_APERTURE) ?: ci.aperture,
+                        flash = result.get(CaptureResult.FLASH_STATE) == CameraMetadata.FLASH_STATE_FIRED,
+                        zoom = params.zoom,
+                        meta = meta,
+                        raw = rawReader != null,
+                        at = SystemClock.elapsedRealtime(),
+                    )
+                    main.post { lastShot.value = info }
                     if (rawReader != null) {
                         pendingRawResult = result
                         tryWriteRaw()
@@ -911,6 +924,17 @@ data class ShotMeta(
     val lookAmount: Float = 1f,
     val plan: String? = null,
     val orientation: Int = 0,
+)
+
+data class ShotInfo(
+    val iso: Int,
+    val exposureNs: Long,
+    val aperture: Float,
+    val flash: Boolean,
+    val zoom: Float,
+    val meta: ShotMeta,
+    val raw: Boolean,
+    val at: Long,
 )
 
 class PhotoJob(val jpeg: ByteArray, val meta: ShotMeta)

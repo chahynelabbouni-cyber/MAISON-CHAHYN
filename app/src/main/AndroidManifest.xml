@@ -66,6 +66,27 @@
             </intent-filter>
         </activity>
 
+        <!-- Retouche Chahyn : améliore une photo de la Galerie (Partager / Modifier avec) -->
+        <activity
+            android:name=".camera.EditActivity"
+            android:exported="true"
+            android:label="@string/edit_name"
+            android:icon="@mipmap/ic_camera"
+            android:roundIcon="@mipmap/ic_camera"
+            android:taskAffinity="com.maisonchahyn.app.retouche"
+            android:theme="@style/Theme.Maison.Camera">
+            <intent-filter android:label="@string/edit_name">
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/edit_name">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
         <!-- L'écran d'accueil style iPhone -->
         <activity
             android:name=".launcher.LauncherActivity"

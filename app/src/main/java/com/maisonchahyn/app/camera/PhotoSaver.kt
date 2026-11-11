@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
@@ -49,29 +50,86 @@ object PhotoSaver {
 
     /** Applique le style en pleine résolution puis recopie les métadonnées EXIF d'origine. */
     private fun applyLook(ctx: Context, src: ByteArray, look: Look, meta: ShotMeta): ByteArray? {
+        val tmpIn = File(ctx.cacheDir, "exif_src.jpg")
         return try {
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeByteArray(src, 0, src.size, bounds)
-            if (bounds.outWidth.toLong() * bounds.outHeight > MAX_STYLE_PIXELS) return null
-            val bmp = BitmapFactory.decodeByteArray(src, 0, src.size) ?: return null
-            val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
-            val paint = Paint(Paint.FILTER_BITMAP_FLAG).apply {
-                colorFilter = ColorMatrixColorFilter(look.matrix(meta.lookAmount))
-            }
-            Canvas(out).drawBitmap(bmp, 0f, 0f, paint)
-            bmp.recycle()
-            val tmpIn = File(ctx.cacheDir, "exif_src.jpg").apply { writeBytes(src) }
-            val tmpOut = File(ctx.cacheDir, "styled.jpg")
-            FileOutputStream(tmpOut).use { out.compress(Bitmap.CompressFormat.JPEG, 98, it) }
-            out.recycle()
-            copyExif(tmpIn, tmpOut, "Chahyn Photo — ${meta.scene} · ${look.name}")
-            val result = tmpOut.readBytes()
-            tmpIn.delete(); tmpOut.delete()
-            result
+            tmpIn.writeBytes(src)
+            val out = render(ctx, tmpIn, look.matrix(meta.lookAmount), "Chahyn Photo — ${meta.scene} · ${look.name}", allowDownsample = false)
+            out?.readBytes().also { out?.delete() }
         } catch (e: Throwable) {
             null // mémoire insuffisante, etc. : on garde l'original
+        } finally {
+            tmpIn.delete()
         }
     }
+
+    /**
+     * Décode [src], applique la matrice de couleur, ré-encode en JPEG 98 et recopie l'EXIF.
+     * Si l'image dépasse la limite mémoire : réduite par 2 si [allowDownsample], sinon abandon (null).
+     */
+    private fun render(ctx: Context, src: File, cm: ColorMatrix, description: String, allowDownsample: Boolean): File? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(src.absolutePath, bounds)
+        if (bounds.outWidth <= 0) return null
+        var sample = 1
+        while ((bounds.outWidth.toLong() / sample) * (bounds.outHeight.toLong() / sample) > MAX_STYLE_PIXELS) sample *= 2
+        if (sample > 1 && !allowDownsample) return null
+        val bmp = BitmapFactory.decodeFile(src.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
+            ?: return null
+        val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG).apply { colorFilter = ColorMatrixColorFilter(cm) }
+        Canvas(out).drawBitmap(bmp, 0f, 0f, paint)
+        bmp.recycle()
+        val tmpOut = File(ctx.cacheDir, "rendu_${System.nanoTime()}.jpg")
+        FileOutputStream(tmpOut).use { out.compress(Bitmap.CompressFormat.JPEG, 98, it) }
+        out.recycle()
+        copyExif(src, tmpOut, description)
+        return tmpOut
+    }
+
+    /** Retouche : enregistre une COPIE améliorée de [src] (l'original n'est jamais modifié). */
+    fun saveEdited(ctx: Context, src: Uri, cm: ColorMatrix, description: String): Saved? {
+        val tmpIn = File(ctx.cacheDir, "retouche_src")
+        var out: File? = null
+        return try {
+            ctx.contentResolver.openInputStream(src)?.use { input ->
+                FileOutputStream(tmpIn).use { input.copyTo(it) }
+            } ?: return null
+            out = render(ctx, tmpIn, cm, description, allowDownsample = true) ?: return null
+            val bytes = out.readBytes()
+            val uri = write(ctx, baseName().replace("CHAHYN_", "CHAHYN_RETOUCHE_") + ".jpg", "image/jpeg") { it.write(bytes) }
+                ?: return null
+            Saved(uri, thumbnail(bytes), true)
+        } catch (e: Throwable) {
+            null
+        } finally {
+            tmpIn.delete()
+            out?.delete()
+        }
+    }
+
+    /** Aperçu réduit (≈ [maxSide] px), dans le bon sens, pour l'écran de retouche. */
+    fun loadPreview(ctx: Context, src: Uri, maxSide: Int = 1600): Bitmap? = try {
+        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        ctx.contentResolver.openInputStream(src)?.use { BitmapFactory.decodeStream(it, null, o) }
+        var sample = 1
+        while (maxOf(o.outWidth, o.outHeight) / (sample * 2) >= maxSide) sample *= 2
+        val bmp = ctx.contentResolver.openInputStream(src)?.use {
+            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
+        }
+        val rot = ctx.contentResolver.openInputStream(src)?.use { rotationOf(ExifInterface(it)) } ?: 0f
+        if (bmp != null && rot != 0f) Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rot) }, true)
+        else bmp
+    } catch (e: Throwable) {
+        null
+    }
+
+    private fun rotationOf(e: ExifInterface): Float =
+        when (e.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
 
     private val exifTags = listOf(
         ExifInterface.TAG_ORIENTATION, ExifInterface.TAG_DATETIME, ExifInterface.TAG_DATETIME_ORIGINAL,
@@ -163,12 +221,7 @@ object PhotoSaver {
         var sample = 1
         while (o.outWidth / (sample * 2) >= 200) sample *= 2
         val bmp = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size, BitmapFactory.Options().apply { inSampleSize = sample })
-        val rot = when (ExifInterface(ByteArrayInputStream(jpeg)).getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-            else -> 0f
-        }
+        val rot = rotationOf(ExifInterface(ByteArrayInputStream(jpeg)))
         if (bmp != null && rot != 0f) {
             Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rot) }, true)
         } else bmp

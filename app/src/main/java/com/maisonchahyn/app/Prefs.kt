@@ -124,6 +124,7 @@ object Prefs {
     val cTimer = Pref("c_timer", 0)
     val cTips = Pref("c_tips", true)
     val cVolumeShutter = Pref("c_volume_shutter", true)
+    val cOnboarded = Pref("c_onboarded", false)
 
     // ---------- Fond d'écran ----------
     val wallpaperPath = Pref("w_path", "")
