@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PhoneIphone
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import com.maisonchahyn.app.ui.MaisonTheme
 import com.maisonchahyn.app.ui.WallpaperStore
 import com.maisonchahyn.app.ui.hubBackdrop
 import com.maisonchahyn.app.ui.screens.AccueilScreen
+import com.maisonchahyn.app.ui.screens.BoostScreen
 import com.maisonchahyn.app.ui.screens.ClavierScreen
 import com.maisonchahyn.app.ui.screens.EcranScreen
 import com.maisonchahyn.app.ui.screens.ModelesScreen
@@ -81,6 +83,7 @@ data class TabDef(val id: String, val label: String, val icon: ImageVector)
 
 val tabs = listOf(
     TabDef("accueil", "Accueil", Icons.Rounded.Home),
+    TabDef("boost", "Boost", Icons.Rounded.RocketLaunch),
     TabDef("modeles", "Modèles", Icons.Rounded.AutoAwesome),
     TabDef("ecran", "Écran", Icons.Rounded.PhoneIphone),
     TabDef("clavier", "Clavier", Icons.Rounded.Keyboard),
@@ -104,6 +107,7 @@ fun HubApp(requested: String?, consumed: () -> Unit) {
     BackdropHost(backdrop, Modifier.fillMaxSize()) {
         Crossfade(targetState = tab, label = "onglets") { t ->
             when (t) {
+                "boost" -> BoostScreen()
                 "modeles" -> ModelesScreen()
                 "ecran" -> EcranScreen()
                 "clavier" -> ClavierScreen()

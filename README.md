@@ -7,6 +7,7 @@
 | Onglet | Ce que tu peux faire |
 |---|---|
 | **Accueil** | « ✨ Tout appliquer » : style iPhone complet en 1 clic + liste de progression |
+| **Boost** 🚀 | Tape ce que tu veux (« je veux jouer », « supprime tout ce qui est inutile », « économise la batterie », « libère la RAM »…) et Maison l'exécute. Modes Jeu / Film / Batterie / Nuit / Focus en 1 clic (120 Hz, luminosité, animations, Ne pas déranger, RAM) avec retour à la normale ; grand nettoyage (caches, miniatures, fichiers temporaires, dossiers vides, .apk, corbeilles cachées, gros fichiers) ; applis inutilisées depuis 30 jours ; état RAM / stockage / batterie |
 | **Modèles** | 12 modèles prêts (iPhone Liquid Glass, iOS 18 teinté, Néon, Pastel, Luxe or…) qui changent tout d’un coup : fond, logos, couleurs, verre, clavier ; enregistre tes propres modèles |
 | **Écran** | Écran d'accueil iPhone : icônes squircle, dock en verre liquide, widget horloge, recherche, bibliothèque d'apps, 7 styles d’icônes, packs d’icônes du Play Store, logo et nom personnalisés par appli (emoji, lettre, photo), applis masquées |
 | **Clavier** | Clavier AZERTY façon iPhone : thèmes en verre, accents (appui long), emojis, curseur en glissant sur l'espace, majuscules auto, « . » double espace |
