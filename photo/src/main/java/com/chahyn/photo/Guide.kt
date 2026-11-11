@@ -1,4 +1,4 @@
-package com.maisonchahyn.app.camera
+package com.chahyn.photo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,9 +38,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.maisonchahyn.app.ui.IosYellow
-import com.maisonchahyn.app.ui.PrimaryButton
-import com.maisonchahyn.app.ui.TextDim
+import com.chahyn.photo.ui.IosYellow
+import com.chahyn.photo.ui.PrimaryButton
+import com.chahyn.photo.ui.TextDim
 
 /** Le mode d'emploi complet de Chahyn Photo, intégré à l'appli. */
 @Composable
@@ -144,7 +144,7 @@ fun GuideSheet(firstTime: Boolean, onClose: () -> Unit) {
                 P("« Retouche Chahyn » améliore n'importe quelle photo déjà prise (même avec l'appareil photo Samsung). L'original n'est jamais modifié : une copie est enregistrée dans l'album Chahyn Photo.")
                 Bullet("Depuis la Galerie Samsung : ouvre une photo → Partager → « Retouche Chahyn ».")
                 Bullet("Ou : ⋮ → Ouvrir avec / Modifier dans une autre appli → « Retouche Chahyn ».")
-                Bullet("Ou depuis l'appli Maison (Accueil → Retoucher une photo), ou depuis la fiche après une photo.")
+                Bullet("Ou dans Chahyn Photo : ⚙️ Réglages → « Retoucher une photo de la Galerie », ou le bouton Retoucher de la fiche après une photo.")
                 Item("✨ Amélioration auto", "Analyse les couleurs de la photo : rétablit les noirs et les blancs, corrige les dominantes de couleur, ajoute un peu d'éclat.", null)
                 Item("Styles + réglages", "Les 13 styles, plus Luminosité, Contraste, Saturation, Chaleur, Teinte, Fondu.", "Maintiens le doigt sur la photo pour voir l'original.")
             }

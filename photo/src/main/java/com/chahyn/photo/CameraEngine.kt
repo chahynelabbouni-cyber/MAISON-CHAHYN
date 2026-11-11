@@ -1,4 +1,4 @@
-package com.maisonchahyn.app.camera
+package com.chahyn.photo
 
 import android.annotation.SuppressLint
 import android.content.Context

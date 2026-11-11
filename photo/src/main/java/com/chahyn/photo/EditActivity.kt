@@ -1,4 +1,4 @@
-package com.maisonchahyn.app.camera
+package com.chahyn.photo
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -64,13 +64,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.maisonchahyn.app.Prefs
-import com.maisonchahyn.app.toast
-import com.maisonchahyn.app.ui.IosYellow
-import com.maisonchahyn.app.ui.MaisonTheme
-import com.maisonchahyn.app.ui.PrimaryButton
-import com.maisonchahyn.app.ui.SecondaryButton
-import com.maisonchahyn.app.ui.TextDim
+import com.chahyn.photo.ui.IosYellow
+import com.chahyn.photo.ui.PhotoTheme
+import com.chahyn.photo.ui.PrimaryButton
+import com.chahyn.photo.ui.SecondaryButton
+import com.chahyn.photo.ui.TextDim
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -88,7 +86,7 @@ class EditActivity : ComponentActivity() {
         Prefs.init(this)
         enableEdgeToEdge()
         incoming.value = uriFrom(intent)
-        setContent { MaisonTheme { EditScreen(incoming.value, onClose = { finish() }) } }
+        setContent { PhotoTheme { EditScreen(incoming.value, onClose = { finish() }) } }
     }
 
     override fun onNewIntent(intent: Intent) {

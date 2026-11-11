@@ -16,7 +16,6 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.KeyboardAlt
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.Text
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maisonchahyn.app.AppState
 import com.maisonchahyn.app.Prefs
-import com.maisonchahyn.app.camera.CameraActivity
 import com.maisonchahyn.app.launcher.LauncherActivity
 import com.maisonchahyn.app.system.SystemTools
 import com.maisonchahyn.app.toast
@@ -130,26 +128,6 @@ fun AccueilScreen(onTab: (String) -> Unit) {
                     ctx.toast(if (ok) "Fond d'écran appliqué ✓" else "Réglages appliqués ✓")
                     if (!SystemTools.isDefaultLauncher(ctx)) askHome()
                     else ctx.toast("Tout est prêt ✓ — active maintenant le clavier")
-                }
-            }
-        }
-
-        GlassCard(title = "Chahyn Photo", icon = Icons.Rounded.PhotoCamera, iconColor = IosOrange) {
-            BodyText(
-                "L'appareil photo qui se règle tout seul : il reconnaît la situation (nuit, portrait, contre-jour, " +
-                    "paysage, coucher de soleil, sport, nourriture, macro…) et choisit l'ISO, la vitesse, la mise au point " +
-                    "et la balance des blancs pour la meilleure qualité. 13 styles en direct, mode Pro et RAW. " +
-                    "La Retouche améliore aussi les photos de ta Galerie (Partager › Retouche Chahyn)."
-            )
-            PrimaryButton("📷 Ouvrir Chahyn Photo") {
-                ctx.startActivity(Intent(ctx, CameraActivity::class.java))
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SecondaryButton("✏️ Retoucher une photo", Modifier.weight(1f)) {
-                    com.maisonchahyn.app.camera.EditActivity.open(ctx)
-                }
-                SecondaryButton("❓ Guide complet", Modifier.weight(1f)) {
-                    ctx.startActivity(Intent(ctx, CameraActivity::class.java).putExtra("guide", true))
                 }
             }
         }

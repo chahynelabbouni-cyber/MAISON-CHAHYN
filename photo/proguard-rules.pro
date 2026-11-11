@@ -1,0 +1,2 @@
+-keep class com.chahyn.photo.** { *; }
+-dontwarn org.jetbrains.annotations.**

@@ -1,4 +1,4 @@
-package com.maisonchahyn.app.camera
+package com.chahyn.photo
 
 import android.os.Bundle
 import android.view.KeyEvent
@@ -7,8 +7,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.maisonchahyn.app.Prefs
-import com.maisonchahyn.app.ui.MaisonTheme
+import com.chahyn.photo.ui.PhotoTheme
 
 /** « Chahyn Photo » : l'appareil photo qui s'adapte tout seul à chaque situation. */
 class CameraActivity : ComponentActivity() {
@@ -31,7 +30,7 @@ class CameraActivity : ComponentActivity() {
                 if (o != OrientationEventListener.ORIENTATION_UNKNOWN) engine.deviceOrientation = o
             }
         }
-        setContent { MaisonTheme { CameraScreen(engine, motion, this) } }
+        setContent { PhotoTheme { CameraScreen(engine, motion, this) } }
     }
 
     override fun onResume() {

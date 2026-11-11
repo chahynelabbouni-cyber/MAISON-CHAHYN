@@ -107,25 +107,6 @@ object Prefs {
     val currentModel = Pref("current_model", "")
     val customModels = Pref("custom_models", "[]")
 
-    // ---------- Chahyn Photo (appareil photo) ----------
-    val cScene = Pref("c_scene", "auto")
-    val cLook = Pref("c_look", "naturel")
-    val cLookAmount = Pref("c_look_amount", 1f)
-    val cRes = Pref("c_res", "12")
-    val cRatio = Pref("c_ratio", "4:3")
-    val cRaw = Pref("c_raw", false)
-    val cGrid = Pref("c_grid", true)
-    val cLevel = Pref("c_level", true)
-    val cHisto = Pref("c_histo", false)
-    val cSound = Pref("c_sound", true)
-    val cSmartIso = Pref("c_smart_iso", true)
-    val cTripod = Pref("c_tripod", true)
-    val cFlash = Pref("c_flash", "off")
-    val cTimer = Pref("c_timer", 0)
-    val cTips = Pref("c_tips", true)
-    val cVolumeShutter = Pref("c_volume_shutter", true)
-    val cOnboarded = Pref("c_onboarded", false)
-
     // ---------- Fond d'écran ----------
     val wallpaperPath = Pref("w_path", "")
     val wallpaperVersion = Pref("w_version", 0)

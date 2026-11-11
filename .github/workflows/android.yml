@@ -29,10 +29,29 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           ./gradlew assembleRelease --stacktrace
           cp app/build/outputs/apk/release/app-release.apk MaisonChahyn.apk
+          cp photo/build/outputs/apk/release/photo-release.apk ChahynPhoto.apk
       - uses: actions/upload-artifact@v4
         with:
           name: MaisonChahyn-apk
           path: MaisonChahyn.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChahynPhoto-apk
+          path: ChahynPhoto.apk
+      - name: Publier Chahyn Photo (appli séparée)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: chahyn-photo
+          target_commitish: ${{ github.sha }}
+          name: 📷 Chahyn Photo — appareil photo
+          prerelease: false
+          make_latest: true
+          overwrite_files: true
+          files: ChahynPhoto.apk
+          body: |
+            **Chahyn Photo** — l'appareil photo qui se règle tout seul (appli séparée de Maison Chahyn).
+            Télécharge **ChahynPhoto.apk** depuis ton Galaxy et installe-le.
+            Build n°${{ github.run_number }} — commit ${{ github.sha }}
       - name: Publier l'APK (dernière version)
         uses: softprops/action-gh-release@v2
         with:

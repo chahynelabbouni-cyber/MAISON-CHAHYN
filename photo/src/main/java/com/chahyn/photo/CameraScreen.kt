@@ -1,4 +1,4 @@
-package com.maisonchahyn.app.camera
+package com.chahyn.photo
 
 import android.Manifest
 import android.content.Intent
@@ -108,14 +108,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.maisonchahyn.app.Prefs
-import com.maisonchahyn.app.toast
-import com.maisonchahyn.app.ui.Chips
-import com.maisonchahyn.app.ui.IosGreen
-import com.maisonchahyn.app.ui.IosYellow
-import com.maisonchahyn.app.ui.PrimaryButton
-import com.maisonchahyn.app.ui.SettingSwitch
-import com.maisonchahyn.app.ui.TextDim
+import com.chahyn.photo.ui.Chips
+import com.chahyn.photo.ui.IosGreen
+import com.chahyn.photo.ui.IosYellow
+import com.chahyn.photo.ui.PrimaryButton
+import com.chahyn.photo.ui.SettingSwitch
+import com.chahyn.photo.ui.TextDim
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -986,6 +984,9 @@ private fun SettingsSheet(ci: CamInfo?, onClose: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) { Icon(Icons.Rounded.Close, "Fermer", tint = Color.White) }
             }
+
+            val sctx = LocalContext.current
+            PrimaryButton("✏️ Retoucher une photo de la Galerie") { EditActivity.open(sctx) }
 
             Text("Résolution", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Chips(listOf("12" to "12 MP — recommandé", "max" to "Maximum"), Prefs.cRes.value) { Prefs.cRes.value = it }
