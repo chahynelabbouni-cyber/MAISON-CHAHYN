@@ -40,6 +40,7 @@ val IosPink = Color(0xFFFF375F)
 val IosTeal = Color(0xFF64D2FF)
 val IosIndigo = Color(0xFF5E5CE6)
 val TextDim = Color.White.copy(alpha = 0.68f)
+val Bg = Color(0xFF07070C)
 
 @Composable
 fun ScreenColumn(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
@@ -51,7 +52,7 @@ fun ScreenColumn(title: String, subtitle: String? = null, content: @Composable C
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp)
-            .padding(top = 14.dp, bottom = 40.dp),
+            .padding(top = 14.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(title, fontSize = 34.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -107,3 +108,33 @@ fun PrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean 
 @Composable
 fun SecondaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) =
     Btn(text, modifier, enabled, Color.White.copy(alpha = 0.14f), onClick)
+
+@Composable
+fun Field(value: String, label: String, onChange: (String) -> Unit) {
+    androidx.compose.material3.OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+            focusedBorderColor = Accent, unfocusedBorderColor = Color.White.copy(alpha = 0.25f),
+            focusedLabelColor = Accent, unfocusedLabelColor = TextDim, cursorColor = Accent
+        )
+    )
+}
+
+@Composable
+fun LogBox(lines: List<String>) {
+    if (lines.isEmpty()) return
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.Black.copy(alpha = 0.35f))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) { lines.forEach { Text(it, color = Color.White, fontSize = 13.sp, lineHeight = 17.sp) } }
+}
