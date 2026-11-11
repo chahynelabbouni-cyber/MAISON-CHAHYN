@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "MaisonChahyn"
-include(":app")
+include(":app", ":boost")

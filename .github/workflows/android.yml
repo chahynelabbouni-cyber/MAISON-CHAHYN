@@ -29,10 +29,27 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           ./gradlew assembleRelease --stacktrace
           cp app/build/outputs/apk/release/app-release.apk MaisonChahyn.apk
+          ./gradlew :boost:assembleRelease --stacktrace
+          cp boost/build/outputs/apk/release/boost-release.apk BoostChahyn.apk
       - uses: actions/upload-artifact@v4
         with:
           name: MaisonChahyn-apk
           path: MaisonChahyn.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BoostChahyn-apk
+          path: BoostChahyn.apk
+      - name: Publier Boost Chahyn (lien fixe)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: boost-latest
+          name: Boost Chahyn — dernière version
+          prerelease: false
+          make_latest: true
+          files: BoostChahyn.apk
+          body: |
+            Appli séparée **Boost Chahyn** : télécharge **BoostChahyn.apk** depuis ton Galaxy et installe-la.
+            Build n°${{ github.run_number }} — commit ${{ github.sha }}
       - name: Publier l'APK (dernière version)
         uses: softprops/action-gh-release@v2
         with:
