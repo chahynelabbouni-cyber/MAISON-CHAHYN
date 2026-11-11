@@ -106,28 +106,21 @@ fun StyledIcon(
 @Composable
 private fun StyledLayers(app: AppEntry, size: Dp, style: String, tint: Color, shape: Shape) {
     val glyph = app.mono
-    val fallback: @Composable (Color) -> Unit = { bg ->
-        Box(Modifier.size(size).background(bg), contentAlignment = Alignment.Center) {
-            Image(
-                app.icon, null,
-                Modifier.size(size * 0.62f).clip(CircleShape),
-                contentScale = ContentScale.Crop, colorFilter = grayMatrix
-            )
-        }
+    val fallback: @Composable (Color) -> Unit = { overlay ->
+        Image(app.icon, null, Modifier.size(size), contentScale = ContentScale.Crop, colorFilter = grayMatrix)
+        Box(Modifier.size(size).background(overlay))
     }
     when (style) {
         "teinte" -> {
             Box(Modifier.size(size).background(Brush.verticalGradient(listOf(Color(0xFF2C2C2E), Color(0xFF111113)))))
             if (glyph != null) Image(glyph, null, Modifier.size(size), colorFilter = ColorFilter.tint(tint))
-            else fallback(Color.Transparent)
+            else fallback(tint.copy(alpha = 0.25f))
         }
 
         "verre" -> {
             LiquidGlass(Modifier.size(size), shape = shape, blur = 14.dp, tintAlpha = 0.22f, border = 0.55f, highlight = true) {
                 if (glyph != null) Image(glyph, null, Modifier.size(size), colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.95f)))
-                else Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-                    Image(app.icon, null, Modifier.size(size * 0.6f).clip(CircleShape), contentScale = ContentScale.Crop)
-                }
+                else Image(app.icon, null, Modifier.size(size), contentScale = ContentScale.Crop, alpha = 0.85f)
             }
         }
 
@@ -140,7 +133,7 @@ private fun StyledLayers(app: AppEntry, size: Dp, style: String, tint: Color, sh
                     colorFilter = ColorFilter.tint(tint)
                 )
                 Image(glyph, null, Modifier.size(size), colorFilter = ColorFilter.tint(lerp(tint, Color.White, 0.35f)))
-            } else fallback(Color.Transparent)
+            } else fallback(tint.copy(alpha = 0.3f))
         }
 
         "pastel" -> {
@@ -154,7 +147,7 @@ private fun StyledLayers(app: AppEntry, size: Dp, style: String, tint: Color, sh
         "inverse" -> {
             Box(Modifier.size(size).background(Brush.verticalGradient(listOf(Color.White, Color(0xFFEDEDF2)))))
             if (glyph != null) Image(glyph, null, Modifier.size(size), colorFilter = ColorFilter.tint(lerp(tint, Color.Black, 0.55f)))
-            else fallback(Color.Transparent)
+            else fallback(Color.White.copy(alpha = 0.35f))
         }
 
         "mono" -> Image(app.icon, null, Modifier.size(size), contentScale = ContentScale.Crop, colorFilter = grayMatrix)

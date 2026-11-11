@@ -2,6 +2,7 @@ package com.maisonchahyn.app.launcher
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -44,6 +45,7 @@ object AppRepository {
             val um = ctx.getSystemService(UserManager::class.java)
             val me = Process.myUserHandle()
             val dpi = ctx.resources.displayMetrics.densityDpi
+            val useSystem = Prefs.lSystemIcons.value
             val pack = Prefs.lIconPack.value.takeIf { it.isNotEmpty() && it != ctx.packageName }
             val out = mutableListOf<AppEntry>()
             val users = try { um.userProfiles } catch (e: Exception) { listOf(me) }
@@ -53,7 +55,9 @@ object AppRepository {
                     try {
                         val cn = info.componentName
                         val key = cn.flattenToShortString() + if (user == me) "" else "@" + user.hashCode()
-                        val raw = info.getIcon(dpi)
+                        val themed = info.getIcon(dpi)
+                        // Logo d'origine en couleur (contourne les icônes du thème Samsung)
+                        val raw = if (useSystem || user != me) themed else (originalIcon(ctx, info, dpi) ?: themed)
                         val packIcon = pack?.let { IconPacks.drawableFor(ctx, it, cn) }
                         val base = packIcon ?: raw
                         val icon = if (user != me) ctx.packageManager.getUserBadgedIcon(base, user) else base
@@ -92,12 +96,58 @@ object AppRepository {
                 it.setBounds(-inset, -inset, size + inset, size + inset); it.draw(c)
             }
         } else {
-            c.drawColor(Color.WHITE)
-            val pad = (size * 0.14f).toInt()
-            d.setBounds(pad, pad, size - pad, size - pad)
-            d.draw(c)
+            drawLegacyFull(d, size, c)
         }
         return bmp
+    }
+
+    /** Charge le logo directement depuis l'appli (sans les icônes de thème One UI). */
+    private fun originalIcon(ctx: Context, info: LauncherActivityInfo, dpi: Int): Drawable? = try {
+        val pm = ctx.packageManager
+        val ai = info.applicationInfo
+        val act = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.activityInfo
+        else pm.getActivityInfo(info.componentName, 0)
+        val id = act.iconResource.takeIf { it != 0 } ?: ai.icon
+        if (id == 0) null else pm.getResourcesForApplication(ai).getDrawableForDensity(id, dpi, null)
+    } catch (e: Throwable) {
+        null
+    }
+
+    /**
+     * Ancienne icône (non adaptative) : on recadre sur le logo visible et on le fait remplir
+     * toute la forme, avec la couleur de fond du logo — plus de cadre blanc.
+     */
+    private fun drawLegacyFull(d: Drawable, size: Int, c: Canvas) {
+        val tmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        d.setBounds(0, 0, size, size)
+        d.draw(Canvas(tmp))
+        var l = size; var t = size; var r = -1; var b = -1
+        val px = IntArray(size * size)
+        tmp.getPixels(px, 0, size, 0, 0, size, size)
+        for (y in 0 until size) for (x in 0 until size) {
+            if ((px[y * size + x] ushr 24) > 40) {
+                if (x < l) l = x; if (x > r) r = x; if (y < t) t = y; if (y > b) b = y
+            }
+        }
+        if (r <= l || b <= t) {
+            c.drawColor(Color.WHITE); return
+        }
+        // Couleur de fond = pixel juste à l'intérieur du bord supérieur du logo
+        val cx = (l + r) / 2
+        val sample = px[(t + (b - t) / 12).coerceAtMost(size - 1) * size + cx]
+        val bg = if ((sample ushr 24) > 200) sample or 0xFF000000.toInt() else Color.WHITE
+        c.drawColor(bg)
+        val w = r - l; val h = b - t
+        val over = 0.06f
+        val src = android.graphics.Rect(l, t, r + 1, b + 1)
+        val dst = android.graphics.RectF(-size * over, -size * over, size * (1 + over), size * (1 + over))
+        if (w.toFloat() / h > 1.15f || h.toFloat() / w > 1.15f) {
+            // logo pas carré : on le centre sans le déformer
+            val scale = size * 0.78f / maxOf(w, h)
+            val dw = w * scale; val dh = h * scale
+            dst.set((size - dw) / 2, (size - dh) / 2, (size + dw) / 2, (size + dh) / 2)
+        }
+        c.drawBitmap(tmp, src, dst, android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG or android.graphics.Paint.ANTI_ALIAS_FLAG))
     }
 
     /** Icône d'un pack : dessinée telle quelle, plein cadre. */

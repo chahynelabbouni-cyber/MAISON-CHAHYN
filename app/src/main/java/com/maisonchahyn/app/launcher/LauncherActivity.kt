@@ -253,7 +253,7 @@ fun LauncherScreen(homePressed: Int) {
     val dockApps = if (dockOn) dockKeys.mapNotNull { k -> apps.firstOrNull { it.key == k } } else emptyList()
     val gridApps = apps.filter { it.key !in hidden && (!dockOn || it.key !in dockKeys) }
     val backdrop = rememberLauncherBackdrop()
-    LaunchedEffect(Prefs.lIconPack.value) {
+    LaunchedEffect(Prefs.lIconPack.value, Prefs.lSystemIcons.value) {
         IconPacks.invalidate()
         AppRepository.load(ctx.applicationContext)
     }

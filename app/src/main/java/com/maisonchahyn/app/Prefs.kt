@@ -103,6 +103,7 @@ object Prefs {
     // ---------- Interface & modèles ----------
     val uiAccent = Pref("ui_accent", 0xFF0A84FF.toInt())
     val lIconPack = Pref("l_icon_pack", "")
+    val lSystemIcons = Pref("l_system_icons", false)
     val currentModel = Pref("current_model", "")
     val customModels = Pref("custom_models", "[]")
 

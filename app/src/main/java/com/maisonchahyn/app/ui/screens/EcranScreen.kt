@@ -40,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -239,6 +241,8 @@ private fun IconPacksCard() {
     val tick = AppState.resumeTick.intValue
     val packs = remember(tick) { IconPacks.list(ctx) }
     val cur = Prefs.lIconPack.value
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(cur) { IconPacks.invalidate(); AppRepository.load(ctx.applicationContext) }
     GlassCard(title = "Packs d'icônes (logos)", icon = Icons.Rounded.Apps, iconColor = Color(0xFF5E5CE6)) {
         BodyText(
             "Change les logos de toutes tes applis d'un coup avec un pack d'icônes du Play Store " +
@@ -270,6 +274,14 @@ private fun IconPacksCard() {
             }
         }
         if (packs.isEmpty()) BodyText("Aucun pack installé pour l'instant.")
+        SettingSwitch(
+            "Utiliser les logos du thème Samsung",
+            "Désactivé : logos d'origine en couleur (recommandé)",
+            Prefs.lSystemIcons.value
+        ) {
+            Prefs.lSystemIcons.value = it
+            scope.launch { AppRepository.load(ctx.applicationContext) }
+        }
         SecondaryButton("🔎 Trouver des packs d'icônes iOS", Modifier.fillMaxWidth()) {
             SystemTools.safeStart(
                 ctx,

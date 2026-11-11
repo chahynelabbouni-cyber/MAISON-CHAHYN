@@ -68,7 +68,7 @@ import kotlinx.coroutines.withContext
 fun ModelesScreen() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) { if (AppRepository.apps.value.isEmpty()) AppRepository.load(ctx.applicationContext) }
+    LaunchedEffect(Unit) { AppRepository.load(ctx.applicationContext) }
     val apps = AppRepository.apps.value
     val sample = remember(apps) {
         val prefer = listOf("com.samsung.android.dialer", "com.samsung.android.messaging", "com.sec.android.app.camera",
