@@ -287,6 +287,9 @@ object BoostTools {
         if (id == "normal") return restore(ctx)
         val m = modes.firstOrNull { it.id == id } ?: return listOf("Mode inconnu")
         saveSnapshot(ctx)
+        // Changer de mode = repartir de tes réglages d'origine, puis appliquer le nouveau mode.
+        // Ainsi rien ne reste coincé d'un mode précédent (ex. Ne pas déranger).
+        baseline(ctx, ctx.getSharedPreferences(SNAP, Context.MODE_PRIVATE))
         val log = mutableListOf("${m.emoji} Mode ${m.title} activé")
         val write = SystemTools.canWriteSettings(ctx)
         val secure = SystemTools.hasSecureSettings(ctx)
@@ -298,7 +301,8 @@ object BoostTools {
         m.rotation?.let { r(write && setRotation(ctx, it), "Rotation auto ${onOff(it)}", "autorise « Réglages du téléphone »") }
         m.anim?.let { r(secure && setAnim(ctx, it), if (it == 0f) "Animations coupées" else "Animations ×$it", "mode avancé ADB") }
         m.hz120?.let { r(setHighRefresh(ctx, it), if (it) "Écran 120 Hz" else "Écran 60 Hz", "mode avancé ADB") }
-        m.dnd?.let { r(setDnd(ctx, it), if (it == ALL) "Notifications activées" else "Ne pas déranger", "autorise « Ne pas déranger »") }
+        // Chaque mode décide clairement des notifications : sans consigne, elles sont réactivées.
+        (m.dnd ?: ALL).let { r(setDnd(ctx, it), if (it == ALL) "Notifications activées" else if (it == ALARMS) "Ne pas déranger (réveils seulement)" else "Ne pas déranger", "autorise « Ne pas déranger »") }
         m.ringer?.let { r(setRinger(ctx, it), ringerName(it), "autorise « Ne pas déranger »") }
         m.media?.let { r(setVolumePct(ctx, AudioManager.STREAM_MUSIC, it), "Volume média $it %", "refusé") }
         if (m.ram) log += "✅ RAM libérée (${freeRam(ctx)} applis fermées)"
@@ -311,7 +315,18 @@ object BoostTools {
 
     fun restore(ctx: Context): List<String> {
         val sp = ctx.getSharedPreferences(SNAP, Context.MODE_PRIVATE)
-        if (!sp.getBoolean("saved", false)) return listOf("ℹ️ Aucun mode actif, tout est déjà normal")
+        if (!sp.getBoolean("saved", false)) {
+            // Rien de sauvegardé : on remet au moins les notifications et la sonnerie
+            setDnd(ctx, ALL); setRinger(ctx, AudioManager.RINGER_MODE_NORMAL)
+            return listOf("↩️ Notifications et sonnerie réactivées")
+        }
+        baseline(ctx, sp)
+        sp.edit().clear().apply()
+        return listOf("↩️ Tout est revenu comme avant (luminosité, veille, sons, notifications, écran)")
+    }
+
+    /** Remet les réglages d'origine sans oublier la sauvegarde. */
+    private fun baseline(ctx: Context, sp: android.content.SharedPreferences) {
         if (SystemTools.canWriteSettings(ctx)) {
             SystemTools.putSystemInt(ctx, Settings.System.SCREEN_BRIGHTNESS, sp.getInt("bright", 128))
             SystemTools.putSystemInt(ctx, Settings.System.SCREEN_BRIGHTNESS_MODE, sp.getInt("brightMode", 1))
@@ -328,11 +343,10 @@ object BoostTools {
                 Settings.System.putFloat(ctx.contentResolver, "min_refresh_rate", 0f)
             } catch (_: Throwable) {}
         }
-        setDnd(ctx, sp.getInt("dnd", ALL))
+        val d = sp.getInt("dnd", ALL)
+        setDnd(ctx, if (d in 1..4) d else ALL)
         setRinger(ctx, sp.getInt("ringer", AudioManager.RINGER_MODE_NORMAL))
         try { ctx.getSystemService(AudioManager::class.java)?.setStreamVolume(AudioManager.STREAM_MUSIC, sp.getInt("media", 5), 0) } catch (_: Throwable) {}
-        sp.edit().clear().apply()
-        return listOf("↩️ Tout est revenu comme avant")
     }
 
     private fun onOff(b: Boolean) = if (b) "activés" else "coupés"

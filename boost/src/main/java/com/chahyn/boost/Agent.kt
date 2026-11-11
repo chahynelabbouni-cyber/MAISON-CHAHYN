@@ -197,6 +197,87 @@ object Agent {
             r("⏱️ Allumé depuis ${BoostTools.uptime()}", "💡 Redémarre une fois par semaine (bouton latéral + volume bas → Redémarrer). Aucune appli ne peut le faire à ta place.")
         }
 
+
+        // ---- Réglages relatifs ----
+        fun adjust(c: Context, stream: Int, up: Boolean) = try {
+            c.getSystemService(AudioManager::class.java)!!.adjustStreamVolume(stream, if (up) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI); true
+        } catch (_: Throwable) { false }
+        fun brightNow(c: Context) = SystemTools.getSystemInt(c, Settings.System.SCREEN_BRIGHTNESS, 128) * 100 / 255
+        t += Task("vol_up", "🔊", "Monter le son", "Son", listOf("monte le son", "plus fort", "augmente le volume", "monte le volume")) { c -> ok(adjust(c, AudioManager.STREAM_MUSIC, true), "Son monté") }
+        t += Task("vol_down", "🔉", "Baisser le son", "Son", listOf("baisse le son", "moins fort", "diminue le volume", "baisse le volume")) { c -> ok(adjust(c, AudioManager.STREAM_MUSIC, false), "Son baissé") }
+        t += Task("vol_mute", "🔇", "Couper le son des médias", "Son", listOf("coupe le son", "mute", "muet")) { c -> ok(BoostTools.setVolumePct(c, AudioManager.STREAM_MUSIC, 0), "Son des médias coupé") }
+        t += Task("bright_up", "🔆", "Plus de luminosité (+20 %)", "Écran", listOf("augmente la luminosite", "un peu plus lumineux", "plus de lumiere")) { c -> val v = (brightNow(c) + 20).coerceAtMost(100); ok(BoostTools.setBrightnessPct(c, v), "Luminosité à $v %") }
+        t += Task("bright_down", "🔅", "Moins de luminosité (−20 %)", "Écran", listOf("diminue la luminosite", "un peu moins lumineux", "moins de lumiere", "ca m'eblouit")) { c -> val v = (brightNow(c) - 20).coerceAtLeast(0); ok(BoostTools.setBrightnessPct(c, v), "Luminosité à $v %") }
+        t += Task("screen_on", "👀", "Écran toujours allumé (30 min)", "Écran", listOf("ecran toujours allume", "ne t'eteins pas", "garde l'ecran allume")) { c -> ok(BoostTools.setTimeout(c, 1_800_000), "Écran allumé 30 min") }
+
+        // ---- Raccourcis du quotidien ----
+        fun open(id: String, emoji: String, title: String, kw: List<String>, intent: () -> Intent) {
+            t += Task(id, emoji, title, "Raccourcis", kw) { c -> r(if (SystemTools.safeStart(c, intent())) "$emoji $title" else "❌ Impossible : $title") }
+        }
+        open("photo", "📷", "Prendre une photo", listOf("prends une photo", "prendre une photo", "selfie")) { Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA) }
+        open("video", "🎥", "Filmer une vidéo", listOf("filme", "prends une video", "enregistre une video")) { Intent(android.provider.MediaStore.INTENT_ACTION_VIDEO_CAMERA) }
+        open("dial", "📞", "Ouvrir le téléphone", listOf("appeler quelqu'un", "clavier telephone", "passer un appel")) { Intent(Intent.ACTION_DIAL) }
+        open("sms", "💬", "Écrire un SMS", listOf("ecris un sms", "envoie un sms", "envoyer un message")) { Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:")) }
+        open("mail", "📧", "Écrire un e-mail", listOf("ecris un mail", "envoie un mail", "email")) { Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")) }
+        open("contacts", "👥", "Mes contacts", listOf("mes contacts", "repertoire")) { Intent(Intent.ACTION_VIEW, android.provider.ContactsContract.Contacts.CONTENT_URI) }
+        open("alarms", "⏰", "Voir mes réveils", listOf("mes reveils", "mes alarmes")) { Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS) }
+        open("timers", "⏲️", "Voir mes minuteurs", listOf("mes minuteurs")) { Intent(android.provider.AlarmClock.ACTION_SHOW_TIMERS) }
+        open("browser", "🌐", "Ouvrir internet", listOf("navigateur", "ouvre internet")) { Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com")) }
+        open("maps", "🗺️", "Ouvrir la carte", listOf("ouvre la carte", "ou je suis")) { Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=")) }
+        open("weather", "🌦️", "Météo", listOf("meteo", "temps qu'il fait", "il pleut", "il fait beau")) { Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=m%C3%A9t%C3%A9o")) }
+        open("speedtest", "🏎️", "Tester la vitesse internet", listOf("vitesse internet", "speedtest", "test de debit", "debit")) { Intent(Intent.ACTION_VIEW, Uri.parse("https://fast.com")) }
+
+        // ---- Discussion ----
+        t += Task("hello", "👋", "Dire bonjour", "Discussion", listOf("bonjour", "salut", "coucou", "hello", "wesh", "yo ")) { _ -> r("${Profile.salut()} Qu'est-ce que je fais pour toi ? Dis « aide » pour voir des idées.") }
+        t += Task("thanks", "🙏", "Merci", "Discussion", listOf("merci", "parfait", "trop bien", "genial", "top")) { _ -> r("Avec plaisir ${Profile.appel} 😎") }
+        t += Task("who", "🤖", "Qui es-tu ?", "Discussion", listOf("qui es tu", "t'es qui", "tu fais quoi", "tu sers a quoi")) { _ -> r("Je suis l'agent de Boost Chahyn 🤖 Je règle ton téléphone, je fais de la place et je lance des modes. Tout se passe sur ton téléphone, rien n'est envoyé.") }
+        t += Task("help", "❓", "Aide : que peux-tu faire ?", "Discussion", listOf("aide", "help", "que peux tu faire", "quoi faire", "exemples", "commandes")) { _ ->
+            r("Voici des exemples :",
+                "⚡ « fais de la place », « tout optimiser », « libère la RAM »",
+                "🎛️ « mode jeu », « mode travail », « je vais dormir », « remets normal »",
+                "🧹 « supprime les doublons », « vide les captures d'écran », « nettoie WhatsApp »",
+                "☀️ « luminosité 40 », « plus fort », « mode vibreur », « ne pas déranger »",
+                "⏰ « réveil à 7h30 », « minuteur 10 min »",
+                "🔎 « cherche recette crêpes », « itinéraire vers Paris », « mets du Ninho »",
+                "📲 « ouvre Snapchat », « désinstalle Candy Crush », « vide le cache de TikTok »",
+                "Tu peux en enchaîner plusieurs : « mode jeu et monte le son ».")
+        }
+        t += Task("list_modes", "🎛️", "Liste des modes", "Discussion", listOf("quels modes", "liste des modes", "les modes")) { _ ->
+            Reply(listOf("Mes ${BoostTools.modes.size} modes :") + BoostTools.modes.map { "${it.emoji} ${it.title} — ${it.desc}" })
+        }
+        t += Task("time", "🕒", "Quelle heure est-il ?", "Infos", listOf("quelle heure", "l'heure")) { _ ->
+            r("🕒 Il est " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.FRENCH).format(java.util.Date()))
+        }
+        t += Task("date", "📅", "Quel jour sommes-nous ?", "Infos", listOf("quel jour", "on est le combien", "la date")) { _ ->
+            r("📅 " + java.text.SimpleDateFormat("EEEE d MMMM yyyy", java.util.Locale.FRENCH).format(java.util.Date()))
+        }
+        t += Task("network", "📶", "Ma connexion", "Infos", listOf("ma connexion", "suis-je connecte", "j'ai internet")) { c ->
+            val cm = c.getSystemService(android.net.ConnectivityManager::class.java)
+            val caps = cm?.getNetworkCapabilities(cm.activeNetwork)
+            r(when {
+                caps == null -> "❌ Pas de connexion internet"
+                caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> "📶 Connecté en Wi-Fi"
+                caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) -> "📡 Connecté en données mobiles"
+                else -> "🌐 Connecté"
+            })
+        }
+
+        // ---- Scénarios (plusieurs actions d'un coup) ----
+        fun combo(id: String, emoji: String, title: String, kw: List<String>, vararg ids: String) {
+            t += Task(id, emoji, title, "Scénarios", kw) { c ->
+                Reply(listOf("$emoji $title :") + ids.flatMap { tid -> t.firstOrNull { it.id == tid }?.run?.invoke(c)?.lines ?: emptyList() })
+            }
+        }
+        combo("sc_matin", "🌅", "Routine du matin", listOf("bonjour le matin", "je me reveille", "routine du matin", "je suis reveille"), "mode_normal", "bright_auto_on", "dnd_off", "info_batt", "time")
+        combo("sc_dodo", "🛌", "Routine du coucher", listOf("je vais dormir", "je vais me coucher", "bonne nuit", "routine du soir"), "mode_sommeil", "info_batt")
+        combo("sc_sortie", "🚶", "Je sors", listOf("je sors", "je pars", "je quitte la maison"), "mode_normal", "ring_normal", "info_batt")
+        combo("sc_maison", "🏠", "Je rentre à la maison", listOf("je rentre", "je suis a la maison", "je suis chez moi"), "mode_normal", "bright_auto_on")
+        combo("sc_charge", "🔌", "Avant la nuit en charge", listOf("je le mets en charge", "en charge pour la nuit"), "tout", "mode_sommeil")
+        combo("sc_gamenight", "🕹️", "Grosse session de jeu", listOf("grosse session", "session de jeu", "je vais jouer longtemps", "tryhard"), "tout", "mode_ultra")
+        combo("sc_presentation", "📊", "Avant une présentation", listOf("presentation", "expose", "oral"), "mode_reunion", "ram")
+        combo("sc_cine", "🍿", "Soirée ciné", listOf("soiree cine", "soiree film", "cinema"), "mode_film", "ram")
+        combo("sc_faim", "🪫", "Il me reste peu de batterie", listOf("plus de batterie", "batterie faible", "je vais m'eteindre", "batterie a plat"), "mode_survie", "info_batt")
+
         // ---- Pages de réglages ----
         t += page("wifi", "📶", "Wi-Fi", listOf("wifi", "wi-fi"), Settings.Panel.ACTION_WIFI, Settings.ACTION_WIFI_SETTINGS)
         t += page("internet", "🌐", "Internet (panneau)", listOf("internet", "connexion", "reseau"), Settings.Panel.ACTION_INTERNET_CONNECTIVITY)
@@ -296,7 +377,7 @@ object Agent {
         var tab: String? = null
         val done = mutableSetOf<String>()
         for (p in parts.ifEmpty { listOf(norm(text)) }) {
-            val task = numeric(p, all) ?: best(p, all)
+            val task = special(p) ?: numeric(p, all) ?: best(p, all)
             if (task == null || task.id in done) continue
             done += task.id
             val res = try { task.run(ctx) } catch (e: Throwable) { r("❌ ${task.title} : ${e.message}") }
@@ -311,6 +392,64 @@ object Agent {
             "• « mode jeu et libère la RAM » (plusieurs à la fois)"
         )
         return Reply(lines, confirm, tab)
+    }
+
+
+    // ================= Commandes avec paramètres libres =================
+
+    private fun tk(f: (Context) -> Reply) = Task("special", "", "", "", emptyList(), f)
+
+    /** Réveil, minuteur, recherche, appel, itinéraire, musique… */
+    private fun special(p: String): Task? {
+        val hm = Regex("(\\d{1,2})\\s*(?:h|heures?|:)\\s*(\\d{1,2})?").find(p)
+        if ((p.contains("reveil") || p.contains("alarme") || p.contains("reveille")) && hm != null) {
+            val h = hm.groupValues[1].toInt().coerceIn(0, 23); val m = hm.groupValues[2].toIntOrNull()?.coerceIn(0, 59) ?: 0
+            return tk { c ->
+                val i = Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+                    .putExtra(android.provider.AlarmClock.EXTRA_HOUR, h).putExtra(android.provider.AlarmClock.EXTRA_MINUTES, m)
+                    .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, "Boost Chahyn").putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, true)
+                r(if (SystemTools.safeStart(c, i)) "⏰ Réveil réglé à ${h}h%02d".format(m) else "❌ Impossible de régler le réveil")
+            }
+        }
+        val dur = Regex("(\\d{1,3})\\s*(min|minutes?|s|sec|secondes?|h|heures?)\\b").find(p)
+        if ((p.contains("minuteur") || p.contains("timer") || p.contains("chrono") || p.contains("rappelle")) && dur != null) {
+            val n = dur.groupValues[1].toInt(); val u = dur.groupValues[2]
+            val sec = when { u.startsWith("h") -> n * 3600; u.startsWith("m") -> n * 60; else -> n }
+            return tk { c ->
+                val i = Intent(android.provider.AlarmClock.ACTION_SET_TIMER)
+                    .putExtra(android.provider.AlarmClock.EXTRA_LENGTH, sec).putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, true)
+                    .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, "Boost Chahyn")
+                r(if (SystemTools.safeStart(c, i)) "⏲️ Minuteur lancé : ${dur.value}" else "❌ Impossible de lancer le minuteur")
+            }
+        }
+        fun after(vararg keys: String): String? = keys.firstNotNullOfOrNull { k ->
+            val i = p.indexOf(k); if (i >= 0) p.substring(i + k.length).trim().takeIf { it.isNotEmpty() } else null
+        }
+        after("cherche sur google ", "recherche ", "cherche ", "google ")?.let { q ->
+            if (!q.startsWith("les ") && !q.startsWith("des ")) return tk { c ->
+                SystemTools.safeStart(c, Intent(Intent.ACTION_WEB_SEARCH).putExtra(android.app.SearchManager.QUERY, q),
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=" + Uri.encode(q))))
+                r("🔎 Je cherche « $q »")
+            }
+        }
+        after("itineraire vers ", "emmene moi a ", "emmene-moi a ", "va a ", "aller a ", "route vers ")?.let { q ->
+            return tk { c -> SystemTools.safeStart(c, Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(q))), Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(q)))); r("🗺️ Itinéraire vers « $q »") }
+        }
+        after("ou se trouve ", "carte de ", "montre moi ")?.let { q ->
+            return tk { c -> SystemTools.safeStart(c, Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(q)))); r("📍 Je te montre « $q » sur la carte") }
+        }
+        Regex("(?:appelle|appeler|compose)\\s+([+\\d][\\d ]{5,})").find(p)?.let { m ->
+            val num = m.groupValues[1].replace(" ", "")
+            return tk { c -> SystemTools.safeStart(c, Intent(Intent.ACTION_DIAL, Uri.parse("tel:$num"))); r("📞 Numéro $num prêt, appuie sur Appeler") }
+        }
+        after("mets la musique de ", "joue la musique de ", "mets du ", "mets de la ", "joue du ", "ecoute ")?.let { q ->
+            return tk { c ->
+                SystemTools.safeStart(c, Intent(android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).putExtra(android.app.SearchManager.QUERY, q),
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q))))
+                r("🎵 Je lance « $q »")
+            }
+        }
+        return null
     }
 
     /** Demandes avec un nombre libre : « luminosité 37 », « volume 65 ». */
