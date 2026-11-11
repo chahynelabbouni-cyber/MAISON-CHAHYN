@@ -361,7 +361,10 @@ object Agent {
                 },
             )
         }
-        return staticTasks + dyn
+        val custom = BoostTools.customModes(ctx).map { m ->
+            Task("mode_${m.id}", m.emoji, "Mode ${m.title}", "Mes modes", listOf("mode ${norm(m.title)}", norm(m.title))) { c -> Reply(BoostTools.applyMode(c, m.id)) }
+        }
+        return custom + staticTasks + dyn
     }
 
     // ================= Compréhension =================
@@ -371,6 +374,8 @@ object Agent {
     /** Comprend une phrase (éventuellement plusieurs demandes) et exécute. */
     fun handle(ctx: Context, text: String): Reply {
         val all = allTasks(ctx)
+        val full = norm(text)
+        createMode(ctx, full)?.let { return it }
         val parts = splitter.split(norm(text)).map { it.trim() }.filter { it.length > 1 }
         val lines = mutableListOf<String>()
         val confirm = mutableListOf<BoostTools.Junk>()
@@ -380,7 +385,8 @@ object Agent {
             val task = special(p) ?: numeric(p, all) ?: best(p, all)
             if (task == null || task.id in done) continue
             done += task.id
-            val res = try { task.run(ctx) } catch (e: Throwable) { r("❌ ${task.title} : ${e.message}") }
+            val mod = if (task.id.startsWith("mode_")) BoostTools.allModes(ctx).firstOrNull { "mode_" + it.id == task.id }?.let { modify(it, full) } else null
+            val res = if (mod != null) Reply(BoostTools.applyMode(ctx, mod.id, mod) + "💡 Dis « crée un mode … » pour l'enregistrer") else try { task.run(ctx) } catch (e: Throwable) { r("❌ ${task.title} : ${e.message}") }
             lines += res.lines; confirm += res.confirm; tab = res.goTab ?: tab
         }
         if (lines.isEmpty()) return r(
@@ -394,6 +400,47 @@ object Agent {
         return Reply(lines, confirm, tab)
     }
 
+
+    // ================= Création / ajustement de modes =================
+
+    private val keepNotif = Regex("(gard|avec|laisse|active|recoi|sans couper|sans bloquer|pas couper|pas bloquer).{0,25}notif|notif.{0,15}(activ|gard|on\\b)")
+    private val cutNotif = Regex("(sans|coupe|bloque|pas de).{0,10}notif")
+
+    /** Variante d'un mode selon la phrase (« en gardant les notifications »…), ou null si rien à changer. */
+    fun modify(base: BoostTools.Mode, p: String): BoostTools.Mode? {
+        var m = base
+        val tags = mutableListOf<String>()
+        if (keepNotif.containsMatchIn(p)) { m = m.copy(dnd = NotificationManager.INTERRUPTION_FILTER_ALL, ringer = AudioManager.RINGER_MODE_NORMAL); tags += "avec notifications" }
+        else if (cutNotif.containsMatchIn(p)) { m = m.copy(dnd = NotificationManager.INTERRUPTION_FILTER_PRIORITY); tags += "sans notifications" }
+        if (Regex("(garde|avec|laisse).{0,10}(le son|la sonnerie|les sons)").containsMatchIn(p)) { m = m.copy(touch = null, media = null, ringer = AudioManager.RINGER_MODE_NORMAL); tags += "avec le son" }
+        else if (Regex("sans (le )?son|silencieu|vibreur").containsMatchIn(p) && base.id != "discret") { m = m.copy(ringer = AudioManager.RINGER_MODE_VIBRATE, media = 0); tags += "silencieux" }
+        Regex("lumi\\D{0,12}(\\d{1,3})").find(p)?.let { m = m.copy(bright = it.groupValues[1].toInt().coerceIn(0, 100)); tags += "luminosité ${m.bright} %" }
+        if (Regex("sans (fermer|tuer|vider la ram)|garde mes applis").containsMatchIn(p)) { m = m.copy(ram = false); tags += "applis gardées ouvertes" }
+        if (Regex("econom|batterie|sans chauffer").containsMatchIn(p) && base.id !in listOf("batterie", "survie")) { m = m.copy(hz120 = false, bright = minOf(m.bright ?: 60, 60)); tags += "économe" }
+        if (tags.isEmpty()) return null
+        return m.copy(title = "${base.title} (${tags.joinToString(", ")})")
+    }
+
+    private val createWords = Regex("\\b(cree|creer|creee|cree-moi|fais(-| )moi un mode|nouveau mode|invente|enregistre un mode|ajoute un mode|mon propre mode)")
+
+    /** « crée-moi un mode pour jouer mais en gardant les notifications » → nouveau mode enregistré + activé. */
+    private fun createMode(ctx: Context, p: String): Reply? {
+        if (!createWords.containsMatchIn(p) || "mode" !in p) return null
+        val base = BoostTools.modes.filter { it.id != "normal" }
+            .maxByOrNull { m -> m.keywords.filter { p.contains(norm(it)) }.maxOfOrNull { it.length } ?: 0 }
+            ?.takeIf { m -> m.keywords.any { p.contains(norm(it)) } }
+            ?: BoostTools.Mode("perso", "⭐", "Perso", "", emptyList(), ram = true)
+        val mod = modify(base, p) ?: base.copy(title = "${base.title} perso")
+        val name = Regex("(?:appel(?:le|e)|nomme|nom)\\s+(?:le\\s+)?[\"«]?\\s*([\\p{L}\\d ]{2,25})").find(p)?.groupValues?.get(1)?.trim()
+            ?.replaceFirstChar { it.uppercase() } ?: mod.title
+        val id = "c_" + System.currentTimeMillis()
+        val custom = mod.copy(id = id, title = name, desc = BoostTools.describe(mod), keywords = listOf(norm(name)), emoji = base.emoji, tip = null)
+        BoostTools.addCustom(ctx, custom)
+        return Reply(
+            listOf("✨ Nouveau mode créé : ${custom.emoji} « ${custom.title} »", "📋 ${custom.desc}", "Il est enregistré dans l'onglet Modes. Je l'active :") +
+                BoostTools.applyMode(ctx, id)
+        )
+    }
 
     // ================= Commandes avec paramètres libres =================
 

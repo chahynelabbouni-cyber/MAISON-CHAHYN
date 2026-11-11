@@ -406,36 +406,109 @@ private fun Bubble(m: Msg) {
 fun ModesScreen() {
     val ctx = LocalContext.current
     val tick = AppState.resumeTick.intValue
+    var version by remember { mutableIntStateOf(0) }
     var active by remember(tick) { mutableStateOf(BoostTools.activeMode(ctx)) }
     var log by remember { mutableStateOf<List<String>>(emptyList()) }
+    var creating by remember { mutableStateOf(false) }
+    val all = remember(version) { BoostTools.allModes(ctx) }
+    val customIds = remember(version) { BoostTools.customModes(ctx).map { it.id }.toSet() }
 
-    ScreenColumn("Modes", "Un appui = tout se règle. « Revenir à la normale » annule tout.") {
+    ScreenColumn("Modes", "Un appui = tout se règle. Changer de mode remet tout à zéro avant.") {
+        if (!creating) PrimaryButton("➕ Créer mon propre mode", Modifier.fillMaxWidth()) { creating = true }
+        else ModeEditor(onDone = { m ->
+            creating = false
+            if (m != null) { BoostTools.addCustom(ctx, m); version++; log = listOf("✨ Mode « ${m.title} » créé") + BoostTools.applyMode(ctx, m.id); active = m.id }
+        })
         LogBox(log)
-        BoostTools.modes.chunked(2).forEach { row ->
+        all.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { m ->
                     val on = active == m.id
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .height(132.dp)
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(if (on) Brush.linearGradient(listOf(Color(0xFFFF2D55), Color(0xFF7B2BFF))) else Brush.linearGradient(listOf(Color(0x1FFFFFFF), Color(0x0FFFFFFF))))
-                            .clickable {
-                                log = BoostTools.applyMode(ctx, m.id)
-                                active = BoostTools.activeMode(ctx)
-                            }
-                            .padding(14.dp)
-                    ) {
-                        Text(m.emoji, fontSize = 30.sp)
-                        Spacer(Modifier.height(4.dp))
-                        Text(m.title + if (on) " ✓" else "", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(m.desc, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, lineHeight = 14.sp, maxLines = 3)
+                    val custom = m.id in customIds
+                    Box(Modifier.weight(1f)) {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(140.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(if (on) Brush.linearGradient(listOf(Color(0xFFFF2D55), Color(0xFF7B2BFF))) else Brush.linearGradient(listOf(Color(0x1FFFFFFF), Color(0x0FFFFFFF))))
+                                .border(if (custom) 1.dp else 0.dp, if (custom) Accent.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(22.dp))
+                                .clickable {
+                                    log = BoostTools.applyMode(ctx, m.id)
+                                    active = BoostTools.activeMode(ctx)
+                                }
+                                .padding(14.dp)
+                        ) {
+                            Text(m.emoji, fontSize = 30.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(m.title + if (on) " ✓" else "", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+                            Text(m.desc, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, lineHeight = 14.sp, maxLines = 3)
+                        }
+                        if (custom) Text(
+                            "✕", color = Color.White, fontSize = 16.sp,
+                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.4f)).clickable { BoostTools.deleteCustom(ctx, m.id); version++ }
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
                     }
                 }
                 if (row.size == 1) Spacer(Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Composable
+private fun ModeEditor(onDone: (BoostTools.Mode?) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var baseId by remember { mutableStateOf("jeu") }
+    val base = BoostTools.modes.first { it.id == baseId }
+    var notifs by remember(baseId) { mutableStateOf((base.dnd ?: android.app.NotificationManager.INTERRUPTION_FILTER_ALL) == android.app.NotificationManager.INTERRUPTION_FILTER_ALL) }
+    var silent by remember(baseId) { mutableStateOf(base.ringer == android.media.AudioManager.RINGER_MODE_VIBRATE) }
+    var ram by remember(baseId) { mutableStateOf(base.ram) }
+    var hz by remember(baseId) { mutableStateOf(base.hz120 == true) }
+    var bright by remember(baseId) { mutableStateOf((base.bright ?: 60).toFloat()) }
+
+    GlassCard(title = "Nouveau mode") {
+        Field(name, "Nom du mode (ex : Jeu avec notifs)") { name = it }
+        Text("Basé sur :", color = TextDim, fontSize = 13.sp)
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BoostTools.modes.filter { it.id != "normal" }.forEach { m ->
+                Box(
+                    Modifier.clip(CircleShape).background(if (m.id == baseId) Accent else Color.White.copy(alpha = 0.1f))
+                        .clickable { baseId = m.id }.padding(horizontal = 12.dp, vertical = 8.dp)
+                ) { Text("${m.emoji} ${m.title}", color = Color.White, fontSize = 13.sp) }
+            }
+        }
+        EditorSwitch("🔔 Garder les notifications", notifs) { notifs = it }
+        EditorSwitch("📳 Silencieux (vibreur)", silent) { silent = it }
+        EditorSwitch("🚀 Libérer la RAM", ram) { ram = it }
+        EditorSwitch("⚡ Écran 120 Hz", hz) { hz = it }
+        Text("☀️ Luminosité : ${bright.toInt()} %", color = Color.White, fontSize = 14.sp)
+        androidx.compose.material3.Slider(value = bright, onValueChange = { bright = it }, valueRange = 0f..100f,
+            colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = Accent, activeTrackColor = Accent))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PrimaryButton("Créer et activer", Modifier.weight(1f)) {
+                val m0 = base.copy(
+                    id = "c_" + System.currentTimeMillis(),
+                    title = name.ifBlank { base.title + " perso" },
+                    dnd = if (notifs) android.app.NotificationManager.INTERRUPTION_FILTER_ALL else android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+                    ringer = if (silent) android.media.AudioManager.RINGER_MODE_VIBRATE else android.media.AudioManager.RINGER_MODE_NORMAL,
+                    ram = ram, hz120 = hz, bright = bright.toInt(), tip = null,
+                )
+                val m = m0.copy(desc = BoostTools.describe(m0), keywords = listOf(norm(m0.title)))
+                onDone(m)
+            }
+            SecondaryButton("Annuler") { onDone(null) }
+        }
+    }
+}
+
+@Composable
+private fun EditorSwitch(label: String, v: Boolean, on: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { on(!v) }, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = Color.White, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        androidx.compose.material3.Switch(v, on, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = IosGreen))
     }
 }
 

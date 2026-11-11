@@ -283,9 +283,64 @@ object BoostTools {
         }.apply()
     }
 
-    fun applyMode(ctx: Context, id: String): List<String> {
-        if (id == "normal") return restore(ctx)
-        val m = modes.firstOrNull { it.id == id } ?: return listOf("Mode inconnu")
+    // ---------- Modes personnalisés ----------
+    private const val CUSTOM = "custom_modes"
+
+    fun customModes(ctx: Context): List<Mode> {
+        val raw = ctx.getSharedPreferences(CUSTOM, Context.MODE_PRIVATE).getString("list", "[]") ?: "[]"
+        return try {
+            val a = org.json.JSONArray(raw)
+            (0 until a.length()).map { i ->
+                val o = a.getJSONObject(i)
+                fun int(k: String) = if (o.has(k)) o.getInt(k) else null
+                fun bool(k: String) = if (o.has(k)) o.getBoolean(k) else null
+                Mode(
+                    o.getString("id"), o.getString("emoji"), o.getString("title"), o.getString("desc"),
+                    o.optString("kw").split('|').filter { it.isNotBlank() },
+                    bright = int("bright"), timeoutMs = int("timeout"),
+                    anim = if (o.has("anim")) o.getDouble("anim").toFloat() else null,
+                    hz120 = bool("hz"), dnd = int("dnd"), ringer = int("ringer"), media = int("media"),
+                    touch = bool("touch"), haptic = bool("haptic"), rotation = bool("rot"),
+                    ram = o.optBoolean("ram"), tip = null
+                )
+            }
+        } catch (_: Throwable) { emptyList() }
+    }
+
+    private fun saveCustom(ctx: Context, list: List<Mode>) {
+        val a = org.json.JSONArray()
+        list.forEach { m ->
+            val o = org.json.JSONObject()
+            o.put("id", m.id); o.put("emoji", m.emoji); o.put("title", m.title); o.put("desc", m.desc)
+            o.put("kw", m.keywords.joinToString("|"))
+            m.bright?.let { o.put("bright", it) }; m.timeoutMs?.let { o.put("timeout", it) }
+            m.anim?.let { o.put("anim", it.toDouble()) }; m.hz120?.let { o.put("hz", it) }
+            m.dnd?.let { o.put("dnd", it) }; m.ringer?.let { o.put("ringer", it) }; m.media?.let { o.put("media", it) }
+            m.touch?.let { o.put("touch", it) }; m.haptic?.let { o.put("haptic", it) }; m.rotation?.let { o.put("rot", it) }
+            o.put("ram", m.ram)
+            a.put(o)
+        }
+        ctx.getSharedPreferences(CUSTOM, Context.MODE_PRIVATE).edit().putString("list", a.toString()).apply()
+    }
+
+    fun addCustom(ctx: Context, m: Mode) = saveCustom(ctx, customModes(ctx).filter { it.id != m.id } + m)
+    fun deleteCustom(ctx: Context, id: String) = saveCustom(ctx, customModes(ctx).filter { it.id != id })
+    fun allModes(ctx: Context): List<Mode> = modes.dropLast(1) + customModes(ctx) + modes.last()
+
+    /** Description lisible de ce que règle un mode. */
+    fun describe(m: Mode): String = listOfNotNull(
+        m.bright?.let { "☀️ $it %" },
+        m.hz120?.let { if (it) "120 Hz" else "60 Hz" },
+        if ((m.dnd ?: ALL) == ALL) "🔔 notifications gardées" else "🔕 notifications coupées",
+        m.ringer?.let { if (it == AudioManager.RINGER_MODE_NORMAL) "sonnerie" else "vibreur" },
+        m.media?.let { "🔊 $it %" },
+        m.anim?.let { if (it == 0f) "sans animations" else null },
+        if (m.ram) "RAM libérée" else null,
+    ).joinToString(" · ")
+
+    fun applyMode(ctx: Context, id: String, override: Mode? = null): List<String> {
+        if (id == "normal" && override == null) return restore(ctx)
+        val m = override ?: allModes(ctx).firstOrNull { it.id == id } ?: return listOf("Mode inconnu")
         saveSnapshot(ctx)
         // Changer de mode = repartir de tes réglages d'origine, puis appliquer le nouveau mode.
         // Ainsi rien ne reste coincé d'un mode précédent (ex. Ne pas déranger).
