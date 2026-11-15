@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>RéviZen – QCM & Flashcards</title>
+<script src="https://cdn.tailwindcss.com/3.4.1"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  :root{--bg:#000;--card:#0d0d12;--line:#1f1f2b;--acc:#3b82f6;--vio:#8b5cf6}
+  html,body{background:#000;color:#e5e7eb;height:100%;margin:0;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+  body{font-family:system-ui,-apple-system,Roboto,sans-serif;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px}
+  .btn{border-radius:14px;padding:.7rem 1rem;font-weight:600;transition:transform .08s,opacity .15s;user-select:none}
+  .btn:active{transform:scale(.96)}
+  .btn-p{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
+  .btn-g{background:#16161f;border:1px solid var(--line);color:#e5e7eb}
+  .btn-d{background:#3b0d12;border:1px solid #7f1d1d;color:#fecaca}
+  .inp{background:#0a0a0f;border:1px solid var(--line);border-radius:12px;padding:.65rem .8rem;width:100%;color:#e5e7eb;outline:none}
+  .inp:focus{border-color:var(--acc)}
+  .view{display:none;animation:fade .18s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:#6b7280;padding:8px 0}
+  .nav-btn.active{color:#60a5fa}
+  .nav-btn svg{width:24px;height:24px}
+  .choice{width:100%;text-align:left;padding:.85rem 1rem;border-radius:14px;background:#111118;border:1px solid var(--line);transition:all .12s}
+  .choice.sel{border-color:#3b82f6;background:#0f1a33}
+  .choice.ok{border-color:#22c55e;background:#052e16}
+  .choice.ko{border-color:#ef4444;background:#3b0a0a}
+  .flip{perspective:1200px}
+  .flip-inner{position:relative;width:100%;min-height:300px;transition:transform .45s;transform-style:preserve-3d}
+  .flip.flipped .flip-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;justify-content:center;padding:1.4rem;border-radius:20px;border:1px solid var(--line);overflow:auto}
+  .face.front{background:linear-gradient(160deg,#0d0d16,#11112a)}
+  .face.back{background:linear-gradient(160deg,#0d1424,#1a0f2e);transform:rotateY(180deg)}
+  .pill{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600}
+  .st-urgent{background:#450a0a;color:#fca5a5}.st-fragile{background:#431407;color:#fdba74}
+  .st-cours{background:#172554;color:#93c5fd}.st-maitrise{background:#052e16;color:#86efac}
+  #toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1e1b4b;border:1px solid #4c1d95;color:#fff;padding:.6rem 1rem;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;max-width:90vw;text-align:center}
+  #toast.show{opacity:1}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:90;display:none;align-items:flex-end;justify-content:center}
+  .modal-bg.show{display:flex}
+  .sheet{background:#0b0b10;border:1px solid var(--line);border-radius:22px 22px 0 0;width:100%;max-width:640px;max-height:88vh;overflow:auto;padding:1.2rem 1rem calc(1.2rem + env(safe-area-inset-bottom))}
+  textarea.inp{min-height:120px;resize:vertical}
+  .spin{width:18px;height:18px;border:2px solid #fff4;border-top-color:#fff;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .bar{height:8px;background:#16161f;border-radius:99px;overflow:hidden}
+  .bar>div{height:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6)}
+  input[type=checkbox]{accent-color:#3b82f6;width:18px;height:18px}
+</style>
+</head>
+<body>
+<header class="sticky top-0 z-40 bg-black/90 backdrop-blur border-b border-[#1f1f2b] px-4 py-3 flex items-center justify-between" style="padding-top:calc(.75rem + env(safe-area-inset-top))">
+  <h1 id="title" class="text-lg font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">Cours</h1>
+  <span id="dueBadge" class="pill st-cours"></span>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 py-4">
+
+<!-- ================= COURS ================= -->
+<section id="v-cours" class="view active">
+  <div class="card p-4 mb-4">
+    <h2 class="font-semibold mb-3">Matières & chapitres</h2>
+    <div class="flex gap-2 mb-2">
+      <input id="newSubject" class="inp" placeholder="Nouvelle matière (ex : Comptabilité)">
+      <button class="btn btn-p" onclick="UI.addSubject()">+</button>
+    </div>
+    <div id="subjectList" class="space-y-2"></div>
+  </div>
+
+  <div class="card p-4 mb-4">
+    <h2 class="font-semibold mb-3">Importer un cours</h2>
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <select id="impSubject" class="inp" onchange="UI.fillChapterSelect('impChapter',this.value)"></select>
+      <select id="impChapter" class="inp"></select>
+    </div>
+    <input id="impTitle" class="inp mb-2" placeholder="Titre du cours (facultatif)">
+    <label class="btn btn-g w-full block text-center mb-2 cursor-pointer">📄 Choisir un fichier (.pdf, .docx, .txt)
+      <input id="impFile" type="file" accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" onchange="UI.importFile(this)">
+    </label>
+    <textarea id="impText" class="inp mb-2" placeholder="…ou collez ici le texte brut du cours"></textarea>
+    <button class="btn btn-p w-full" onclick="UI.importPasted()">Importer le texte collé</button>
+    <p id="impStatus" class="text-xs text-gray-400 mt-2"></p>
+  </div>
+
+  <div id="courseList" class="space-y-3"></div>
+</section>
+
+<!-- ================= QCM ================= -->
+<section id="v-qcm" class="view">
+  <div id="qcmSetup">
+    <div class="card p-4 mb-4">
+      <h2 class="font-semibold mb-3">1. Choisir le cours et les parties</h2>
+      <select id="qCourse" class="inp mb-3" onchange="UI.renderSectionPicker()"></select>
+      <div class="flex justify-between text-xs mb-2"><button class="text-blue-400" onclick="UI.toggleAllSections(true)">Tout cocher</button><button class="text-gray-400" onclick="UI.toggleAllSections(false)">Tout décocher</button></div>
+      <div id="sectionPicker" class="space-y-2 max-h-72 overflow-auto"></div>
+    </div>
+
+    <div class="card p-4 mb-4">
+      <h2 class="font-semibold mb-3">2. Générer de nouvelles questions</h2>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div><label class="text-xs text-gray-400">Nombre</label>
+          <select id="qCount" class="inp"><option>5</option><option selected>10</option><option>20</option></select></div>
+        <div><label class="text-xs text-gray-400">Difficulté</label>
+          <select id="qDiff" class="inp"><option value="basique">Basique</option><option value="partiel" selected>Partiel L2</option><option value="pieges">Pièges / Avancé</option></select></div>
+      </div>
+      <button id="btnGenApi" class="btn btn-p w-full mb-2" onclick="UI.generateApi()">⚡ Générer un QCM (API)</button>
+      <button class="btn btn-g w-full mb-3" onclick="UI.copyClaudePrompt()">📋 Générer via Claude Pro (copie du prompt)</button>
+      <textarea id="pasteJson" class="inp mb-2" placeholder="Coller ici le JSON renvoyé par Claude"></textarea>
+      <button class="btn btn-g w-full" onclick="UI.importPastedJson()">📥 Importer le JSON de Claude</button>
+      <p id="genStatus" class="text-xs text-gray-400 mt-2"></p>
+    </div>
+
+    <div class="card p-4 mb-4">
+      <h2 class="font-semibold mb-3">3. Lancer une session</h2>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <button id="modeTrain" class="btn btn-p" onclick="UI.setMode('train')">🎯 Entraînement</button>
+        <button id="modeExam" class="btn btn-g" onclick="UI.setMode('exam')">📝 Examen</button>
+      </div>
+      <div id="examOpts" class="hidden mb-3">
+        <label class="flex items-center gap-2 text-sm mb-2"><input type="checkbox" id="timerOn" checked> Chronomètre</label>
+        <div class="flex items-center gap-2 text-sm"><span>Durée (min)</span><input id="timerMin" type="number" value="15" min="1" class="inp w-24"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div><label class="text-xs text-gray-400">Questions / session</label>
+          <select id="sessCount" class="inp"><option>5</option><option selected>10</option><option>20</option><option>40</option></select></div>
+        <div><label class="text-xs text-gray-400">Source</label>
+          <select id="sessSrc" class="inp"><option value="smart">Tri intelligent 80/20</option><option value="new">Nouvelles d'abord</option><option value="random">Aléatoire</option></select></div>
+      </div>
+      <p id="bankInfo" class="text-xs text-gray-400 mb-3"></p>
+      <button class="btn btn-p w-full mb-2" onclick="QCM.start(false)">▶️ Démarrer sur les parties cochées</button>
+      <button class="btn btn-g w-full" onclick="QCM.start(true)">🚑 QCM de rattrapage (toutes matières, erreurs prioritaires)</button>
+    </div>
+  </div>
+
+  <div id="qcmRun" class="hidden">
+    <div class="flex items-center justify-between mb-3">
+      <span id="qProgress" class="text-sm text-gray-400"></span>
+      <span id="qTimer" class="text-sm font-mono text-violet-300"></span>
+      <button class="text-xs text-red-400" onclick="QCM.abort()">Quitter</button>
+    </div>
+    <div class="bar mb-4"><div id="qBar" style="width:0%"></div></div>
+    <div class="card p-4 mb-3">
+      <div id="qMeta" class="flex gap-2 mb-2 flex-wrap"></div>
+      <p id="qText" class="text-base font-medium leading-relaxed"></p>
+    </div>
+    <div id="qChoices" class="space-y-2 mb-3"></div>
+    <div id="qFeedback" class="hidden card p-4 mb-3 text-sm leading-relaxed"></div>
+    <div class="flex gap-2">
+      <button id="btnFragile" class="btn btn-g flex-1" onclick="QCM.markFragile()">🔖 Marquer fragile</button>
+      <button id="btnNext" class="btn btn-p flex-1" onclick="QCM.next()">Valider</button>
+    </div>
+  </div>
+
+  <div id="qcmResult" class="hidden"></div>
+</section>
+
+<!-- ================= FLASHCARDS ================= -->
+<section id="v-flash" class="view">
+  <div id="flashHome">
+    <div class="card p-4 mb-4">
+      <div class="grid grid-cols-4 gap-2 text-center mb-4" id="flashCounters"></div>
+      <select id="fSubject" class="inp mb-2" onchange="UI.renderFlashHome()"></select>
+      <button class="btn btn-p w-full mb-2" onclick="FLASH.start()">▶️ Réviser (priorité 80/20)</button>
+      <button class="btn btn-g w-full" onclick="UI.openCardEditor()">＋ Créer une flashcard</button>
+    </div>
+    <div id="cardList" class="space-y-2"></div>
+  </div>
+  <div id="flashRun" class="hidden">
+    <div class="flex justify-between mb-3 text-sm text-gray-400"><span id="fProgress"></span><button class="text-red-400" onclick="FLASH.stop()">Terminer</button></div>
+    <div id="flipCard" class="flip mb-4" onclick="FLASH.flip()">
+      <div class="flip-inner">
+        <div class="face front"><div id="fMeta" class="mb-3 flex gap-2 flex-wrap"></div><p id="fFront" class="text-lg font-semibold leading-relaxed"></p><p class="text-xs text-gray-500 mt-6">Touchez pour retourner</p></div>
+        <div class="face back"><p id="fBack" class="text-base leading-relaxed whitespace-pre-wrap"></p></div>
+      </div>
+    </div>
+    <div id="gradeBtns" class="grid grid-cols-4 gap-2 opacity-30 pointer-events-none transition">
+      <button class="btn bg-red-900/60 text-red-200 text-sm" onclick="FLASH.grade(0)">Échec<br><span id="iv0" class="text-[10px] opacity-70"></span></button>
+      <button class="btn bg-orange-900/60 text-orange-200 text-sm" onclick="FLASH.grade(3)">Difficile<br><span id="iv3" class="text-[10px] opacity-70"></span></button>
+      <button class="btn bg-blue-900/60 text-blue-200 text-sm" onclick="FLASH.grade(4)">Bien<br><span id="iv4" class="text-[10px] opacity-70"></span></button>
+      <button class="btn bg-green-900/60 text-green-200 text-sm" onclick="FLASH.grade(5)">Parfait<br><span id="iv5" class="text-[10px] opacity-70"></span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STATS ================= -->
+<section id="v-stats" class="view"><div id="statsBox" class="space-y-4"></div></section>
+
+<!-- ================= PARAMETRES ================= -->
+<section id="v-params" class="view">
+  <div class="card p-4 mb-4">
+    <h2 class="font-semibold mb-3">Moteur IA (Méthode A)</h2>
+    <label class="text-xs text-gray-400">Fournisseur</label>
+    <select id="sProvider" class="inp mb-2" onchange="UI.providerChanged()">
+      <option value="gemini">Google Gemini (Flash, gratuit)</option>
+      <option value="anthropic">Anthropic Claude</option>
+    </select>
+    <label class="text-xs text-gray-400">Modèle</label>
+    <input id="sModel" class="inp mb-2">
+    <label class="text-xs text-gray-400">Clé API (stockée uniquement sur ce téléphone)</label>
+    <input id="sKey" type="password" class="inp mb-3" placeholder="Votre clé API">
+    <button class="btn btn-p w-full mb-2" onclick="UI.saveSettings()">Enregistrer</button>
+    <button class="btn btn-g w-full" onclick="UI.testApi()">Tester la connexion</button>
+    <p id="apiStatus" class="text-xs text-gray-400 mt-2"></p>
+  </div>
+  <div class="card p-4 mb-4">
+    <h2 class="font-semibold mb-3">Sauvegarde</h2>
+    <button class="btn btn-p w-full mb-2" onclick="UI.exportData()">💾 Exporter toutes mes données (.json)</button>
+    <label class="btn btn-g w-full block text-center cursor-pointer mb-2">📂 Importer une sauvegarde (.json)
+      <input type="file" accept=".json,application/json" class="hidden" onchange="UI.importBackup(this)">
+    </label>
+    <p id="storageInfo" class="text-xs text-gray-400"></p>
+  </div>
+  <div class="card p-4">
+    <h2 class="font-semibold mb-3 text-red-300">Zone de danger</h2>
+    <button class="btn btn-d w-full" onclick="UI.resetAll()">Tout effacer</button>
+  </div>
+</section>
+</main>
+
+<nav class="fixed bottom-0 inset-x-0 z-50 bg-[#050507]/95 backdrop-blur border-t border-[#1f1f2b] flex" style="padding-bottom:env(safe-area-inset-bottom)">
+  <button class="nav-btn active" data-v="cours" onclick="UI.go('cours')"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM4 19.5A2.5 2.5 0 006.5 22H20v-5"/></svg>Cours</button>
+  <button class="nav-btn" data-v="qcm" onclick="UI.go('qcm')"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg>QCM</button>
+  <button class="nav-btn" data-v="flash" onclick="UI.go('flash')"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 2h12a2 2 0 012 2v12"/></svg>Flashcards</button>
+  <button class="nav-btn" data-v="stats" onclick="UI.go('stats')"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-4 3 3 6-6"/></svg>Stats</button>
+  <button class="nav-btn" data-v="params" onclick="UI.go('params')"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Réglages</button>
+</nav>
+
+<div id="modal" class="modal-bg" onclick="if(event.target===this)UI.closeModal()"><div class="sheet" id="modalBody"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ======================= UTILITAIRES ======================= */
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const DAY = 86400000;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function toast(msg, ms = 2200) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), ms); }
+function fmtIv(days) { if (days < 1) return Math.max(1, Math.round(days * 1440)) + ' min'; if (days < 30) return Math.round(days) + ' j'; if (days < 365) return Math.round(days / 30) + ' mois'; return (days / 365).toFixed(1) + ' an'; }
+
+/* ======================= BASE DE DONNÉES (IndexedDB) ======================= */
+const DB = {
+  db: null,
+  state: null,
+  defaults() {
+    return { version: 1, subjects: [], courses: [], questions: [], cards: [], history: [], settings: { provider: 'gemini', model: 'gemini-2.0-flash', apiKey: '' } };
+  },
+  open() {
+    return new Promise((res) => {
+      if (!window.indexedDB) return res(null);
+      const r = indexedDB.open('revizen', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => { this.db = r.result; res(this.db); };
+      r.onerror = () => res(null);
+    });
+  },
+  async load() {
+    await this.open();
+    let data = null;
+    if (this.db) {
+      data = await new Promise(res => {
+        const tx = this.db.transaction('kv', 'readonly').objectStore('kv').get('state');
+        tx.onsuccess = () => res(tx.result || null); tx.onerror = () => res(null);
+      });
+    }
+    if (!data) { try { data = JSON.parse(localStorage.getItem('revizen_state') || 'null'); } catch (e) { data = null; } }
+    this.state = Object.assign(this.defaults(), data || {});
+    this.state.settings = Object.assign(this.defaults().settings, this.state.settings || {});
+    if (!this.state.subjects.length) {
+      ['Droit des affaires', 'Comptabilité', 'Statistiques', 'Étude de marché'].forEach(n => this.state.subjects.push({ id: uid(), name: n, chapters: [{ id: uid(), name: 'Général' }] }));
+      await this.save();
+    }
+    return this.state;
+  },
+  _t: null,
+  save() {
+    return new Promise(res => {
+      const snapshot = JSON.parse(JSON.stringify(this.state));
+      if (this.db) {
+        const tx = this.db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(snapshot, 'state');
+        tx.oncomplete = () => res(true); tx.onerror = () => { this._lsSave(snapshot); res(false); };
+      } else { this._lsSave(snapshot); res(true); }
+    });
+  },
+  _lsSave(s) { try { localStorage.setItem('revizen_state', JSON.stringify(s)); } catch (e) { toast('Stockage plein : exportez vos données'); } }
+};
+
+/* ======================= EXTRACTION & DÉCOUPAGE ======================= */
+const Parser = {
+  async readFile(file) {
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.pdf')) return this.pdf(file);
+    if (name.endsWith('.docx')) return this.docx(file);
+    return await file.text();
+  },
+  async pdf(file) {
+    if (!window.pdfjsLib) throw new Error('PDF.js non chargé (connexion requise au premier lancement)');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let out = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      let lines = [], lastY = null, line = '';
+      tc.items.forEach(it => {
+        const y = Math.round(it.transform[5]);
+        if (lastY !== null && Math.abs(y - lastY) > 3) { lines.push(line.trim()); line = ''; }
+        line += it.str + (it.hasEOL ? '' : ' ');
+        lastY = y;
+        if (it.hasEOL) { lines.push(line.trim()); line = ''; lastY = null; }
+      });
+      if (line.trim()) lines.push(line.trim());
+      out.push(lines.join('\n'));
+      $('impStatus').textContent = `Lecture PDF : page ${p}/${pdf.numPages}`;
+    }
+    return out.join('\n\n');
+  },
+  async docx(file) {
+    if (!window.mammoth) throw new Error('Mammoth non chargé (connexion requise au premier lancement)');
+    const buf = await file.arrayBuffer();
+    const r = await mammoth.convertToHtml({ arrayBuffer: buf });
+    const div = document.createElement('div'); div.innerHTML = r.value;
+    const parts = [];
+    div.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,td').forEach(el => {
+      const t = el.textContent.trim(); if (!t) return;
+      if (/^H[1-6]$/.test(el.tagName)) parts.push('\n### ' + t); else parts.push((el.tagName === 'LI' ? '• ' : '') + t);
+    });
+    return parts.join('\n');
+  },
+  isHeading(l) {
+    const t = l.trim();
+    if (!t || t.length > 110) return false;
+    if (t.startsWith('### ')) return true;
+    if (/^(chapitre|partie|section|titre|th[eè]me|le[cç]on)\b/i.test(t)) return true;
+    if (/^([IVXLC]+|[A-Z]|\d+(\.\d+){0,3})\s*[\.\)\-–:]\s+\S/.test(t) && t.length < 90 && !/[\.;,]$/.test(t)) return true;
+    if (t.length >= 4 && t.length < 70 && t === t.toUpperCase() && /[A-ZÀ-Ý]{3}/.test(t)) return true;
+    return false;
+  },
+  split(text) {
+    text = text.replace(/\r/g, '').replace(/ /g, ' ').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    const lines = text.split('\n');
+    let sections = [], cur = { title: 'Introduction', lines: [] };
+    lines.forEach(l => {
+      if (this.isHeading(l)) {
+        if (cur.lines.join(' ').trim().length > 40) sections.push(cur);
+        else if (cur.lines.length && sections.length) sections[sections.length - 1].lines.push(...cur.lines);
+        cur = { title: l.replace(/^###\s*/, '').trim(), lines: [] };
+      } else cur.lines.push(l);
+    });
+    if (cur.lines.join(' ').trim().length) sections.push(cur);
+    let res = [];
+    sections.forEach(s => {
+      const body = s.lines.join('\n').trim();
+      if (body.length <= 3500) { res.push({ title: s.title, text: body }); return; }
+      const paras = body.split(/\n\s*\n|\n(?=[A-ZÀ-Ý•\-])/);
+      let chunk = '', n = 1;
+      paras.forEach(p => {
+        if ((chunk + p).length > 2500 && chunk.length > 300) { res.push({ title: `${s.title} (partie ${n++})`, text: chunk.trim() }); chunk = ''; }
+        chunk += p + '\n';
+      });
+      if (chunk.trim()) res.push({ title: n > 1 ? `${s.title} (partie ${n})` : s.title, text: chunk.trim() });
+    });
+    if (res.length <= 1 && text.length > 3000) {
+      res = []; const paras = text.split(/\n\s*\n/); let chunk = '', n = 1;
+      paras.forEach(p => { if ((chunk + p).length > 2000 && chunk) { res.push({ title: `Partie ${n++}`, text: chunk.trim() }); chunk = ''; } chunk += p + '\n\n'; });
+      if (chunk.trim()) res.push({ title: `Partie ${n}`, text: chunk.trim() });
+    }
+    return res.map(s => ({ id: uid(), title: s.title.slice(0, 120), text: s.text }));
+  }
+};
+
+/* ======================= SM-2 / STATUTS / PRIORITÉ ======================= */
+const SRS = {
+  init() { return { ef: 2.5, interval: 0, reps: 0, due: Date.now(), errors: 0, lastResult: null, lastWrongAt: 0, flagged: false, seen: 0, lastSeen: 0 }; },
+  preview(s, q) { return this.compute(Object.assign({}, s), q).interval; },
+  compute(s, q) {
+    if (q < 3) { s.reps = 0; s.interval = 10 / 1440; }
+    else {
+      if (s.reps === 0) s.interval = q === 3 ? 1 : (q === 4 ? 1 : 3);
+      else if (s.reps === 1) s.interval = q === 3 ? 3 : (q === 4 ? 6 : 8);
+      else s.interval = Math.max(1, s.interval * s.ef * (q === 3 ? 0.8 : q === 5 ? 1.3 : 1));
+      s.reps++;
+    }
+    s.ef = Math.max(1.3, s.ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+    return s;
+  },
+  apply(item, q) {
+    const s = item.srs || (item.srs = this.init());
+    this.compute(s, q);
+    s.due = Date.now() + s.interval * DAY;
+    s.seen++; s.lastSeen = Date.now(); s.lastResult = q;
+    if (q < 3) { s.errors++; s.lastWrongAt = Date.now(); s.flagged = true; }
+    else if (q === 3) s.flagged = true;
+    else if (q >= 4) s.flagged = false;
+  },
+  status(item) {
+    const s = item.srs || this.init();
+    if (s.lastResult !== null && s.lastResult < 3) return 'urgent';
+    if (s.flagged || s.errors >= 2 || s.ef < 2.0) return 'fragile';
+    if (s.interval >= 21 && s.reps >= 3) return 'maitrise';
+    return 'cours';
+  },
+  label: { urgent: 'Urgence', fragile: 'Fragile', cours: 'En cours', maitrise: 'Maîtrisé' },
+  priority(item) {
+    const s = item.srs || this.init(); const now = Date.now();
+    let p = 0;
+    if (s.lastResult !== null && s.lastResult < 3) p += 1000 + Math.max(0, 200 - (now - s.lastWrongAt) / 3600000);
+    if (s.flagged) p += 500;
+    if (s.due <= now && s.seen > 0) p += 200 + Math.min(100, (now - s.due) / DAY * 5);
+    p += s.errors * 20;
+    if (s.seen === 0) p += 50;
+    return p;
+  },
+  pick(items, n) {
+    const scored = items.map(i => ({ i, p: this.priority(i) + Math.random() })).sort((a, b) => b.p - a.p);
+    const hot = scored.filter(x => x.p >= 200).map(x => x.i);
+    const rest = shuffle(scored.filter(x => x.p < 200).map(x => x.i));
+    const nHot = Math.min(hot.length, Math.ceil(n * 0.8));
+    let out = hot.slice(0, nHot);
+    out = out.concat(rest.slice(0, n - out.length));
+    if (out.length < n) out = out.concat(hot.slice(nHot, nHot + n - out.length));
+    return shuffle(out).slice(0, n);
+  }
+};
+
+/* ======================= IA : PROMPTS & API ======================= */
+const AI = {
+  diffLabel: { basique: 'Basique (définitions, notions clés, compréhension directe)', partiel: 'Niveau partiel de Licence 2 (application, raisonnement, distinctions entre notions proches)', pieges: 'Avancé avec pièges (exceptions, nuances, formulations trompeuses, cas pratiques)' },
+  system() {
+    return `Tu es un professeur universitaire expert qui rédige des QCM d'examen en français. Tu réponds UNIQUEMENT avec un JSON strict valide, sans texte avant ni après, sans balises markdown.
+Format exact :
+{"questions":[{"question":"énoncé","choices":["A","B","C","D"],"answer":0,"explanation":"explication générale détaillée","choiceExplanations":["pourquoi A est vrai/faux","pourquoi B…","pourquoi C…","pourquoi D…"],"quote":"citation exacte et courte du passage du cours qui justifie la réponse","notion":"notion testée en 2 à 6 mots"}]}
+Règles : exactement 4 choix par question, une seule bonne réponse, "answer" est l'index (0-3) de la bonne réponse, bonne réponse placée aléatoirement, distracteurs plausibles, questions strictement fondées sur l'extrait fourni.`;
+  },
+  user(excerpt, n, diff, avoid) {
+    return `Génère ${n} questions inédites de QCM.
+Niveau de difficulté : ${this.diffLabel[diff] || diff}.
+${avoid.length ? `ANTI-RÉPÉTITION : ces notions/questions ont déjà été posées, choisis d'autres angles, d'autres notions ou d'autres formulations :\n- ${avoid.slice(-80).join('\n- ')}\n` : ''}
+EXTRAIT DU COURS :
+"""
+${excerpt}
+"""
+Réponds uniquement avec le JSON.`;
+  },
+  parse(raw) {
+    let t = String(raw).trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+    const a = t.indexOf('{'), b = t.indexOf('[');
+    let start = (a === -1) ? b : (b === -1 ? a : Math.min(a, b));
+    if (start > 0) t = t.slice(start);
+    const endObj = t.lastIndexOf('}'), endArr = t.lastIndexOf(']');
+    t = t.slice(0, Math.max(endObj, endArr) + 1);
+    let data;
+    try { data = JSON.parse(t); } catch (e) { data = JSON.parse(t.replace(/,\s*([}\]])/g, '$1')); }
+    let qs = Array.isArray(data) ? data : (data.questions || data.qcm || []);
+    return qs.map(q => {
+      let choices = q.choices || q.options || q.reponses || [];
+      if (!Array.isArray(choices) && typeof choices === 'object') choices = Object.values(choices);
+      let ans = q.answer ?? q.correct ?? q.answerIndex ?? q.bonne_reponse ?? 0;
+      if (typeof ans === 'string') { const L = 'ABCDEF'.indexOf(ans.trim().toUpperCase()); ans = L >= 0 && ans.trim().length === 1 ? L : Math.max(0, choices.findIndex(c => c === ans)); }
+      return { question: String(q.question || q.enonce || ''), choices: choices.map(String), answer: Math.min(Math.max(0, +ans || 0), choices.length - 1), explanation: String(q.explanation || q.explication || ''), choiceExplanations: (q.choiceExplanations || q.explications || []).map(String), quote: String(q.quote || q.citation || ''), notion: String(q.notion || '') };
+    }).filter(q => q.question && q.choices.length >= 2);
+  },
+  async call(system, user) {
+    const s = DB.state.settings;
+    if (!s.apiKey) throw new Error('Aucune clé API : ajoutez-la dans Réglages');
+    if (s.provider === 'anthropic') {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: s.model || 'claude-sonnet-5-5', max_tokens: 8000, system, messages: [{ role: 'user', content: user }] })
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error?.message || ('Erreur HTTP ' + r.status));
+      return j.content.filter(c => c.type === 'text').map(c => c.text).join('');
+    } else {
+      const model = s.model || 'gemini-2.0-flash';
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(s.apiKey)}`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.9, maxOutputTokens: 8192 } })
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error?.message || ('Erreur HTTP ' + r.status));
+      return (j.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+    }
+  }
+};
+
+/* ======================= BANQUE DE QUESTIONS & FLASHCARDS ======================= */
+const Bank = {
+  addQuestions(list, course, sectionIds, diff) {
+    const existing = new Set(DB.state.questions.map(q => q.question.trim().toLowerCase()));
+    let added = 0;
+    list.forEach(q => {
+      const key = q.question.trim().toLowerCase();
+      if (existing.has(key)) return;
+      existing.add(key);
+      DB.state.questions.push(Object.assign({ id: uid(), courseId: course?.id || null, subjectId: course?.subjectId || null, sectionIds: sectionIds || [], difficulty: diff || 'partiel', createdAt: Date.now(), srs: SRS.init() }, q));
+      added++;
+    });
+    return added;
+  },
+  avoidList(courseId) {
+    return DB.state.questions.filter(q => !courseId || q.courseId === courseId).map(q => q.notion ? `${q.notion} — ${q.question.slice(0, 90)}` : q.question.slice(0, 110));
+  },
+  cardFromQuestion(q, reason) {
+    let card = DB.state.cards.find(c => c.questionId === q.id);
+    const good = q.choices[q.answer];
+    const back = `✅ ${good}\n\n${q.explanation || ''}${q.quote ? `\n\n📖 « ${q.quote} »` : ''}`;
+    const front = q.notion ? `${q.notion} : ${q.question}` : q.question;
+    if (card) {
+      card.back = back; card.front = front;
+      card.srs.flagged = true; card.srs.due = Date.now();
+      if (reason === 'wrong') { card.srs.lastResult = 0; card.srs.errors++; card.srs.lastWrongAt = Date.now(); card.srs.reps = 0; card.srs.interval = 0; }
+      return card;
+    }
+    card = { id: uid(), questionId: q.id, courseId: q.courseId, subjectId: q.subjectId, front, back, source: reason === 'wrong' ? 'Erreur QCM' : 'Marquée fragile', createdAt: Date.now(), srs: SRS.init() };
+    card.srs.flagged = true;
+    if (reason === 'wrong') { card.srs.lastResult = 0; card.srs.errors = 1; card.srs.lastWrongAt = Date.now(); }
+    DB.state.cards.push(card);
+    return card;
+  },
+  subjectName(id) { return DB.state.subjects.find(s => s.id === id)?.name || 'Sans matière'; },
+  course(id) { return DB.state.courses.find(c => c.id === id); }
+};
+
+/* ======================= MOTEUR QCM ======================= */
+const QCM = {
+  s: null,
+  start(rattrapage) {
+    let pool;
+    const n = +$('sessCount').value;
+    const course = Bank.course($('qCourse').value);
+    if (rattrapage) {
+      pool = DB.state.questions.filter(q => SRS.priority(q) >= 200);
+      if (pool.length < n) pool = DB.state.questions.slice();
+    } else {
+      if (!course) return toast('Choisissez un cours');
+      const sel = UI.selectedSections();
+      pool = DB.state.questions.filter(q => q.courseId === course.id && (!sel.length || !q.sectionIds.length || q.sectionIds.some(id => sel.includes(id))));
+    }
+    if (!pool.length) return toast('Aucune question : générez-en d\'abord');
+    const src = $('sessSrc').value;
+    let list;
+    if (rattrapage || src === 'smart') list = SRS.pick(pool, n);
+    else if (src === 'new') list = pool.slice().sort((a, b) => (a.srs.seen - b.srs.seen) || (b.createdAt - a.createdAt)).slice(0, n);
+    else list = shuffle(pool).slice(0, n);
+    list = list.map(q => { const order = shuffle(q.choices.map((_, i) => i)); return { q, order, picked: null, fragile: false }; });
+    this.s = { list, idx: 0, mode: UI.mode, answered: false, start: Date.now(), timer: null, end: null, rattrapage, courseId: course?.id || null };
+    if (this.s.mode === 'exam' && $('timerOn').checked) {
+      this.s.end = Date.now() + Math.max(1, +$('timerMin').value) * 60000;
+      this.s.timer = setInterval(() => this.tick(), 500);
+    }
+    $('qcmSetup').classList.add('hidden'); $('qcmResult').classList.add('hidden'); $('qcmRun').classList.remove('hidden');
+    this.tick(); this.render();
+  },
+  tick() {
+    if (!this.s) return;
+    if (!this.s.end) { $('qTimer').textContent = this.s.mode === 'exam' ? '⏱ libre' : ''; return; }
+    const left = Math.max(0, this.s.end - Date.now());
+    const m = Math.floor(left / 60000), sec = Math.floor(left % 60000 / 1000);
+    $('qTimer').textContent = `⏱ ${m}:${String(sec).padStart(2, '0')}`;
+    $('qTimer').style.color = left < 60000 ? '#f87171' : '';
+    if (left <= 0) { toast('Temps écoulé !'); this.finish(); }
+  },
+  render() {
+    const s = this.s, it = s.list[s.idx], q = it.q;
+    s.answered = false;
+    $('qProgress').textContent = `Question ${s.idx + 1} / ${s.list.length}`;
+    $('qBar').style.width = (s.idx / s.list.length * 100) + '%';
+    const st = SRS.status(q);
+    $('qMeta').innerHTML = `<span class="pill st-${st}">${SRS.label[st]}</span><span class="pill bg-[#1f1f2b] text-gray-300">${esc(Bank.subjectName(q.subjectId))}</span>${q.notion ? `<span class="pill bg-violet-950 text-violet-300">${esc(q.notion)}</span>` : ''}`;
+    $('qText').textContent = q.question;
+    $('qChoices').innerHTML = it.order.map((ci, k) => `<button class="choice ${it.picked === ci ? 'sel' : ''}" data-ci="${ci}" onclick="QCM.pick(${ci})"><b class="text-violet-300 mr-2">${'ABCDEF'[k]}.</b>${esc(q.choices[ci])}</button>`).join('');
+    $('qFeedback').classList.add('hidden');
+    $('btnNext').textContent = s.mode === 'exam' ? (s.idx === s.list.length - 1 ? 'Terminer' : 'Suivante') : 'Valider';
+    $('btnFragile').textContent = it.fragile ? '✅ Marquée fragile' : '🔖 Marquer fragile';
+  },
+  pick(ci) {
+    const s = this.s; if (s.answered) return;
+    s.list[s.idx].picked = ci;
+    document.querySelectorAll('#qChoices .choice').forEach(b => b.classList.toggle('sel', +b.dataset.ci === ci));
+  },
+  markFragile() {
+    const it = this.s.list[this.s.idx]; if (it.fragile) return;
+    it.fragile = true;
+    it.q.srs.flagged = true;
+    Bank.cardFromQuestion(it.q, 'fragile'); DB.save();
+    $('btnFragile').textContent = '✅ Marquée fragile';
+    toast('Flashcard ajoutée à la pile prioritaire');
+  },
+  grade(it) {
+    const ok = it.picked === it.q.answer;
+    SRS.apply(it.q, ok ? (it.fragile ? 3 : 4) : 0);
+    if (!ok) Bank.cardFromQuestion(it.q, 'wrong');
+    return ok;
+  },
+  next() {
+    const s = this.s, it = s.list[s.idx];
+    if (s.mode === 'train') {
+      if (!s.answered) {
+        if (it.picked === null) return toast('Choisissez une réponse');
+        s.answered = true;
+        const ok = this.grade(it); DB.save();
+        const q = it.q;
+        document.querySelectorAll('#qChoices .choice').forEach(b => { const ci = +b.dataset.ci; b.classList.remove('sel'); if (ci === q.answer) b.classList.add('ok'); else if (ci === it.picked) b.classList.add('ko'); });
+        const fb = $('qFeedback');
+        fb.innerHTML = `<p class="font-bold mb-2 ${ok ? 'text-green-400' : 'text-red-400'}">${ok ? '✅ Bonne réponse' : '❌ Mauvaise réponse — flashcard créée automatiquement'}</p>
+          ${q.explanation ? `<p class="mb-3">${esc(q.explanation)}</p>` : ''}
+          ${q.choiceExplanations?.length ? `<div class="space-y-1 mb-3">${it.order.map((ci, k) => q.choiceExplanations[ci] ? `<p class="${ci === q.answer ? 'text-green-300' : 'text-gray-400'}"><b>${'ABCDEF'[k]}.</b> ${esc(q.choiceExplanations[ci])}</p>` : '').join('')}</div>` : ''}
+          ${q.quote ? `<blockquote class="border-l-2 border-violet-500 pl-3 italic text-gray-300">📖 « ${esc(q.quote)} »</blockquote>` : ''}`;
+        fb.classList.remove('hidden');
+        $('btnNext').textContent = s.idx === s.list.length - 1 ? 'Voir le résultat' : 'Question suivante';
+        fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+    } else if (it.picked === null && !confirm('Passer sans répondre ?')) return;
+    if (s.idx < s.list.length - 1) { s.idx++; this.render(); window.scrollTo(0, 0); }
+    else this.finish();
+  },
+  finish() {
+    const s = this.s; if (!s) return;
+    clearInterval(s.timer);
+    if (s.mode === 'exam') s.list.forEach(it => this.grade(it));
+    const good = s.list.filter(it => it.picked === it.q.answer).length;
+    const total = s.list.length;
+    const note = Math.round(good / total * 200) / 10;
+    DB.state.history.push({ id: uid(), date: Date.now(), mode: s.mode, good, total, note, courseId: s.courseId, rattrapage: s.rattrapage, duration: Date.now() - s.start, subjectIds: [...new Set(s.list.map(i => i.q.subjectId))] });
+    DB.save();
+    const wrong = s.list.filter(it => it.picked !== it.q.answer);
+    $('qcmRun').classList.add('hidden');
+    const r = $('qcmResult'); r.classList.remove('hidden');
+    r.innerHTML = `<div class="card p-6 text-center mb-4">
+        <p class="text-gray-400 text-sm">${s.mode === 'exam' ? 'Note finale' : 'Score'}</p>
+        <p class="text-6xl font-black my-2 ${note >= 10 ? 'text-green-400' : 'text-red-400'}">${note}<span class="text-2xl text-gray-500">/20</span></p>
+        <p class="text-gray-400">${good} bonne(s) réponse(s) sur ${total} · ${Math.round((Date.now() - s.start) / 60000)} min</p>
+        ${wrong.length ? `<p class="text-violet-300 text-sm mt-2">${wrong.length} flashcard(s) ajoutée(s) à la révision prioritaire</p>` : ''}
+      </div>
+      ${s.mode === 'exam' ? `<h3 class="font-semibold mb-2">Correction</h3>${s.list.map((it, i) => `<div class="card p-3 mb-2 text-sm"><p class="font-medium mb-1">${i + 1}. ${esc(it.q.question)}</p>
+        <p class="${it.picked === it.q.answer ? 'text-green-400' : 'text-red-400'}">Votre réponse : ${it.picked === null ? '—' : esc(it.q.choices[it.picked])}</p>
+        ${it.picked !== it.q.answer ? `<p class="text-green-300">Bonne réponse : ${esc(it.q.choices[it.q.answer])}</p>` : ''}
+        ${it.q.explanation ? `<p class="text-gray-400 mt-1">${esc(it.q.explanation)}</p>` : ''}
+        ${it.q.quote ? `<p class="text-gray-500 italic mt-1">📖 « ${esc(it.q.quote)} »</p>` : ''}</div>`).join('')}` : ''}
+      <button class="btn btn-p w-full mb-2" onclick="QCM.backToSetup()">Retour</button>
+      ${wrong.length ? `<button class="btn btn-g w-full" onclick="UI.go('flash');FLASH.start()">Réviser les flashcards créées</button>` : ''}`;
+    this.s = null;
+    UI.refreshBadges();
+  },
+  abort() { if (!confirm('Quitter la session ? Les réponses déjà validées sont conservées.')) return; clearInterval(this.s?.timer); this.s = null; this.backToSetup(); },
+  backToSetup() { $('qcmRun').classList.add('hidden'); $('qcmResult').classList.add('hidden'); $('qcmSetup').classList.remove('hidden'); UI.renderQcmSetup(); window.scrollTo(0, 0); }
+};
+
+/* ======================= MOTEUR FLASHCARDS ======================= */
+const FLASH = {
+  s: null,
+  start() {
+    const subj = $('fSubject').value;
+    let pool = DB.state.cards.filter(c => !subj || c.subjectId === subj);
+    if (!pool.length) return toast('Aucune flashcard pour le moment');
+    const due = pool.filter(c => SRS.priority(c) >= 200);
+    const list = SRS.pick(due.length >= 5 ? due.concat(pool.filter(c => !due.includes(c)).slice(0, Math.ceil(due.length / 4))) : pool, Math.min(30, pool.length));
+    this.s = { list: list.sort((a, b) => SRS.priority(b) - SRS.priority(a)), idx: 0, done: 0, again: 0 };
+    $('flashHome').classList.add('hidden'); $('flashRun').classList.remove('hidden');
+    this.render();
+  },
+  render() {
+    const c = this.s.list[this.s.idx];
+    $('flipCard').classList.remove('flipped');
+    $('gradeBtns').classList.add('opacity-30', 'pointer-events-none');
+    $('fProgress').textContent = `Carte ${this.s.idx + 1} / ${this.s.list.length}`;
+    const st = SRS.status(c);
+    $('fMeta').innerHTML = `<span class="pill st-${st}">${SRS.label[st]}</span><span class="pill bg-[#1f1f2b] text-gray-300">${esc(Bank.subjectName(c.subjectId))}</span>${c.srs.errors ? `<span class="pill bg-red-950 text-red-300">${c.srs.errors} erreur(s)</span>` : ''}`;
+    setTimeout(() => { $('fFront').textContent = c.front; $('fBack').textContent = c.back; }, 120);
+    [0, 3, 4, 5].forEach(q => $('iv' + q).textContent = fmtIv(SRS.preview(c.srs, q)));
+  },
+  flip() { $('flipCard').classList.toggle('flipped'); $('gradeBtns').classList.remove('opacity-30', 'pointer-events-none'); },
+  grade(q) {
+    const c = this.s.list[this.s.idx];
+    SRS.apply(c, q);
+    if (c.questionId) { const qu = DB.state.questions.find(x => x.id === c.questionId); if (qu && q >= 4) { qu.srs.flagged = false; if (qu.srs.lastResult !== null && qu.srs.lastResult < 3) qu.srs.lastResult = 3; } }
+    DB.save();
+    this.s.done++;
+    if (q < 3 && this.s.again < 15) { this.s.again++; this.s.list.splice(Math.min(this.s.list.length, this.s.idx + 4), 0, c); }
+    if (this.s.idx < this.s.list.length - 1) { this.s.idx++; this.render(); }
+    else { toast(`Session terminée : ${this.s.done} révision(s)`); DB.state.history.push({ id: uid(), date: Date.now(), mode: 'flash', good: this.s.done - this.s.again, total: this.s.done }); DB.save(); this.stop(); }
+  },
+  stop() { this.s = null; $('flashRun').classList.add('hidden'); $('flashHome').classList.remove('hidden'); UI.renderFlashHome(); UI.refreshBadges(); }
+};
+
+/* ======================= INTERFACE ======================= */
+const UI = {
+  mode: 'train',
+  titles: { cours: 'Cours', qcm: 'QCM', flash: 'Flashcards', stats: 'Statistiques', params: 'Réglages' },
+  go(v) {
+    document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+    $('v-' + v).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+    $('title').textContent = this.titles[v];
+    if (v === 'cours') this.renderCours();
+    if (v === 'qcm' && !QCM.s) this.renderQcmSetup();
+    if (v === 'flash' && !FLASH.s) this.renderFlashHome();
+    if (v === 'stats') this.renderStats();
+    if (v === 'params') this.renderParams();
+    window.scrollTo(0, 0);
+  },
+  refreshBadges() {
+    const n = DB.state.cards.filter(c => SRS.priority(c) >= 200).length + DB.state.questions.filter(q => SRS.priority(q) >= 1000).length;
+    $('dueBadge').textContent = n ? `🔥 ${n} à revoir` : '✨ À jour';
+  },
+  /* ---- Cours ---- */
+  addSubject() {
+    const n = $('newSubject').value.trim(); if (!n) return;
+    DB.state.subjects.push({ id: uid(), name: n, chapters: [{ id: uid(), name: 'Général' }] });
+    $('newSubject').value = ''; DB.save(); this.renderCours();
+  },
+  addChapter(sid) {
+    const n = prompt('Nom du chapitre :'); if (!n) return;
+    DB.state.subjects.find(s => s.id === sid).chapters.push({ id: uid(), name: n.trim() }); DB.save(); this.renderCours();
+  },
+  delSubject(sid) {
+    if (!confirm('Supprimer la matière, ses cours, questions et flashcards ?')) return;
+    const cids = DB.state.courses.filter(c => c.subjectId === sid).map(c => c.id);
+    DB.state.subjects = DB.state.subjects.filter(s => s.id !== sid);
+    DB.state.courses = DB.state.courses.filter(c => c.subjectId !== sid);
+    DB.state.questions = DB.state.questions.filter(q => !cids.includes(q.courseId));
+    DB.state.cards = DB.state.cards.filter(c => c.subjectId !== sid);
+    DB.save(); this.renderCours();
+  },
+  fillSubjectSelect(id, withAll) {
+    const el = $(id), cur = el.value;
+    el.innerHTML = (withAll ? '<option value="">Toutes les matières</option>' : '') + DB.state.subjects.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    if ([...el.options].some(o => o.value === cur)) el.value = cur;
+  },
+  fillChapterSelect(id, sid) {
+    const s = DB.state.subjects.find(x => x.id === sid);
+    $(id).innerHTML = (s?.chapters || []).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  },
+  renderCours() {
+    this.fillSubjectSelect('impSubject');
+    this.fillChapterSelect('impChapter', $('impSubject').value);
+    $('subjectList').innerHTML = DB.state.subjects.map(s => `<div class="bg-[#0a0a0f] rounded-xl p-3 border border-[#1f1f2b]">
+      <div class="flex justify-between items-center"><b>${esc(s.name)}</b><div class="flex gap-3 text-xs"><button class="text-blue-400" onclick="UI.addChapter('${s.id}')">+ chapitre</button><button class="text-red-400" onclick="UI.delSubject('${s.id}')">suppr.</button></div></div>
+      <div class="flex flex-wrap gap-1 mt-2">${s.chapters.map(c => `<span class="pill bg-[#1f1f2b] text-gray-300">${esc(c.name)}</span>`).join('')}</div></div>`).join('');
+    const cs = DB.state.courses;
+    $('courseList').innerHTML = cs.length ? cs.slice().reverse().map(c => {
+      const subj = DB.state.subjects.find(s => s.id === c.subjectId);
+      const ch = subj?.chapters.find(x => x.id === c.chapterId);
+      const nq = DB.state.questions.filter(q => q.courseId === c.id).length;
+      return `<div class="card p-4"><div class="flex justify-between gap-2"><div><p class="font-semibold">${esc(c.title)}</p><p class="text-xs text-gray-400">${esc(subj?.name || '?')} › ${esc(ch?.name || '?')} · ${c.sections.length} parties · ${nq} questions</p></div>
+        <div class="flex flex-col gap-1 text-xs text-right"><button class="text-blue-400" onclick="UI.openCourse('${c.id}')">Voir</button><button class="text-violet-400" onclick="UI.goQcm('${c.id}')">QCM</button><button class="text-red-400" onclick="UI.delCourse('${c.id}')">Suppr.</button></div></div></div>`;
+    }).join('') : '<p class="text-center text-gray-500 text-sm py-6">Aucun cours importé.</p>';
+  },
+  async importFile(input) {
+    const f = input.files[0]; if (!f) return;
+    $('impStatus').innerHTML = '<span class="spin"></span> Extraction en cours…';
+    try {
+      const text = await Parser.readFile(f);
+      if (!text.trim()) throw new Error('Aucun texte extrait (PDF scanné ?)');
+      this.createCourse(text, $('impTitle').value.trim() || f.name.replace(/\.[^.]+$/, ''));
+    } catch (e) { $('impStatus').textContent = '❌ ' + e.message; }
+    input.value = '';
+  },
+  importPasted() {
+    const t = $('impText').value.trim(); if (t.length < 30) return toast('Texte trop court');
+    this.createCourse(t, $('impTitle').value.trim() || ('Cours du ' + new Date().toLocaleDateString('fr-FR')));
+    $('impText').value = '';
+  },
+  createCourse(text, title) {
+    const sid = $('impSubject').value, chid = $('impChapter').value;
+    if (!sid) return toast('Créez d\'abord une matière');
+    const sections = Parser.split(text);
+    const c = { id: uid(), subjectId: sid, chapterId: chid, title, sections, createdAt: Date.now(), chars: text.length };
+    DB.state.courses.push(c); DB.save();
+    $('impStatus').textContent = `✅ « ${title} » importé : ${sections.length} partie(s) détectée(s).`;
+    $('impTitle').value = '';
+    this.renderCours(); this.openCourse(c.id);
+  },
+  delCourse(id) {
+    if (!confirm('Supprimer ce cours et ses questions ?')) return;
+    DB.state.courses = DB.state.courses.filter(c => c.id !== id);
+    DB.state.questions = DB.state.questions.filter(q => q.courseId !== id);
+    DB.state.cards = DB.state.cards.filter(c => c.courseId !== id);
+    DB.save(); this.renderCours();
+  },
+  openCourse(id) {
+    const c = Bank.course(id);
+    this.modal(`<div class="flex justify-between items-center mb-3"><h3 class="font-bold text-lg">${esc(c.title)}</h3><button onclick="UI.closeModal()" class="text-2xl text-gray-400">×</button></div>
+      <p class="text-xs text-gray-400 mb-3">Renommez, fusionnez ou supprimez les parties détectées. Elles seront sélectionnables dans l'onglet QCM.</p>
+      <div class="space-y-3">${c.sections.map((s, i) => `<div class="bg-[#0a0a0f] border border-[#1f1f2b] rounded-xl p-3">
+        <input class="inp mb-2 font-semibold" value="${esc(s.title)}" onchange="UI.renameSection('${c.id}','${s.id}',this.value)">
+        <details><summary class="text-xs text-blue-400">Afficher le texte (${s.text.length} caractères)</summary><p class="text-sm text-gray-300 whitespace-pre-wrap mt-2">${esc(s.text)}</p></details>
+        <div class="flex gap-4 text-xs mt-2">${i > 0 ? `<button class="text-violet-400" onclick="UI.mergeSection('${c.id}',${i})">⬆ Fusionner avec la précédente</button>` : ''}<button class="text-red-400" onclick="UI.delSection('${c.id}','${s.id}')">Supprimer</button></div></div>`).join('')}</div>
+      <button class="btn btn-p w-full mt-4" onclick="UI.closeModal();UI.goQcm('${c.id}')">Générer un QCM sur ce cours</button>`);
+  },
+  renameSection(cid, sid, v) { Bank.course(cid).sections.find(s => s.id === sid).title = v; DB.save(); },
+  mergeSection(cid, i) { const c = Bank.course(cid); c.sections[i - 1].text += '\n\n' + c.sections[i].title + '\n' + c.sections[i].text; c.sections.splice(i, 1); DB.save(); this.openCourse(cid); },
+  delSection(cid, sid) { const c = Bank.course(cid); if (c.sections.length === 1) return toast('Au moins une partie requise'); c.sections = c.sections.filter(s => s.id !== sid); DB.save(); this.openCourse(cid); },
+  goQcm(cid) { this.go('qcm'); $('qCourse').value = cid; this.renderSectionPicker(); },
+  /* ---- QCM setup ---- */
+  setMode(m) {
+    this.mode = m;
+    $('modeTrain').className = 'btn ' + (m === 'train' ? 'btn-p' : 'btn-g');
+    $('modeExam').className = 'btn ' + (m === 'exam' ? 'btn-p' : 'btn-g');
+    $('examOpts').classList.toggle('hidden', m !== 'exam');
+  },
+  renderQcmSetup() {
+    const el = $('qCourse'), cur = el.value;
+    el.innerHTML = DB.state.courses.length ? DB.state.courses.map(c => `<option value="${c.id}">${esc(Bank.subjectName(c.subjectId))} — ${esc(c.title)}</option>`).join('') : '<option value="">Aucun cours importé</option>';
+    if ([...el.options].some(o => o.value === cur)) el.value = cur;
+    this.renderSectionPicker();
+  },
+  renderSectionPicker() {
+    const c = Bank.course($('qCourse').value);
+    $('sectionPicker').innerHTML = c ? c.sections.map(s => {
+      const n = DB.state.questions.filter(q => q.courseId === c.id && q.sectionIds.includes(s.id)).length;
+      return `<label class="flex items-start gap-3 bg-[#0a0a0f] border border-[#1f1f2b] rounded-xl p-3"><input type="checkbox" class="secChk mt-1" value="${s.id}" checked onchange="UI.updateBankInfo()"><span><span class="text-sm font-medium">${esc(s.title)}</span><br><span class="text-xs text-gray-500">${s.text.length} car. · ${n} question(s)</span></span></label>`;
+    }).join('') : '<p class="text-sm text-gray-500">Importez un cours dans l\'onglet Cours.</p>';
+    this.updateBankInfo();
+  },
+  toggleAllSections(v) { document.querySelectorAll('.secChk').forEach(c => c.checked = v); this.updateBankInfo(); },
+  selectedSections() { return [...document.querySelectorAll('.secChk:checked')].map(c => c.value); },
+  updateBankInfo() {
+    const c = Bank.course($('qCourse').value);
+    const tot = DB.state.questions.length;
+    const inC = c ? DB.state.questions.filter(q => q.courseId === c.id).length : 0;
+    const urg = DB.state.questions.filter(q => SRS.priority(q) >= 200).length;
+    $('bankInfo').textContent = `Banque : ${tot} question(s) au total · ${inC} sur ce cours · ${urg} prioritaire(s)`;
+  },
+  excerpt() {
+    const c = Bank.course($('qCourse').value); if (!c) return null;
+    const sel = this.selectedSections(); if (!sel.length) { toast('Cochez au moins une partie'); return null; }
+    let txt = c.sections.filter(s => sel.includes(s.id)).map(s => `## ${s.title}\n${s.text}`).join('\n\n');
+    if (txt.length > 60000) txt = txt.slice(0, 60000);
+    return { course: c, sel, txt };
+  },
+  async generateApi() {
+    const ex = this.excerpt(); if (!ex) return;
+    const n = +$('qCount').value, diff = $('qDiff').value;
+    const btn = $('btnGenApi'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Génération…';
+    $('genStatus').textContent = '';
+    try {
+      const raw = await AI.call(AI.system(), AI.user(ex.txt, n, diff, Bank.avoidList(ex.course.id)));
+      const qs = AI.parse(raw);
+      const added = Bank.addQuestions(qs, ex.course, ex.sel, diff);
+      await DB.save();
+      $('genStatus').textContent = `✅ ${added} nouvelle(s) question(s) ajoutée(s) à la banque.`;
+      toast(`${added} questions générées`); this.renderSectionPicker();
+    } catch (e) { $('genStatus').textContent = '❌ ' + e.message; }
+    btn.disabled = false; btn.innerHTML = '⚡ Générer un QCM (API)';
+  },
+  async copyClaudePrompt() {
+    const ex = this.excerpt(); if (!ex) return;
+    const prompt = AI.system() + '\n\n' + AI.user(ex.txt, +$('qCount').value, $('qDiff').value, Bank.avoidList(ex.course.id));
+    this._pending = { courseId: ex.course.id, sel: ex.sel, diff: $('qDiff').value };
+    try { await navigator.clipboard.writeText(prompt); toast('Prompt copié ! Collez-le dans Claude.'); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = prompt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('Prompt copié !'); } catch (_) { this.modal(`<p class="mb-2 text-sm">Copiez manuellement :</p><textarea class="inp" style="min-height:300px">${esc(prompt)}</textarea>`); }
+      ta.remove();
+    }
+    $('genStatus').textContent = 'Prompt copié. Collez la réponse JSON de Claude ci-dessus puis importez.';
+  },
+  async importPastedJson() {
+    const raw = $('pasteJson').value.trim(); if (!raw) return toast('Collez le JSON');
+    try {
+      const qs = AI.parse(raw);
+      if (!qs.length) throw new Error('Aucune question valide trouvée');
+      const p = this._pending && this._pending.courseId === $('qCourse').value ? this._pending : { courseId: $('qCourse').value, sel: this.selectedSections(), diff: $('qDiff').value };
+      const added = Bank.addQuestions(qs, Bank.course(p.courseId), p.sel, p.diff);
+      await DB.save(); $('pasteJson').value = '';
+      $('genStatus').textContent = `✅ ${added} question(s) importée(s) (${qs.length - added} doublon(s) ignoré(s)).`;
+      this.renderSectionPicker();
+    } catch (e) { $('genStatus').textContent = '❌ JSON invalide : ' + e.message; }
+  },
+  /* ---- Flashcards ---- */
+  renderFlashHome() {
+    this.fillSubjectSelect('fSubject', true);
+    const subj = $('fSubject').value;
+    const cards = DB.state.cards.filter(c => !subj || c.subjectId === subj);
+    const cnt = { urgent: 0, fragile: 0, cours: 0, maitrise: 0 };
+    cards.forEach(c => cnt[SRS.status(c)]++);
+    $('flashCounters').innerHTML = Object.keys(cnt).map(k => `<div class="rounded-xl p-2 st-${k}"><p class="text-xl font-bold">${cnt[k]}</p><p class="text-[10px]">${SRS.label[k]}</p></div>`).join('');
+    const sorted = cards.slice().sort((a, b) => SRS.priority(b) - SRS.priority(a));
+    $('cardList').innerHTML = sorted.length ? sorted.map(c => {
+      const st = SRS.status(c);
+      return `<div class="card p-3"><div class="flex justify-between gap-2 mb-1"><span class="pill st-${st}">${SRS.label[st]}</span><span class="text-xs text-gray-500">${c.srs.due <= Date.now() ? 'à revoir' : 'dans ' + fmtIv((c.srs.due - Date.now()) / DAY)} · ${c.srs.errors} err.</span></div>
+        <p class="text-sm">${esc(c.front)}</p><div class="flex gap-4 text-xs mt-2"><button class="text-blue-400" onclick="UI.openCardEditor('${c.id}')">Modifier</button><button class="text-red-400" onclick="UI.delCard('${c.id}')">Supprimer</button></div></div>`;
+    }).join('') : '<p class="text-center text-gray-500 text-sm py-6">Les flashcards se créent automatiquement à chaque erreur en QCM.</p>';
+  },
+  openCardEditor(id) {
+    const c = id ? DB.state.cards.find(x => x.id === id) : null;
+    this.modal(`<h3 class="font-bold mb-3">${c ? 'Modifier' : 'Nouvelle'} flashcard</h3>
+      <label class="text-xs text-gray-400">Matière</label><select id="ceSubj" class="inp mb-2">${DB.state.subjects.map(s => `<option value="${s.id}" ${c?.subjectId === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
+      <label class="text-xs text-gray-400">Recto</label><textarea id="ceFront" class="inp mb-2">${esc(c?.front || '')}</textarea>
+      <label class="text-xs text-gray-400">Verso</label><textarea id="ceBack" class="inp mb-3">${esc(c?.back || '')}</textarea>
+      <button class="btn btn-p w-full" onclick="UI.saveCard('${id || ''}')">Enregistrer</button>`);
+  },
+  saveCard(id) {
+    const f = $('ceFront').value.trim(), b = $('ceBack').value.trim(); if (!f || !b) return toast('Recto et verso requis');
+    if (id) { const c = DB.state.cards.find(x => x.id === id); c.front = f; c.back = b; c.subjectId = $('ceSubj').value; }
+    else DB.state.cards.push({ id: uid(), subjectId: $('ceSubj').value, courseId: null, front: f, back: b, source: 'Manuelle', createdAt: Date.now(), srs: SRS.init() });
+    DB.save(); this.closeModal(); this.renderFlashHome(); this.refreshBadges();
+  },
+  delCard(id) { if (!confirm('Supprimer la carte ?')) return; DB.state.cards = DB.state.cards.filter(c => c.id !== id); DB.save(); this.renderFlashHome(); },
+  /* ---- Stats ---- */
+  renderStats() {
+    const S = DB.state, h = S.history.filter(x => x.mode !== 'flash');
+    const avg = h.length ? (h.reduce((a, x) => a + x.note, 0) / h.length).toFixed(1) : '—';
+    const all = S.questions.concat(S.cards);
+    const cnt = { urgent: 0, fragile: 0, cours: 0, maitrise: 0 }; all.forEach(i => cnt[SRS.status(i)]++);
+    const totalAns = S.questions.reduce((a, q) => a + q.srs.seen, 0);
+    const errs = S.questions.reduce((a, q) => a + q.srs.errors, 0);
+    const last = h.slice(-12);
+    const days = {}; S.history.forEach(x => { const d = new Date(x.date).toDateString(); days[d] = 1; });
+    let streak = 0; for (let d = new Date(); days[d.toDateString()]; d = new Date(d - DAY)) streak++;
+    const bySubj = S.subjects.map(s => {
+      const qs = S.questions.filter(q => q.subjectId === s.id && q.srs.seen);
+      const seen = qs.reduce((a, q) => a + q.srs.seen, 0), er = qs.reduce((a, q) => a + q.srs.errors, 0);
+      return { name: s.name, rate: seen ? Math.round((1 - er / seen) * 100) : null, n: S.questions.filter(q => q.subjectId === s.id).length };
+    });
+    const weak = S.questions.filter(q => q.srs.errors).sort((a, b) => b.srs.errors - a.srs.errors).slice(0, 6);
+    $('statsBox').innerHTML = `
+      <div class="grid grid-cols-3 gap-2">
+        <div class="card p-3 text-center"><p class="text-2xl font-black text-blue-400">${avg}</p><p class="text-[11px] text-gray-400">Moyenne /20</p></div>
+        <div class="card p-3 text-center"><p class="text-2xl font-black text-violet-400">${streak}</p><p class="text-[11px] text-gray-400">Jours d'affilée</p></div>
+        <div class="card p-3 text-center"><p class="text-2xl font-black text-green-400">${totalAns ? Math.round((1 - errs / totalAns) * 100) : 0}%</p><p class="text-[11px] text-gray-400">Réussite</p></div>
+      </div>
+      <div class="card p-4"><h3 class="font-semibold mb-3">Maîtrise (questions + cartes)</h3>
+        ${Object.keys(cnt).map(k => `<div class="flex items-center gap-2 mb-2"><span class="pill st-${k} w-20 text-center">${SRS.label[k]}</span><div class="bar flex-1"><div style="width:${all.length ? cnt[k] / all.length * 100 : 0}%"></div></div><span class="text-xs w-8 text-right">${cnt[k]}</span></div>`).join('')}</div>
+      <div class="card p-4"><h3 class="font-semibold mb-3">Dernières notes</h3>
+        ${last.length ? `<div class="flex items-end gap-1 h-32">${last.map(x => `<div class="flex-1 flex flex-col items-center justify-end h-full"><span class="text-[9px] text-gray-400">${x.note}</span><div class="w-full rounded-t ${x.note >= 10 ? 'bg-gradient-to-t from-blue-600 to-violet-500' : 'bg-red-700'}" style="height:${Math.max(4, x.note / 20 * 100)}%"></div></div>`).join('')}</div>` : '<p class="text-sm text-gray-500">Aucune session.</p>'}</div>
+      <div class="card p-4"><h3 class="font-semibold mb-3">Par matière</h3>
+        ${bySubj.map(s => `<div class="mb-2"><div class="flex justify-between text-sm"><span>${esc(s.name)}</span><span class="text-gray-400">${s.rate === null ? '—' : s.rate + '%'} · ${s.n} q.</span></div><div class="bar mt-1"><div style="width:${s.rate || 0}%"></div></div></div>`).join('')}</div>
+      <div class="card p-4"><h3 class="font-semibold mb-3">Notions les plus ratées</h3>
+        ${weak.length ? weak.map(q => `<p class="text-sm mb-2"><span class="pill st-urgent mr-1">${q.srs.errors}×</span>${esc(q.notion || q.question.slice(0, 80))}</p>`).join('') : '<p class="text-sm text-gray-500">Rien à signaler.</p>'}</div>
+      <div class="card p-4 text-sm text-gray-400">${S.courses.length} cours · ${S.questions.length} questions · ${S.cards.length} flashcards · ${S.history.length} sessions</div>`;
+  },
+  /* ---- Réglages ---- */
+  renderParams() {
+    const s = DB.state.settings;
+    $('sProvider').value = s.provider; $('sModel').value = s.model; $('sKey').value = s.apiKey;
+    const size = new Blob([JSON.stringify(DB.state)]).size;
+    $('storageInfo').textContent = `Données locales : ${(size / 1024).toFixed(1)} Ko · ${DB.db ? 'IndexedDB' : 'localStorage'}`;
+  },
+  providerChanged() { $('sModel').value = $('sProvider').value === 'anthropic' ? 'claude-sonnet-5-5' : 'gemini-2.0-flash'; },
+  saveSettings() {
+    DB.state.settings = { provider: $('sProvider').value, model: $('sModel').value.trim(), apiKey: $('sKey').value.trim() };
+    DB.save(); toast('Réglages enregistrés');
+  },
+  async testApi() {
+    this.saveSettings(); $('apiStatus').innerHTML = '<span class="spin"></span> Test…';
+    try { const r = await AI.call('Réponds uniquement en JSON.', 'Renvoie {"ok":true}'); $('apiStatus').textContent = '✅ Connexion OK : ' + r.slice(0, 60); }
+    catch (e) { $('apiStatus').textContent = '❌ ' + e.message; }
+  },
+  exportData() {
+    const data = JSON.parse(JSON.stringify(DB.state));
+    if (confirm('Inclure la clé API dans la sauvegarde ?') === false) data.settings.apiKey = '';
+    data.exportedAt = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+    const name = `revizen-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`;
+    if (navigator.canShare && window.File) {
+      const file = new File([blob], name, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] }) && /Android|iPhone/i.test(navigator.userAgent)) { navigator.share({ files: [file], title: name }).catch(() => this._download(blob, name)); return; }
+    }
+    this._download(blob, name);
+  },
+  _download(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Sauvegarde exportée');
+  },
+  async importBackup(input) {
+    const f = input.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!data.subjects || !data.courses) throw new Error('Fichier non reconnu');
+      const merge = confirm('OK = fusionner avec les données actuelles\nAnnuler = remplacer entièrement');
+      if (merge) {
+        ['subjects', 'courses', 'questions', 'cards', 'history'].forEach(k => {
+          const ids = new Set(DB.state[k].map(x => x.id));
+          (data[k] || []).forEach(x => { if (!ids.has(x.id)) DB.state[k].push(x); });
+        });
+        if (data.settings?.apiKey && !DB.state.settings.apiKey) DB.state.settings = data.settings;
+      } else {
+        const keep = DB.state.settings;
+        DB.state = Object.assign(DB.defaults(), data);
+        if (!DB.state.settings?.apiKey) DB.state.settings = keep;
+      }
+      DB.state.questions.forEach(q => { q.srs = Object.assign(SRS.init(), q.srs || {}); q.sectionIds = q.sectionIds || []; });
+      DB.state.cards.forEach(c => c.srs = Object.assign(SRS.init(), c.srs || {}));
+      await DB.save(); toast('Sauvegarde restaurée'); this.renderParams(); this.refreshBadges();
+    } catch (e) { toast('❌ ' + e.message); }
+    input.value = '';
+  },
+  async resetAll() {
+    if (!confirm('Effacer TOUTES les données ?') || !confirm('Vraiment ? Cette action est irréversible.')) return;
+    DB.state = DB.defaults(); localStorage.removeItem('revizen_state'); await DB.save(); await DB.load(); toast('Données effacées'); this.go('cours'); this.refreshBadges();
+  },
+  modal(html) { $('modalBody').innerHTML = html; $('modal').classList.add('show'); },
+  closeModal() { $('modal').classList.remove('show'); }
+};
+
+/* ======================= DÉMARRAGE ======================= */
+(async () => {
+  await DB.load();
+  UI.renderCours(); UI.refreshBadges();
+  if (navigator.storage?.persist) navigator.storage.persist();
+  document.addEventListener('visibilitychange', () => { if (document.hidden) DB.save(); });
+  window.addEventListener('popstate', () => { if ($('modal').classList.contains('show')) UI.closeModal(); });
+})();
+</script>
+</body>
+</html>
