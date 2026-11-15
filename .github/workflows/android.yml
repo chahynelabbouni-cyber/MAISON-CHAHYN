@@ -29,10 +29,13 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           ./gradlew assembleRelease --stacktrace
           cp app/build/outputs/apk/release/app-release.apk MaisonChahyn.apk
+          cp combat/build/outputs/apk/release/combat-release.apk ObjectifCombat.apk
       - uses: actions/upload-artifact@v4
         with:
           name: MaisonChahyn-apk
-          path: MaisonChahyn.apk
+          path: |
+            MaisonChahyn.apk
+            ObjectifCombat.apk
       - name: Publier l'APK (dernière version)
         uses: softprops/action-gh-release@v2
         with:
@@ -40,7 +43,9 @@ jobs:
           name: Maison Chahyn — dernière version (${{ github.ref_name }})
           prerelease: true
           make_latest: false
-          files: MaisonChahyn.apk
+          files: |
+            MaisonChahyn.apk
+            ObjectifCombat.apk
           body: |
-            Télécharge **MaisonChahyn.apk** depuis ton Galaxy et installe-le.
+            Télécharge **ObjectifCombat.apk** (ou **MaisonChahyn.apk**) depuis ton Galaxy et installe-le.
             Build n°${{ github.run_number }} — commit ${{ github.sha }}

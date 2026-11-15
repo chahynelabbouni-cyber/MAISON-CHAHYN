@@ -75,7 +75,7 @@
     <div class="text-[11px] font-black tracking-widest text-[var(--red)]">AUJOURD'HUI</div>
     <div class="text-lg font-black mt-1" id="todayHeadline">—</div>
     <div class="space-y-2 mt-3" id="todayTodo"></div>
-    <button class="btn btn-red w-full mt-3 !py-4 !text-base" onclick="openRoutine()" id="routineBtn">▶ Séance du matin · 15 min</button>
+    <button class="btn btn-red w-full mt-3 !py-4 !text-base" onclick="openRoutine()" id="routineBtn">▶ Séance du matin · 12 min</button>
     <div class="grid grid-cols-3 gap-2 mt-2">
       <button class="btn !text-xs" onclick="addWater(500)">💧 +500 ml</button>
       <button class="btn !text-xs" onclick="openMealModal()">🍗 J'ai mangé</button>
@@ -281,31 +281,11 @@
 <!-- ================= TAB TRAIN ================= -->
 <section id="tab-train" class="tab space-y-4">
   <div class="card text-center">
-    <div class="font-black">Fractionné shadow-boxing · 15 min</div>
-    <div class="text-xs mut">30 s explosif / 30 s récup active · 15 rounds</div>
-    <div class="relative mx-auto mt-4 w-56 h-56">
-      <svg viewBox="0 0 120 120" class="w-full h-full">
-        <circle cx="60" cy="60" r="54" stroke="#232330" stroke-width="8" fill="none"/>
-        <circle id="hiitRing" class="ring" cx="60" cy="60" r="54" stroke="var(--red)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="0"/>
-      </svg>
-      <div class="absolute inset-0 flex flex-col items-center justify-center">
-        <div class="text-xs font-black tracking-widest" id="hiitPhase">PRÊT</div>
-        <div class="text-6xl font-black" id="hiitSec">30</div>
-        <div class="text-xs mut" id="hiitRound">Round 0/15</div>
-      </div>
-    </div>
-    <div class="text-sm font-bold mt-2 min-h-[40px]" id="hiitCombo">Appuie sur GO</div>
-    <div class="grid grid-cols-3 gap-2 mt-3">
-      <button class="btn btn-red" onclick="hiitStart()" id="hiitStartBtn">GO</button>
-      <button class="btn" onclick="hiitPause()">PAUSE</button>
-      <button class="btn" onclick="hiitReset()">RESET</button>
-    </div>
-    <div class="grid grid-cols-2 gap-2 mt-3 text-left">
-      <div class="card2"><div class="text-[11px] mut">Temps total</div><div class="font-black text-xl" id="hiitTotal">00:00</div></div>
-      <div class="card2"><div class="text-[11px] mut">Calories brûlées</div><div class="font-black text-xl text-[var(--ylw)]" id="hiitKcal">0 kcal</div></div>
-    </div>
+    <div class="text-5xl">🏠</div>
+    <div class="font-black text-lg mt-2">Séance du matin · 12 min</div>
+    <div class="text-xs mut mt-1">Sur place, dans 2 m², sans matériel. Pompes, squats, fentes, gainage, vacuum. Guidée étape par étape.</div>
+    <button class="btn btn-red w-full mt-4 !py-4 !text-base" onclick="openRoutine()">▶ Lancer la séance</button>
   </div>
-
   <div class="card">
     <div class="flex justify-between items-center mb-3">
       <div class="font-black">Circuit pompes (coche à la main)</div>
@@ -325,7 +305,7 @@
     <div class="mt-3 space-y-2" id="extraWorkouts"></div>
     <div class="grid grid-cols-2 gap-2 mt-3">
       <button class="btn" onclick="quickWorkout('boxe',60)">🥊 Boxe Arsenal</button>
-      <button class="btn" onclick="quickWorkout('shadow',15)">👊 Shadow 15'</button>
+      <button class="btn" onclick="quickWorkout('boxe',90)">🥊 Boxe 1h30</button>
     </div>
   </div>
 </section>
@@ -408,7 +388,7 @@
     <button class="text-sm mut font-bold" onclick="closeRoutine()">✕ Quitter</button>
   </div>
   <div class="bar mt-3"><i id="rtBar" style="background:var(--red)"></i></div>
-  <div class="flex justify-between text-[11px] mut mt-1"><span id="rtStep">Étape 1/17</span><span id="rtLeft">~15 min</span></div>
+  <div class="flex justify-between text-[11px] mut mt-1"><span id="rtStep">Étape 1/17</span><span id="rtLeft">~12 min</span></div>
   <div class="flex-1 flex flex-col items-center justify-center text-center">
     <div class="text-6xl" id="rtEmoji">💧</div>
     <div class="text-3xl font-black mt-4" id="rtTitle">—</div>
@@ -1017,7 +997,7 @@ ${meals}
 --- Hydratation ---
 Eau : ${(d.water/1000).toFixed(2)} L = ${(d.water/1500).toFixed(2)} bouteilles de 1,5 L. Objectif du jour : ${wp.goal/1000} L. ${wp.label} Sel : ${wp.salt}.
 --- Entraînement ---
-${wk}. HIIT shadow 15 min : ${d.workouts.hiit?'FAIT':'non'}. Autres : ${d.extra.map(e=>e.type+' '+e.min+'min ('+e.kc+'kcal)').join(', ')||'aucun'}
+${wk}. Autres : ${d.extra.map(e=>e.type+' '+e.min+'min ('+e.kc+'kcal)').join(', ')||'aucun'}
 Dépense estimée : base ${tdeeBase()} + sport ${sportKcal()} kcal. Déficit du jour : ${tdeeBase()+sportKcal()-t.kc} kcal.
 --- Planning ---
 Prochain départ : ${nd?DAYS[nd.date.getDay()]+' '+nd.time+' ('+nd.label+') → repas à '+minus10(nd.time):'aucun prévu'}
@@ -1025,10 +1005,12 @@ Agenda aujourd'hui : ${agendaText(now)}
 Agenda demain : ${agendaText(new Date(now.getTime()+864e5))} · réveil prévu ${wakeTime(new Date(now.getTime()+864e5))}
 Séances de boxe à venir (club Arsenal, en soirée ; il y va au minimum 2 fois/semaine, souvent 3-4) : ${Object.keys(S.events).filter(k=>k>=dKey(now)).sort().slice(0,40).flatMap(k=>S.events[k].filter(e=>e[3]==='boxe').map(e=>k.slice(8)+'/'+k.slice(5,7)+' '+e[0])).slice(0,6).join(', ')||'aucune'}
 Examens du semestre : 7 au 18 décembre (le combat du 12/12 tombe pendant les examens → gérer stress et sommeil).
-Séance du matin (15 min guidée) aujourd'hui : ${(S.routines||{})[dKey(now)]?'FAITE':'pas encore faite'}
+Séance du matin (12 min guidée) aujourd'hui : ${(S.routines||{})[dKey(now)]?'FAITE':'pas encore faite'}
 Règles : 1800 kcal, 190 g P, ≤30 g G (légumes verts uniquement), 55 g L, ZÉRO laitage, zéro pâtes/riz/pain/avoine/sucre.`;
 }
 const SYSTEM_PROMPT = () => `Tu es "Coach Cut", préparateur physique de boxe anglaise et nutritionniste du sport de haut niveau, disponible 24h/24 pour Chahyn. Tu réponds en français, tutoiement, ton direct de coach de coin de ring, zéro blabla, phrases courtes, chiffres précis tirés du contexte. Tu maîtrises : physiologie de la perte de poids (glycogène, eau, sodium, transit), water cut, boxe (technique, shadow, combinaisons, cardio, gestion de combat), musculation au poids du corps, récupération, sommeil, faim, stress, recettes protéinées sans laitage et sans glucides.
+
+CONTRAINTE MAISON : Chahyn s'entraîne chez lui dans un espace TRÈS restreint (environ 2 m²). Jamais de shadow-boxing, de course, de corde ou de sauts amples à la maison : uniquement des exercices sur place (pompes, squats, fentes sur place, gainage, vacuum, étirements). Sa routine du matin dure 12 min. Le cardio et la boxe se font au club (Arsenal).
 
 SÉCURITÉ (non négociable) : jamais de diurétiques, laxatifs, crachats, combinaisons plastique pour courir, sauna prolongé (>15 min, toujours avec quelqu'un), ni jeûne sec de plus de 24h. Si Chahyn décrit vertiges, palpitations, crampes sévères, confusion, urines très foncées ou perte >1,5 % par jour hors fight week : tu lui dis de stopper, de boire et de consulter. Rappelle la réhydratation (eau + électrolytes + glucides) juste après la pesée officielle.
 
@@ -1209,7 +1191,7 @@ Si vertiges, palpitations ou malaise : stop, bois, mange, et parle-en à ton coa
  {id:'force', re:/(force|frappe|puissance|explosi|punch|muscle|perdre (du|mes) muscle|catabol)/,
   a:c=>`💪 **Garder ta force de frappe sans glucides :**
 • **190 g de protéines/jour** = ton bouclier anti-catabolisme. Aujourd'hui : ${c.t.p.toFixed(0)} g. ${proteinSuggestion(c)}
-• La frappe = **technique + vitesse + rotation des hanches**, pas du glycogène : 10 min de shadow technique lent avant le HIIT.
+• La frappe = **technique + vitesse + rotation des hanches**, pas du glycogène : travaille-la au club, en technique, pas en volume.
 • Garde **l'intensité, réduis le volume** : 5 séries de pompes explosives (claquées si possible) plutôt que 10 séries molles.
 • **Créatine** : à éviter pendant le cut (retient 1–2 kg d'eau intramusculaire) — à reprendre après la pesée.
 • Après la pesée officielle : **recharge glucidique** (riz, banane, miel) → tu retrouveras 100 % de ta puissance pour le combat.
@@ -1232,7 +1214,7 @@ Cause n°1 = **électrolytes** (sodium, potassium, magnésium), pas le manque d'
 Si la crampe dure > 10 min ou revient en boucle : avis médical.`},
  {id:'shadow', re:/(shadow|enchainement|combinaison|combo|transpirer|suer|cardio sans courir|hiit)/,
   a:c=>{ const pick=[...COMBOS].sort(()=>Math.random()-.5).slice(0,6);
-  return `🥊 **Shadow boxing explosif — 15 min "sudation max"** (lance le timer dans l'onglet Train)
+  return `🥊 **Shadow boxing explosif — à faire au club** (pas la place à la maison)
 Échauffement 3 min : jumping jacks, rotations épaules, jab léger.
 Puis 15 × (30 s explosif / 30 s récup active en garde, pieds mobiles) :
 ${pick.map((p,i)=>`${i+1}. ${p}`).join('\n')}
@@ -1272,7 +1254,6 @@ Ce qui te reste : **${c.rk} kcal · ${c.rp.toFixed(0)} g P · ${c.rc.toFixed(0)}
   a:c=>`♨️ **Sudation — version sécurisée :**
 • Avant J-2, **aucun intérêt** : tu reprends tout en buvant. Ton objectif S1 se fait avec glucides bas + eau + sel modéré.
 • J-1 seulement, si et seulement si il manque ≤ 1 kg : **bain chaud 20 min (40 °C) puis enveloppé dans une serviette 15 min**, ou sauna **2–3 × 10 min max**, **jamais seul**, pesée entre chaque.
-• Shadow boxing habillé chaud (sweat) 15 min : 0,3–0,6 kg.
 • ❌ Jamais de combinaison plastique pour courir, jamais de diurétiques/laxatifs, jamais de sauna > 15 min d'affilée.
 • Dès la pesée validée : 500 ml eau + électrolytes toutes les 20 min, puis repas glucidique.
 Écart actuel avec 74,5 kg : **${fr(c.toF)} kg**, il te reste ${c.dFight} jours — ça se fait proprement.`},
@@ -1343,7 +1324,7 @@ ${c.d.meals.some(m=>m.dairy)?'⚠️ J\'ai détecté un laitage aujourd\'hui : b
 🔮 Demain matin à jeun : **${fr(c.pred)} kg**
 🍗 ${c.t.kc}/1800 kcal · ${c.t.p.toFixed(0)}/190 P · ${c.t.c.toFixed(0)}/30 G · ${c.t.f.toFixed(0)}/55 L
 💧 ${(c.d.water/1000).toFixed(2)}/${c.wp.goal/1000} L
-💪 Pompes ${pushupsDone(c.d)}/7 · HIIT ${hiitDone(c.d)?'✅':'❌'}`},
+💪 Séance du matin ${(S.routines||{})[dKey()]?'✅':'❌'} · pompes ${pushupsDone(c.d)}/7`},
  {id:'avant_boxe', re:/(avant (la )?(boxe|seance|entrainement)|pre.?workout|echauff)/,
   a:c=>`🔥 **Avant la séance :**
 • 60–90 min avant : ${c.rp>30?'30 g whey + 1 œuf dur':'café noir + 500 ml eau'} (pas de gros repas).
@@ -1362,7 +1343,7 @@ ${statusLine(c)}`},
 1. Pas de panique : 1 repas ≠ du gras. C'est surtout **eau + glycogène + transit** (+0,5 à 1,5 kg temporaires).
 2. Reviens immédiatement au plan : prochain repas 100 % protéines + légumes verts.
 3. **+1 L d'eau** aujourd'hui, sel modéré.
-4. 15 min de HIIT shadow pour vider une partie du glycogène.
+4. Fais ta séance du matin (12 min) et donne tout à la boxe.
 5. Pas de jeûne compensatoire : ça fait perdre du muscle.
 Le poids revient en 24–48 h si tu restes clean.`},
  {id:'salut', re:/^(salut|yo|hello|bonjour|bonsoir|wesh|coucou|hey|cc)\b/,
@@ -1492,6 +1473,7 @@ async function sendChat(preset){
 /* --- Voix --- */
 let recog=null, listening=false;
 function toggleMic(){
+  if(window.Android && Android.startVoice){ Android.startVoice(); return; }
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   const fallback = (why)=>{ $('chatIn').focus(); openModal(`<div class="font-black text-lg mb-2">🎙️ Micro indisponible ici</div><div class="text-sm">${why}</div>
     <div class="card2 mt-3 text-sm"><b>Solution immédiate :</b> appuie dans la zone de texte, puis sur le <b>🎤 du clavier Samsung</b> (en haut du clavier). Tu parles, le texte s'écrit, tu envoies.</div>
@@ -1507,6 +1489,7 @@ function toggleMic(){
   recog.onresult=e=>{ $('chatIn').value = Array.from(e.results).map(r=>r[0].transcript).join(''); };
   try{ recog.start(); }catch(err){ fallback(String(err.message||err)); }
 }
+window.onNativeVoice = t => { if(!t) return; $('chatIn').value=t; sendChat(); };
 function toggleTTS(){ S.tts=!S.tts; save(); $('ttsBtn').textContent=S.tts?'🔊':'🔇'; if(!S.tts) speechSynthesis.cancel(); toast(S.tts?'Voix activée':'Voix coupée'); }
 function speak(text){
   if(!S.tts||!('speechSynthesis' in window)) return;
@@ -1573,7 +1556,7 @@ function renderChart(){
 function zoneInfo(n){
   const z=zones(), t=totals(), st=stomachLoad(), d=today(), el=$('zoneDetail'); el.classList.remove('hidden');
   if(n===1) el.innerHTML=`<b>① Bas du ventre & eau sous-cutanée — ${z.z1}%</b><br>Glucides ${t.c.toFixed(0)}/30 g ${t.c<=30?'✅':'❌'} · Laitage ${z.dairy?'❌ détecté':'✅ zéro'} · Eau ${(d.water/1000).toFixed(2)}/${waterPlan().min/1000} L ${z.waterScore>=1?'✅':'⏳'}<br><span class="mut">Les 3 leviers qui dégonflent la zone sous-ombilicale en quelques jours.</span>`;
-  if(n===2) el.innerHTML=`<b>② Pecs / épaules / force — ${z.z2}%</b><br>Protéines ${t.p.toFixed(0)}/190 g · Circuit pompes ${pushupsDone()}/7 · HIIT ${hiitDone()?'✅':'❌'}<br><span class="mut">Vert = tu ne perds pas de muscle malgré le déficit.</span>`;
+  if(n===2) el.innerHTML=`<b>② Pecs / épaules / force — ${z.z2}%</b><br>Protéines ${t.p.toFixed(0)}/190 g · Circuit pompes ${pushupsDone()}/7 <br><span class="mut">Vert = tu ne perds pas de muscle malgré le déficit.</span>`;
   if(n===3) el.innerHTML=`<b>③ Estomac / transit</b><br>Nourriture en digestion : ${fr(st.foodKg,2)} kg · Eau pas encore éliminée : ${fr(st.waterKg,2)} kg<br>Prédiction demain matin à jeun : <b class="text-[var(--blu)]">${fr(predictMorning())} kg</b><br><span class="mut">Basé sur ton dernier poids, ton déficit du jour, les glucides stockés et ~0,6 kg de perte nocturne.</span>`;
 }
 
@@ -1628,7 +1611,7 @@ function renderFuel(){
 function renderTrain(){
   const d=today();
   $('checklist').innerHTML = WK_ITEMS.map(i=>`<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('${i.id}')"><span class="chk ${d.workouts[i.id]?'on':''}">${d.workouts[i.id]?'✓':''}</span><span class="font-bold text-sm flex-1">${i.n}</span><span class="text-[11px] mut">~${i.kc} kcal</span></button>`).join('')
-   + `<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('hiit')"><span class="chk ${d.workouts.hiit?'on':''}">${d.workouts.hiit?'✓':''}</span><span class="font-bold text-sm flex-1">Fractionné shadow 15 min</span><span class="text-[11px] mut">~${d.workouts.hiitKcal||190} kcal</span></button>`;
+   + (false?`<button><span class="chk ${d.workouts.hiit?'on':''}">${d.workouts.hiit?'✓':''}</span><span class="font-bold text-sm flex-1">Fractionné shadow 15 min</span></button>`:'');
   const n=pushupsDone(d); $('wkProg').textContent=`${n}/7`; $('wkBar').style.width=(n/7*100)+'%';
   const base=tdeeBase(), sp=sportKcal(d), t=totals(d);
   $('eBase').textContent=base; $('eSport').textContent='+'+sp; $('eDef').textContent=(base+sp-t.kc);
@@ -1651,7 +1634,8 @@ function renderPlan(){
   $('setTravelFac').value=S.settings.travelFac; $('setTravelBoxe').value=S.settings.travelBoxe; $('setWakeFree').value=S.settings.wakeFree; $('setWakeBefore').value=S.settings.wakeBefore;
   const al = buildAlerts(new Date()); const now=hm();
   $('todayAlerts').innerHTML = al.map(a=>`<div class="card2 flex gap-3 items-start ${a.time<now?'opacity-50':''}"><div class="font-black text-[var(--red)] w-12">${a.time}</div><div class="text-sm flex-1"><b>${a.title}</b><div class="text-[11px] mut">${a.body}</div></div></div>`).join('');
-  $('notifState').textContent = !('Notification' in window)?'Notifications non supportées sur ce navigateur — alertes visuelles + sons uniquement.':Notification.permission==='granted'?'✅ Notifications activées':Notification.permission==='denied'?'❌ Bloquées dans les réglages du navigateur':'⏳ Pas encore autorisées';
+  syncNativeAlarms();
+  $('notifState').textContent = window.Android?(Android.notifGranted()?'✅ Rappels actifs, même appli fermée':'⏳ Appuie sur Activer pour autoriser les rappels'):!('Notification' in window)?'Notifications non supportées sur ce navigateur — alertes visuelles + sons uniquement.':Notification.permission==='granted'?'✅ Notifications activées':Notification.permission==='denied'?'❌ Bloquées dans les réglages du navigateur':'⏳ Pas encore autorisées';
 }
 function renderAll(){ renderDash(); renderFuel(); renderTrain(); renderPlan(); }
 
@@ -1790,7 +1774,7 @@ function hiitTick(){
   }
   renderHiit();
 }
-function renderHiit(){
+function renderHiit(){ if(!$('hiitSec')) return;
   $('hiitSec').textContent=H.phase==='done'?'✓':H.sec;
   $('hiitPhase').textContent={idle:'PRÊT',work:'À FOND 🔥',rest:'RÉCUP ACTIVE',done:'TERMINÉ'}[H.phase];
   $('hiitPhase').style.color=H.phase==='work'?'var(--red)':H.phase==='rest'?'var(--blu)':'var(--grn)';
@@ -1808,7 +1792,7 @@ function renderHiit(){
 const ROUTINE = [
  {e:'⚖️',t:'Pesée à jeun',d:'Après les toilettes, avant de boire quoi que ce soit.',kind:'weigh'},
  {e:'💧',t:'Bois 500 ml',d:'Un tiers de ta 1ère bouteille de 1,5 L. Ça relance le drainage.',kind:'water'},
- {e:'🔥',t:'Jumping jacks',d:'Rythme régulier, respire par le nez.',sec:60},
+ {e:'🔥',t:'Montées de genoux sur place',d:'Sans bouger les pieds de place, rythme régulier.',sec:45},
  {e:'🔄',t:'Rotations',d:'Épaules, bras, hanches, chevilles. Réveille les articulations.',sec:45},
  {e:'💪',t:'Pompes normales',d:'Corps gainé, poitrine près du sol, remonte fort.',reps:'20'},
  {e:'😮‍💨',t:'Récup',d:'Secoue les bras, respire.',sec:30,rest:true},
@@ -1819,9 +1803,9 @@ const ROUTINE = [
  {e:'🦵',t:'Squats',d:'Cuisses parallèles au sol, dos droit.',reps:'25'},
  {e:'🔺',t:'Pompes piquées',d:'Fesses en l\'air, tête vers le sol → épaules.',reps:'15'},
  {e:'😮‍💨',t:'Récup',d:'Respire.',sec:30,rest:true},
- {e:'🚶',t:'Fentes',d:'Genou arrière qui frôle le sol. Alterne les jambes.',reps:'12 / jambe'},
+ {e:'🦿',t:'Fentes sur place',d:'Pieds fixes, un devant un derrière. Descends, remonte. Change de jambe à la moitié.',reps:'12 / jambe'},
  {e:'🧱',t:'Gainage',d:'Sur les avant-bras, fesses alignées, abdos serrés.',sec:45},
- {e:'🥊',t:'Shadow explosif',d:'Garde haute, enchaîne les combos qui s\'affichent.',sec:120,shadow:true},
+ {e:'📐',t:'Gainage latéral',d:'30 s côté droit, puis 30 s côté gauche. Bassin haut.',sec:60},
  {e:'🌀',t:'Vacuum abdo',d:'Expire tout, rentre le nombril 20 s, relâche 10 s. ×2. Resserre le bas du ventre.',sec:60},
  {e:'🧘',t:'Étirements',d:'Pecs contre un mur, quadriceps, épaules.',sec:60},
 ];
@@ -1868,7 +1852,7 @@ function rtPrev(){ RT.i=Math.max(0,RT.i-1); rtShow(); }
 function rtFinish(){
   closeRoutine(); const d=today(); S.routines=S.routines||{}; S.routines[dKey()]=true;
   ['p_norm','p_diam','p_large','p_pique','squat','fentes'].forEach(id=>d.workouts[id]=true);
-  d.extra.push({type:'séance du matin',min:15,kc:Math.round(6*currentWeight()*15/60),time:hm()});
+  d.extra.push({type:'séance du matin',min:12,kc:Math.round(5*currentWeight()*12/60),time:hm()});
   save(); renderAll(); beep(1200,.4,3); speak('Séance terminée. Bravo Chahyn.');
   openModal(`<div class="text-center"><div class="text-6xl">🏆</div><div class="text-2xl font-black mt-2">Séance validée !</div><div class="text-sm mut mt-2">Pompes, squats, fentes et gainage cochés automatiquement.<br>Maintenant : douche, protéines, et finis ta 1ère bouteille avant 14h.</div><button class="btn btn-red w-full mt-5 !py-3" onclick="closeModal()">Let's go 👊</button></div>`);
 }
@@ -1880,7 +1864,7 @@ function renderToday(){
   $('todayHeadline').textContent = evs.find(e=>e.type==='combat')?'🥊 JOUR DU COMBAT':boxe?`Boxe ce soir à ${boxe.start} 🥊`:evs.length?`${evs.length} cours aujourd'hui`:'Journée sans cours';
   const items=[
     {ok:weighed,txt:'Pesée du matin à jeun',act:"openWeigh('matin')"},
-    {ok:done,txt:'Séance du matin (15 min)',act:'openRoutine()'},
+    {ok:done,txt:'Séance du matin (12 min)',act:'openRoutine()'},
     {ok:d.water>=waterPlan().min,txt:`Eau : ${fr(d.water/1000,2)} / ${fr(waterPlan().min/1000,1)} L`,act:'addWater(500)'},
     {ok:t.p>=170,txt:`Protéines : ${t.p.toFixed(0)} / 190 g`,act:"go('fuel')"},
     {ok:t.c<=30,txt:`Glucides : ${t.c.toFixed(0)} / 30 g max`,act:"go('fuel')",warn:t.c>30},
@@ -1888,7 +1872,7 @@ function renderToday(){
   if(nd && nd.date.toDateString()===now.toDateString()) items.splice(2,0,{ok:false,txt:`🚪 Départ ${nd.time} → mange à ${minus10(nd.time)}`,act:"go('plan')",info:true});
   if(boxe) items.push({ok:hiitDone(d)||d.extra.some(e=>/boxe/i.test(e.type)),txt:`Boxe Arsenal ${boxe.start}`,act:"quickWorkout('boxe',75)"});
   $('todayTodo').innerHTML = items.map(i=>`<button class="w-full flex items-center gap-3 text-left" onclick="${i.act}"><span class="chk ${i.ok?'on':''}" style="${i.warn?'border-color:var(--red);background:var(--red)':''}${i.info?';border-color:var(--grn)':''}">${i.ok?'✓':i.warn?'!':''}</span><span class="text-sm ${i.ok?'mut line-through':'font-bold'}">${i.txt}</span></button>`).join('');
-  $('routineBtn').textContent = done?'✅ Séance du matin faite · refaire ?':'▶ Séance du matin · 15 min';
+  $('routineBtn').textContent = done?'✅ Séance du matin faite · refaire ?':'▶ Séance du matin · 12 min';
   $('routineBtn').className = done?'btn w-full mt-3 !py-3':'btn btn-red w-full mt-3 !py-4 !text-base';
   $('hdrTitle').textContent = (h<12?'Bonjour':h<18?'Salut':'Bonsoir')+' Chahyn 👊';
 }
@@ -1898,7 +1882,7 @@ function renderToday(){
    ===================================================================== */
 function buildAlerts(date){
   const out=[]; const w=wakeTime(date);
-  out.push({time:w,key:'wake',title:'☀️ Debout Chahyn !',body:'Toilettes → pesée à jeun → 500 ml d\'eau → séance du matin de 15 min (bouton rouge sur l\'accueil).'});
+  out.push({time:w,key:'wake',title:'☀️ Debout Chahyn !',body:'Toilettes → pesée à jeun → 500 ml d\'eau → séance du matin de 12 min (bouton rouge sur l\'accueil).'});
   depsForDay(date).forEach(dep=>{
     out.push({time:minus10(dep.time),key:'meal'+dep.time,priority:true,title:'🚨 DÉPART DANS 10 MIN !',body:(dep.type==='boxe'?'Boxe dans peu de temps : ':'')+'Prends ta dose de protéines tout de suite (Poulet / Oeufs durs / Shaker Whey à l\'eau) + bois 500 ml sur ta bouteille de 1,5L. Zéro glucide !'});
     if(dep.type==='boxe') out.push({time:fromMin(toMin(dep.time)-60),key:'boxe'+dep.time,title:'🥊 Boxe ce soir',body:`Départ à ${dep.time}. Prépare ton sac (gants, bandes, protège-dents, bouteille pleine).`});
@@ -1910,6 +1894,22 @@ function buildAlerts(date){
    ['21:30','report','🌙 Rapport du soir','Pesée du soir + raconte ta journée à ton coach.']].forEach(([t,k,ti,b])=>out.push({time:t,key:k,title:ti,body:b}));
   return out.sort((a,b)=>a.time.localeCompare(b.time));
 }
+let _syncT;
+function syncNativeAlarms(){
+  if(!window.Android || !Android.schedule) return;
+  clearTimeout(_syncT); _syncT=setTimeout(()=>{
+    const list=[]; const base=new Date();
+    for(let i=0;i<7;i++){ const d=new Date(base); d.setDate(d.getDate()+i);
+      buildAlerts(d).forEach(a=>{ const [h,m]=a.time.split(':').map(Number); const t=new Date(d); t.setHours(h,m,0,0); if(t>Date.now()) list.push({ts:t.getTime(),title:a.title,body:a.body}); }); }
+    try{ Android.schedule(JSON.stringify(list.sort((a,b)=>a.ts-b.ts).slice(0,60))); }catch(e){}
+  },300);
+}
+window.handleBack = function(){
+  if(!$('routine').classList.contains('hidden')){ closeRoutine(); return true; }
+  if(!$('modal').classList.contains('hidden')){ closeModal(); return true; }
+  if(!$('tab-dash').classList.contains('active')){ go('dash'); return true; }
+  return false;
+};
 function checkAlerts(){
   const now=new Date(); const t=hm(now); const k=dKey(now);
   S.firedAlerts[k]=S.firedAlerts[k]||[];
@@ -1927,7 +1927,8 @@ function fireAlert(a){
   if(a.key==='report'){ const t=totals(); body+=` Bilan : ${t.kc} kcal, ${t.p.toFixed(0)} g P, ${t.c.toFixed(0)} g G.`; }
   beep(a.priority?1100:800,.25,a.priority?4:2);
   $('alertTitle').textContent=a.title; $('alertText').textContent=body; $('alertBanner').classList.remove('hidden');
-  if('Notification' in window && Notification.permission==='granted'){
+  if(window.Android){ /* l'appli Android envoie déjà la notification via ses alarmes */ }
+  else if('Notification' in window && Notification.permission==='granted'){
     try{
       if(navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r=>r.showNotification(a.title,{body,tag:a.key,requireInteraction:!!a.priority,vibrate:[300,100,300]}));
       else new Notification(a.title,{body,tag:a.key,requireInteraction:!!a.priority});
@@ -1936,6 +1937,7 @@ function fireAlert(a){
   if(S.tts) speak(a.title+'. '+body);
 }
 async function enableNotif(){
+  if(window.Android){ Android.requestNotif(); syncNativeAlarms(); setTimeout(renderPlan,1500); toast('🔔 Rappels programmés'); return; }
   if(!('Notification' in window)){ toast('Non supporté ici'); return; }
   const p = await Notification.requestPermission(); renderPlan(); toast(p==='granted'?'🔔 Activées':'Refusées');
   try{ actx = actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch(e){}
