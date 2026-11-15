@@ -963,6 +963,7 @@ const UI = {
     data.exportedAt = new Date().toISOString();
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const name = `revizen-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`;
+    if (window.AndroidBridge) { if (!AndroidBridge.saveFile(name, JSON.stringify(data, null, 1))) toast('❌ Échec de l\'enregistrement'); return; }
     if (navigator.canShare && window.File) {
       const file = new File([blob], name, { type: 'application/json' });
       if (navigator.canShare({ files: [file] }) && /Android|iPhone/i.test(navigator.userAgent)) { navigator.share({ files: [file], title: name }).catch(() => this._download(blob, name)); return; }
