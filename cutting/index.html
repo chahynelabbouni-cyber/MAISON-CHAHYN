@@ -893,7 +893,13 @@ function parseFoods(text){
     const f = findFood(part); if(!f) continue;
     let qty=null, grams=null;
     let m = part.match(/(\d+(?:\.\d+)?)\s*(kg|g|gr|grammes?|ml|cl|l|litres?)\b/);
-    if(m){
+    const cm = part.match(/(\d+(?:\.\d+)?)\s*(?:cm|centimetres?)(?:\s*(?:x|sur|par)\s*(\d+(?:\.\d+)?)\s*(?:cm)?)?/);
+    if(!m && cm){
+      // Morceau mesuré : longueur × largeur (≈ 60 % de la longueur si non donnée) × épaisseur ≈ 2 cm, densité ≈ 1,05
+      const L=parseFloat(cm[1]), W=cm[2]?parseFloat(cm[2]):L*0.8;
+      const nb = (part.match(/^(\d+)\s+(morceau|tranche|filet|bout)/)||[])[1];
+      grams = Math.max(10, L*W*2.5*1.05) * (nb?parseInt(nb):1);
+    } else if(m){
       const v=parseFloat(m[1]); const u=m[2];
       grams = u==='kg'?v*1000: u==='cl'?v*10: (u==='l'||u.startsWith('litre'))?v*1000: v;
     } else {
@@ -907,6 +913,16 @@ function parseFoods(text){
       if(/cuill?ere a cafe|c\.?a\.?c/.test(part)) grams=(qty||1)*5;
       if(/poignee/.test(part)) grams=(qty||1)*30;
       if(/assiette/.test(part)) grams=(qty||1)*250;
+      if(/\bbol\b/.test(part)) grams=(qty||1)*250;
+      if(/tranche/.test(part)) grams=(qty||1)*(f.p>15?30:35);
+      if(/(gros|grand) (morceau|filet|blanc|bout)/.test(part)) grams=(qty||1)*Math.max(150,f.u*1.3);
+      else if(/petit (morceau|filet|bout)/.test(part)) grams=(qty||1)*Math.max(40,f.u*0.4);
+      else if(/(morceau|bout)\b/.test(part) && grams==null) grams=(qty||1)*Math.min(100,f.u);
+      if(/pave/.test(part)) grams=(qty||1)*150;
+      if(/(filet|escalope)\b/.test(part) && grams==null) grams=(qty||1)*130;
+      if(/(barquette|sachet)/.test(part) && grams==null) grams=(qty||1)*200;
+      if(/(verre|tasse)/.test(part) && grams==null) grams=(qty||1)*200;
+      if(/(pincee|trait|filet d.huile|un peu)/.test(part) && f.f>80) grams=5;
       if(/boite/.test(part) && grams==null) grams=(qty||1)*f.u;
       if(grams==null) grams=(qty||1)*f.u;
     }
@@ -1024,7 +1040,7 @@ FUNCTION CALLING : si le message de Chahyn rapporte quelque chose qu'il a mangé
  {"type":"LOG_WEIGHT","data":{"kg":78.8,"type":"matin"}},
  {"type":"LOG_WORKOUT","data":{"items":["p_norm","p_diam","p_large","p_serr","p_pique","squat","fentes"],"hiit":false,"type":"shadow","minutes":15}}]
 \`\`\`
-N'inclus que les actions réellement déclarées (pas d'action pour une simple question). Valeurs nutritionnelles réalistes (base Ciqual). "J'ai fini ma 1ère bouteille" = 1500 ml. Après une action, dis ce qu'il reste (kcal / protéines / glucides / eau). N'écris jamais le bloc actions pour un aliment hypothétique.`;
+RÈGLE ABSOLUE : une QUESTION (« je peux… », « j'ai le droit… », « ou pas », « combien de calories dans… », « si je mange… », envie, projet, demain) n'est JAMAIS une action : tu réponds sans bloc actions. Seuls les faits accomplis (« j'ai mangé », « j'ai bu », « je me suis pesé », « j'ai fini ») déclenchent une action. Pour une portion décrite (morceau de 5 cm, tranche, bol, assiette, poignée, filet, pavé), estime le poids en grammes de façon réaliste et donne le calcul. Valeurs nutritionnelles réalistes (base Ciqual). "J'ai fini ma 1ère bouteille" = 1500 ml. Après une action, dis ce qu'il reste (kcal / protéines / glucides / eau). N'écris jamais le bloc actions pour un aliment hypothétique.`;
 
 /* =====================================================================
    10. APPELS LLM (Claude / OpenAI / Gemini / Groq)
@@ -1129,7 +1145,10 @@ const RECIPES_TXT = {
 const COMBOS = ['Jab-Jab-Direct-Crochet G','1-2-Esquive-2','Double jab-Direct-Uppercut D','Crochet G corps-Crochet G tête-Direct','1-2-3-2 + pas de côté','Jab-Uppercut D-Crochet G-Direct','Rafale 20 directs rapides','Esquive-Remise 3-2','1-1-2 + retrait','Jab corps-Jab tête-Direct','Crochets alternés au corps','Uppercuts en rafale','1-2-Rotation-1-2','Feinte jab-Direct-Crochet','Burpee + 1-2-3'];
 
 const KB = [
- {id:'droit_aliment', re:/(je peu[xt]?|j.peu|puis.je|on peut|ai.je le droit|c.est autorise|c.est bon|je mange|manger) .*(\?|$)/,
+ {id:'calcul', re:/(combien|calorie|kcal|macro|proteine|glucide|lipide|ca fait|ça fait|calcule)/, test:q=>parseFoods(q).length>0 && !/(il me reste|me reste)/.test(norm(q)),
+  a:c=>{ const it=parseFoods(c._q); const T=it.reduce((a,i)=>({kc:a.kc+i.kc,p:a.p+i.p,c:a.c+i.c,f:a.f+i.f}),{kc:0,p:0,c:0,f:0});
+   return `🧮 **Calcul :**\n${it.map(i=>`• ${i.name} ${i.g} g → ${i.kc} kcal · P ${i.p} · G ${i.c} · L ${i.f} ${i.tag==='ban'?'⛔':i.tag==='warn'?'⚠️':'✅'}`).join('\n')}${it.length>1?`\n**Total : ${Math.round(T.kc)} kcal · P ${T.p.toFixed(1)} · G ${T.c.toFixed(1)} · L ${T.f.toFixed(1)}**`:''}\n\n_Rien ajouté. Si tu l'as mangé : « j'ai mangé … »._\n${statusLine(c)}`; }},
+ {id:'droit_aliment', re:/(je peu[xt]?|j.peu|puis.je|on peut|le droit|autorise|interdit|c.est bon|c.est bien|je mange|manger|ou pas|je devrais|vaut mieux)/,
   test:q=>!!findFood(q),
   a:c=>{ const f=findFood(c._q); const it=parseFoods(c._q)[0]||{g:f.u,kc:Math.round(f.kc*f.u/100),p:+(f.p*f.u/100).toFixed(1),c:+(f.c*f.u/100).toFixed(1),f:+(f.f*f.u/100).toFixed(1)};
    const alt = {ban:{'Pâtes cuites':'des tagliatelles de courgette ou du konjac','Riz blanc cuit':'du riz de chou-fleur','Pain':'des feuilles de salade en wrap ou une omelette fine','Flocons d\'avoine':'une crêpe blancs d\'œufs + whey'}};
@@ -1391,7 +1410,7 @@ ${expl}
   const isQuestion = /\?|comment|pourquoi|quoi|quel|quelle|combien|est.ce|dois|peux|conseil|aide|donne|explique|recette|idee/.test(nq);
   if(isQuestion || !actionLog.length){
     const hits = KB.filter(k=>k.re.test(nq) && (!k.test || k.test(q)));
-    if(hits.length) parts.push(...hits.slice(0, hits[0].id==='droit_aliment'?1:2).map(h=>h.a(c)));
+    if(hits.length) parts.push(...hits.slice(0, ['droit_aliment','calcul'].includes(hits[0].id)?1:2).map(h=>h.a(c)));
     else if(!actionLog.length){
       // tentative : aliment cité sans "mangé" -> infos nutritionnelles
       const f = findFood(q);
@@ -1409,21 +1428,24 @@ ${KB.find(k=>k.id==='objectif').a(c)}
   return parts.join('\n\n');
 }
 function isQuestionMsg(n){
+  if(/(le droit|ou pas|ou non|autorise|interdit|c.est bien|c.est grave|c.est mal|vaut mieux|tu me conseilles|tu conseilles|je devrais|il faut que je|est.ce|qu.est.ce)/.test(n)) return true;
   return /\?\s*$/.test(n.trim()) || /^(est.ce|je peu[xt]?|j.peu|puis.je|peut.on|on peut|je dois|dois.je|faut.il|combien|comment|pourquoi|quoi|quel|quelle|c.est quoi|tu penses|t.en penses|si je|ai.je le droit)/.test(n.trim());
 }
 function detectLocalActions(text){
   const actions=[]; const n=norm(text);
   // marqueurs du passé : "j'ai", "je viens de", "je me suis", "fini", "bu", "mangé"…
-  const past = /(j.?ai |jai |je viens d|j.?viens d|je me suis|je me suis pese|c.est fait|termine|fini|^bu |^mange )/.test(n);
-  const question = isQuestionMsg(n);
-  if(!past && question) return actions;            // "Je peux manger des pâtes ?" → aucune action
-  if(!past && !/^\s*(\d|un |une |deux |trois |\d)/.test(n)) return actions; // phrase neutre → aucune action
+  // Action UNIQUEMENT si Chahyn déclare l'avoir fait : "j'ai mangé/bu/fini…", "je viens de…", "je me suis pesé…"
+  const VERBS='(mange|manger|bu|boire|fini|termine|fait|pris|avale|bouffe|grignote|vide|englouti|cree|prepare|cuisine|enchaine|boucle|valide|pese|descendu|tape|siffle|goute|mis)';
+  const past = new RegExp("(\\bj'?\\s?ai\\s+(deja\\s+|juste\\s+|bien\\s+|encore\\s+)?"+VERBS+"|\\bjai\\s+"+VERBS+"|je viens (de|d)\\s|je me suis (pese|entraine)|^(mange|bu|pese|fini|termine)\\b|^(ce midi|ce matin|ce soir|a midi|tout a l.heure)[, ]+j|\\bc.est fait\\b|^je pese \\d)").test(n);
+  const shorthand = /^\s*(\+?\d+(?:[.,]\d+)?\s*(g|gr|kg|ml|cl|l)\b|\+\s*\d)/.test(n) && !isQuestionMsg(n); // "200g poulet", "+500ml"
+  const hypothetical = /(\bsi j|\bsi je|est.ce que j|j.ai le droit|j.ai envie|j.ai faim|j.ai la dalle|j.ai prevu|je vais|je compte|je veux|j.aimerais|je voudrais|demain|\bsi j.?ai|c.est grave|c.est pas grave)/.test(n);
+  if(!(past||shorthand) || hypothetical) return actions;
   const w = parseWeight(text);
   if(w && /(pese|balance|kg|kilo)/.test(n)) actions.push({type:'LOG_WEIGHT',data:w});
-  const isEat = /(mange|bouffe|avale|pris|dejeune|dine|grignote|cree|prepare|cuisine|repas|shaker|bu un shaker)/.test(n);
+  const isEat = shorthand || /(mange|bouffe|avale|pris|dejeune|dine|grignote|cree|prepare|cuisine|repas|shaker|bu un shaker)/.test(n);
   if(isEat){ const items=parseFoods(text).filter(i=>i.name!=='Eau'); if(items.length){ const isRecipe=/(cree|gateau|recette|crepe|pancake|muffin|prepare)/.test(n); actions.push({type:'ADD_MEAL',data:{items,name:isRecipe?'Recette maison':undefined,saveRecipe:isRecipe}}); } }
   const water = parseWater(text);
-  if(water && /(bu|fini|termine|vide|bois)/.test(n)) actions.push({type:'ADD_WATER',data:{ml:water}});
+  if(water && /(bu|boire|fini|termine|vide|bois|\+)/.test(n)) actions.push({type:'ADD_WATER',data:{ml:water}});
   const wk = parseWorkout(text); if(wk) actions.push({type:'LOG_WORKOUT',data:wk});
   return actions;
 }
@@ -1456,7 +1478,10 @@ async function sendChat(preset){
   if(useApi){
     try{
       const raw = await callLLM(text);
-      const {actions,clean} = extractActions(raw);
+      let {actions,clean} = extractActions(raw);
+      // Garde-fou : une question ne modifie jamais le journal, même si l'IA le propose.
+      const nt = norm(text); const declared = detectLocalActions(text).length>0 || (/(j.?ai|jai|je viens|je me suis)/.test(nt) && !isQuestionMsg(nt) && !/(\bsi j|j.ai le droit|j.ai envie|j.ai faim|je vais|demain)/.test(nt));
+      if(!declared) actions = [];
       const log = runActions(actions);
       reply = clean || 'OK.'; meta = `Coach en ligne (${PROVIDERS[S.ai.provider].name})${log.length?' · mis à jour : '+log.map(l=>ACTION_FR[l.type]).join(', '):''}`;
       S.chat.push({role:'assistant',text:reply,raw,meta,ts:Date.now()});
@@ -1953,7 +1978,7 @@ function testNotif(){ fireAlert({key:'test',priority:true,title:'🚨 DÉPART DA
 /* =====================================================================
    17. PWA : manifest + service worker (générés à la volée)
    ===================================================================== */
-const LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3b47"/><stop offset="1" stop-color="#7a0a14"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="#0a0a0f"/><circle cx="256" cy="230" r="170" fill="url(#g)"/><path d="M175 165c0-35 30-60 70-60h45c45 0 80 35 80 80v75c0 30-20 55-50 60v30H195v-35c-12-8-20-22-20-38z" fill="#fff"/><path d="M175 215c-25 0-40 18-40 38s15 38 40 38" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round"/><rect x="190" y="340" width="150" height="34" rx="10" fill="#fff"/><text x="256" y="465" font-size="78" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" fill="#fff">CHAHYN</text></svg>';
+const LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d58"/><stop offset="1" stop-color="#8c0c16"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#g)"/><path d="M366 162A150 150 0 1 0 366 350" fill="none" stroke="#fff" stroke-width="54" stroke-linecap="round"/><path d="M276 150L196 270h58l-24 92 86-128h-60z" fill="#fff"/></svg>';
 const LOGO = 'data:image/svg+xml,'+encodeURIComponent(LOGO_SVG);
 function setupPWA(){
   const icon = LOGO; if($('hdrLogo')) $('hdrLogo').src = LOGO;
