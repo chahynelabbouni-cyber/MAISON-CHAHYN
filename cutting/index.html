@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Cut Commander</title>
+<script src="https://cdn.tailwindcss.com/3.4.1"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#0a0a0f; --card:#14141c; --card2:#1c1c27; --line:#2a2a38; --txt:#e8e8f0; --mut:#8a8aa0; --red:#ff3b47; --grn:#22e08a; --ylw:#ffc533; --blu:#38b6ff; --pur:#a874ff; }
+  html,body { background:var(--bg); color:var(--txt); font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none; }
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; }
+  .card2 { background:var(--card2); border-radius:14px; padding:12px; }
+  .mut { color:var(--mut); }
+  .bar { height:10px; background:#232330; border-radius:99px; overflow:hidden; }
+  .bar > i { display:block; height:100%; border-radius:99px; transition:width .6s cubic-bezier(.2,.8,.2,1); }
+  .btn { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-weight:700; font-size:14px; active:scale-95; transition:transform .1s; }
+  .btn:active { transform:scale(.95); }
+  .btn-red { background:linear-gradient(135deg,#ff3b47,#c41623); border:none; color:#fff; }
+  .btn-grn { background:linear-gradient(135deg,#22e08a,#11a564); border:none; color:#04140b; }
+  .btn-blu { background:linear-gradient(135deg,#38b6ff,#1677d1); border:none; color:#fff; }
+  .tab { display:none; }
+  .tab.active { display:block; animation:fade .25s ease; }
+  @keyframes fade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+  nav button.on { color:var(--red); }
+  nav button.on .dot { opacity:1; }
+  input,select,textarea { background:#0f0f16; border:1px solid var(--line); border-radius:12px; padding:10px 12px; color:var(--txt); width:100%; font-size:16px; }
+  input:focus,select:focus,textarea:focus { outline:none; border-color:var(--red); }
+  .bottle { position:relative; width:64px; height:150px; margin:auto; }
+  .bottle svg { width:100%; height:100%; }
+  .msg-u { background:linear-gradient(135deg,#ff3b47,#b8141f); color:#fff; border-radius:18px 18px 4px 18px; }
+  .msg-a { background:var(--card2); border-radius:18px 18px 18px 4px; }
+  .msg-a b, .msg-a strong { color:#fff; }
+  .chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 8px; border-radius:99px; }
+  .tl-item { position:relative; padding-left:22px; }
+  .tl-item:before { content:""; position:absolute; left:6px; top:0; bottom:-12px; width:2px; background:var(--line); }
+  .tl-item:after { content:""; position:absolute; left:1px; top:14px; width:12px; height:12px; border-radius:99px; background:var(--red); box-shadow:0 0 0 3px var(--bg); }
+  .zone { cursor:pointer; transition:opacity .3s; }
+  .glow { text-shadow:0 0 18px rgba(255,59,71,.55); }
+  .ring { transform:rotate(-90deg); transform-origin:50% 50%; transition:stroke-dashoffset .8s; }
+  #toast { transition:all .3s; }
+  .scroll-x { overflow-x:auto; scrollbar-width:none; } .scroll-x::-webkit-scrollbar{display:none}
+  .pulse { animation:pulse 1.2s infinite; } @keyframes pulse { 50%{opacity:.4} }
+  .chk { width:26px; height:26px; border-radius:8px; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .chk.on { background:var(--grn); border-color:var(--grn); color:#04140b; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-30 px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-3" style="background:linear-gradient(180deg,#0a0a0f 75%,transparent)">
+  <div class="flex items-center justify-between">
+    <div>
+      <div class="text-[11px] font-bold tracking-[.2em] text-[var(--red)]">CUT COMMANDER</div>
+      <div class="text-lg font-black leading-tight" id="hdrTitle">Chahyn · Fight Camp</div>
+    </div>
+    <div class="text-right">
+      <div class="text-2xl font-black" id="hdrClock">--:--</div>
+      <div class="text-[11px] mut" id="hdrDate">—</div>
+    </div>
+  </div>
+</header>
+
+<main class="px-4 space-y-4 max-w-xl mx-auto">
+
+<!-- ================= TAB DASHBOARD ================= -->
+<section id="tab-dash" class="tab active space-y-4">
+
+  <div class="grid grid-cols-2 gap-3">
+    <div class="card relative overflow-hidden">
+      <div class="text-[11px] font-bold mut">PESÉE CLUB · 22 NOV</div>
+      <div class="text-3xl font-black mt-1 glow" id="cdWeigh">--</div>
+      <div class="text-xs mut" id="cdWeighH">--</div>
+      <div class="mt-2 chip bg-[#ff3b4722] text-[var(--red)]">Cible 77,0 kg</div>
+    </div>
+    <div class="card relative overflow-hidden">
+      <div class="text-[11px] font-bold mut">COMBAT · 12 DÉC</div>
+      <div class="text-3xl font-black mt-1" id="cdFight">--</div>
+      <div class="text-xs mut" id="cdFightH">--</div>
+      <div class="mt-2 chip bg-[#22e08a22] text-[var(--grn)]">Cible 74,5–75 kg</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex items-end justify-between">
+      <div>
+        <div class="text-[11px] font-bold mut">DERNIER POIDS</div>
+        <div class="text-5xl font-black leading-none mt-1"><span id="curW">80,0</span><span class="text-lg mut"> kg</span></div>
+        <div class="text-xs mt-1" id="curWinfo">—</div>
+      </div>
+      <div class="text-right">
+        <div class="text-[11px] font-bold mut">VS COURBE CIBLE</div>
+        <div class="text-2xl font-black" id="deltaTarget">—</div>
+        <div class="text-xs mut" id="deltaTargetTxt">—</div>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-between text-[11px] mut mb-1"><span>80,0</span><span>Progression totale</span><span>74,5</span></div>
+      <div class="bar"><i id="totalProg" style="width:0;background:linear-gradient(90deg,var(--red),var(--ylw),var(--grn))"></i></div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mt-4">
+      <button class="btn" onclick="openWeigh('matin')">⚖️ Pesée matin</button>
+      <button class="btn" onclick="openWeigh('soir')">🌙 Pesée soir</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex items-center justify-between mb-2">
+      <div class="font-black">Courbe de coupe</div>
+      <div class="flex gap-2 text-[11px]">
+        <span class="flex items-center gap-1"><i class="w-3 h-1 rounded bg-[var(--red)] inline-block"></i>Cible</span>
+        <span class="flex items-center gap-1"><i class="w-3 h-1 rounded bg-[var(--grn)] inline-block"></i>Matin</span>
+        <span class="flex items-center gap-1"><i class="w-3 h-1 rounded bg-[var(--blu)] inline-block"></i>Soir</span>
+      </div>
+    </div>
+    <div style="height:240px"><canvas id="wChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-1">Carte corporelle</div>
+    <div class="text-xs mut mb-3">Touche une zone pour le détail.</div>
+    <div class="flex gap-3 items-center">
+      <svg viewBox="0 0 120 260" class="w-[38%] shrink-0" id="bodySvg">
+        <defs>
+          <linearGradient id="skin" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2b2b3a"/><stop offset="1" stop-color="#1b1b26"/></linearGradient>
+        </defs>
+        <circle cx="60" cy="22" r="16" fill="url(#skin)" stroke="#3a3a4c"/>
+        <rect x="53" y="36" width="14" height="10" fill="url(#skin)"/>
+        <path d="M22 50 Q60 40 98 50 L104 110 Q96 118 90 112 L86 80 L84 150 Q60 158 36 150 L34 80 L30 112 Q24 118 16 110 Z" fill="url(#skin)" stroke="#3a3a4c"/>
+        <path d="M36 150 L40 250 L56 250 L60 170 L64 250 L80 250 L84 150 Z" fill="url(#skin)" stroke="#3a3a4c"/>
+        <!-- zone 2 pecs/epaules -->
+        <path class="zone" id="z2" onclick="zoneInfo(2)" d="M24 52 Q60 42 96 52 L90 86 Q60 96 30 86 Z" fill="#22e08a" opacity=".5"/>
+        <!-- zone 3 estomac -->
+        <ellipse class="zone" id="z3" onclick="zoneInfo(3)" cx="60" cy="104" rx="20" ry="12" fill="#38b6ff" opacity=".5"/>
+        <!-- zone 1 bas ventre -->
+        <path class="zone" id="z1" onclick="zoneInfo(1)" d="M38 120 Q60 116 82 120 L84 148 Q60 156 36 148 Z" fill="#ff3b47" opacity=".55"/>
+        <text x="60" y="73" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">2</text>
+        <text x="60" y="107" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">3</text>
+        <text x="60" y="138" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">1</text>
+      </svg>
+      <div class="flex-1 space-y-3">
+        <div onclick="zoneInfo(1)">
+          <div class="flex justify-between text-xs font-bold"><span>① Bas ventre / eau</span><span id="z1v">0%</span></div>
+          <div class="bar mt-1"><i id="z1b" style="background:var(--red)"></i></div>
+          <div class="text-[11px] mut mt-1" id="z1t">Dégonflement</div>
+        </div>
+        <div onclick="zoneInfo(2)">
+          <div class="flex justify-between text-xs font-bold"><span>② Pecs / force</span><span id="z2v">0%</span></div>
+          <div class="bar mt-1"><i id="z2b" style="background:var(--grn)"></i></div>
+          <div class="text-[11px] mut mt-1" id="z2t">Maintien musculaire</div>
+        </div>
+        <div onclick="zoneInfo(3)">
+          <div class="flex justify-between text-xs font-bold"><span>③ Transit</span><span id="z3v">0,0 kg</span></div>
+          <div class="bar mt-1"><i id="z3b" style="background:var(--blu)"></i></div>
+          <div class="text-[11px] mut mt-1">Demain matin à jeun :</div>
+          <div class="text-xl font-black text-[var(--blu)]" id="predMorning">--,- kg</div>
+        </div>
+      </div>
+    </div>
+    <div id="zoneDetail" class="card2 mt-3 text-sm hidden"></div>
+  </div>
+
+  <div class="card">
+    <div class="flex justify-between items-center">
+      <div class="font-black">Prochain départ</div>
+      <button class="text-xs text-[var(--red)] font-bold" onclick="go('plan')">Modifier →</button>
+    </div>
+    <div class="flex items-center gap-4 mt-3">
+      <div class="text-4xl font-black" id="nextDepTime">--:--</div>
+      <div class="text-sm">
+        <div id="nextDepLabel" class="font-bold">—</div>
+        <div class="mut text-xs" id="nextDepMeal">Repas à --:--</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="phaseCard">
+    <div class="font-black">Phase du jour</div>
+    <div class="text-sm mt-2" id="phaseTxt">—</div>
+  </div>
+</section>
+
+<!-- ================= TAB FUEL ================= -->
+<section id="tab-fuel" class="tab space-y-4">
+
+  <div class="card">
+    <div class="flex justify-between items-center">
+      <div class="font-black">Bouteilles 1,5 L</div>
+      <div class="text-xs mut">Objectif : <b class="text-white" id="waterGoalTxt">3,0 L</b></div>
+    </div>
+    <div class="grid grid-cols-3 gap-2 mt-3" id="bottles"></div>
+    <div class="text-center mt-2">
+      <span class="text-3xl font-black text-[var(--blu)]" id="waterTotal">0,00</span><span class="mut"> L bus</span>
+      <div class="text-xs mut" id="waterPace">—</div>
+    </div>
+    <div class="grid grid-cols-4 gap-2 mt-3">
+      <button class="btn" onclick="addWater(250)">+250</button>
+      <button class="btn" onclick="addWater(500)">+500</button>
+      <button class="btn" onclick="addWater(750)">+750</button>
+      <button class="btn btn-blu" onclick="addWater(1500)">+1,5L</button>
+    </div>
+    <button class="text-xs mut mt-2 w-full" onclick="addWater(-250)">↶ retirer 250 ml</button>
+  </div>
+
+  <div class="card">
+    <div class="flex items-center gap-4">
+      <svg viewBox="0 0 120 120" class="w-32 h-32 shrink-0">
+        <circle cx="60" cy="60" r="52" stroke="#232330" stroke-width="12" fill="none"/>
+        <circle id="kcalRing" class="ring" cx="60" cy="60" r="52" stroke="var(--red)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+        <text x="60" y="58" text-anchor="middle" font-size="26" font-weight="900" fill="#fff" id="kcalLeft">1800</text>
+        <text x="60" y="76" text-anchor="middle" font-size="10" fill="#8a8aa0">kcal restantes</text>
+      </svg>
+      <div class="flex-1 space-y-3" id="macroBars"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mt-4">
+      <button class="btn btn-red" onclick="openMealModal()">＋ Ajouter un aliment</button>
+      <button class="btn" onclick="openRecipeModal()">🧁 Créer une recette</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-2">Ajout rapide</div>
+    <div class="scroll-x flex gap-2 pb-1" id="quickFoods"></div>
+  </div>
+
+  <div class="card">
+    <div class="flex justify-between items-center mb-3">
+      <div class="font-black">Timeline du jour</div>
+      <div class="text-xs mut" id="tlCount">0 prise</div>
+    </div>
+    <div id="timeline" class="space-y-3"></div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-2">Mes recettes favorites</div>
+    <div id="favRecipes" class="space-y-2"></div>
+  </div>
+</section>
+
+<!-- ================= TAB COACH ================= -->
+<section id="tab-coach" class="tab">
+  <div class="card p-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl" style="background:linear-gradient(135deg,#ff3b47,#a874ff)">🥊</div>
+      <div>
+        <div class="font-black leading-tight">Coach IA</div>
+        <div class="text-[11px]" id="aiMode">Moteur local</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn !px-3" id="ttsBtn" onclick="toggleTTS()">🔇</button>
+      <button class="btn !px-3" onclick="openAISettings()">⚙️</button>
+    </div>
+  </div>
+  <div id="chat" class="space-y-3 py-4 min-h-[50vh]"></div>
+  <div class="scroll-x flex gap-2 pb-2" id="suggests"></div>
+  <div class="sticky bottom-[calc(80px+env(safe-area-inset-bottom))] flex gap-2 items-end bg-[var(--bg)] py-2">
+    <button class="btn !px-3 !py-3" id="micBtn" onclick="toggleMic()">🎙️</button>
+    <textarea id="chatIn" rows="1" placeholder="Parle à ton coach…" class="flex-1 resize-none" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+    <button class="btn btn-red !px-4 !py-3" onclick="sendChat()">➤</button>
+  </div>
+</section>
+
+<!-- ================= TAB TRAIN ================= -->
+<section id="tab-train" class="tab space-y-4">
+  <div class="card text-center">
+    <div class="font-black">HIIT Shadow Boxing · 15 min</div>
+    <div class="text-xs mut">30 s explosif / 30 s récup active · 15 rounds</div>
+    <div class="relative mx-auto mt-4 w-56 h-56">
+      <svg viewBox="0 0 120 120" class="w-full h-full">
+        <circle cx="60" cy="60" r="54" stroke="#232330" stroke-width="8" fill="none"/>
+        <circle id="hiitRing" class="ring" cx="60" cy="60" r="54" stroke="var(--red)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="0"/>
+      </svg>
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <div class="text-xs font-black tracking-widest" id="hiitPhase">PRÊT</div>
+        <div class="text-6xl font-black" id="hiitSec">30</div>
+        <div class="text-xs mut" id="hiitRound">Round 0/15</div>
+      </div>
+    </div>
+    <div class="text-sm font-bold mt-2 min-h-[40px]" id="hiitCombo">Appuie sur START</div>
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <button class="btn btn-red" onclick="hiitStart()" id="hiitStartBtn">START</button>
+      <button class="btn" onclick="hiitPause()">PAUSE</button>
+      <button class="btn" onclick="hiitReset()">RESET</button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mt-3 text-left">
+      <div class="card2"><div class="text-[11px] mut">Temps total</div><div class="font-black text-xl" id="hiitTotal">00:00</div></div>
+      <div class="card2"><div class="text-[11px] mut">Calories brûlées</div><div class="font-black text-xl text-[var(--ylw)]" id="hiitKcal">0 kcal</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex justify-between items-center mb-3">
+      <div class="font-black">Circuit poids du corps</div>
+      <div class="text-xs font-bold" id="wkProg">0/7</div>
+    </div>
+    <div class="bar mb-3"><i id="wkBar" style="background:var(--grn)"></i></div>
+    <div id="checklist" class="space-y-2"></div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-2">Dépense du jour</div>
+    <div class="grid grid-cols-3 gap-2 text-center">
+      <div class="card2"><div class="text-[11px] mut">Base (TDEE)</div><div class="font-black" id="eBase">0</div></div>
+      <div class="card2"><div class="text-[11px] mut">Sport</div><div class="font-black text-[var(--ylw)]" id="eSport">0</div></div>
+      <div class="card2"><div class="text-[11px] mut">Déficit</div><div class="font-black text-[var(--grn)]" id="eDef">0</div></div>
+    </div>
+    <div class="mt-3 space-y-2" id="extraWorkouts"></div>
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button class="btn" onclick="quickWorkout('boxe',60)">🥊 Boxe club 60'</button>
+      <button class="btn" onclick="quickWorkout('shadow',15)">👊 Shadow 15'</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TAB PLAN ================= -->
+<section id="tab-plan" class="tab space-y-4">
+  <div class="card">
+    <div class="font-black">Notifications</div>
+    <div class="text-xs mut mt-1" id="notifState">—</div>
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button class="btn btn-red" onclick="enableNotif()">🔔 Activer</button>
+      <button class="btn" onclick="testNotif()">Tester</button>
+    </div>
+    <div class="text-[11px] mut mt-2">Garde l'app ouverte (ou installée sur l'écran d'accueil) pour que les alertes se déclenchent à l'heure.</div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-1">Emploi du temps</div>
+    <div class="text-xs mut mb-3">Réveil + heure exacte de départ. Le repas « dernière minute » est calé 10 min avant.</div>
+    <div id="schedule" class="space-y-2"></div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-2">Alertes d'aujourd'hui</div>
+    <div id="todayAlerts" class="space-y-2"></div>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-2">Données</div>
+    <div class="grid grid-cols-2 gap-2">
+      <button class="btn" onclick="exportData()">⬇️ Exporter</button>
+      <button class="btn" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+    <button class="btn w-full mt-2 !text-[var(--red)]" onclick="resetToday()">Effacer la journée</button>
+  </div>
+</section>
+</main>
+
+<!-- NAV -->
+<nav class="fixed bottom-0 inset-x-0 z-40 border-t border-[var(--line)] pb-[env(safe-area-inset-bottom)]" style="background:rgba(10,10,15,.94);backdrop-filter:blur(14px)">
+  <div class="grid grid-cols-5 max-w-xl mx-auto">
+    <button data-t="dash" class="on py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('dash')"><span class="text-xl">📊</span>Cut</button>
+    <button data-t="fuel" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('fuel')"><span class="text-xl">🍗</span>Fuel</button>
+    <button data-t="coach" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('coach')"><span class="text-xl">🤖</span>Coach</button>
+    <button data-t="train" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('train')"><span class="text-xl">🥊</span>Train</button>
+    <button data-t="plan" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('plan')"><span class="text-xl">⏰</span>Plan</button>
+  </div>
+</nav>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-50 hidden items-end justify-center" style="background:rgba(0,0,0,.7)" onclick="if(event.target===this)closeModal()">
+  <div class="w-full max-w-xl bg-[var(--card)] rounded-t-3xl p-5 max-h-[88vh] overflow-y-auto border-t border-[var(--line)]" id="modalBody"></div>
+</div>
+
+<!-- ALERT BANNER -->
+<div id="alertBanner" class="fixed top-0 inset-x-0 z-[60] hidden p-4 pt-[calc(env(safe-area-inset-top)+12px)]" style="background:linear-gradient(135deg,#ff3b47,#8c0c16)">
+  <div class="max-w-xl mx-auto">
+    <div class="text-xs font-black tracking-widest" id="alertTitle">ALERTE</div>
+    <div class="font-bold mt-1" id="alertText"></div>
+    <button class="mt-3 bg-white text-black font-black rounded-xl px-4 py-2" onclick="document.getElementById('alertBanner').classList.add('hidden')">OK, j'y vais</button>
+  </div>
+</div>
+
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-[100px] z-[70] bg-white text-black font-bold text-sm px-4 py-2 rounded-full opacity-0 pointer-events-none"></div>
+
+<script>
+/* =====================================================================
+   1. CONSTANTES PROFIL & DATES
+   ===================================================================== */
+const PROFILE = {
+  name: 'Chahyn', age: 19, height: 182, sex: 'M',
+  startWeight: 80.0, w1Target: 77.0, fightTarget: 75.0, safeTarget: 74.5,
+  kcal: 1800, prot: 190, carbs: 30, fat: 55,
+  bottle: 1500
+};
+const START_DATE = new Date(2026, 10, 15, 7, 0);   // 15 nov 2026
+const WEIGH_DATE = new Date(2026, 10, 22, 9, 0);   // J+7 pesée club
+const FIGHT_DATE = new Date(2026, 11, 12, 18, 0);  // 12 déc combat
+const DAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const STORE_KEY = 'cutCommander_v1';
+
+/* =====================================================================
+   2. BASE ALIMENTS (kcal, P, G, L pour 100 g ; unit = poids d'une unité en g)
+   tag : ok / warn / ban  (impact cutting)
+   ===================================================================== */
+const FOODS = [
+ // --- Volailles / viandes
+ {n:'Blanc de poulet cuit',k:['poulet','blanc de poulet','filet de poulet','chicken'],kc:165,p:31,c:0,f:3.6,u:150,t:'ok'},
+ {n:'Cuisse de poulet sans peau',k:['cuisse de poulet','pilon'],kc:177,p:24,c:0,f:8.5,u:120,t:'ok'},
+ {n:'Escalope de dinde',k:['dinde','escalope'],kc:135,p:29,c:0,f:1.7,u:130,t:'ok'},
+ {n:'Jambon de dinde',k:['jambon de dinde','blanc de dinde'],kc:105,p:21,c:1,f:2,u:30,t:'ok'},
+ {n:'Jambon blanc découenné',k:['jambon blanc','jambon'],kc:115,p:21,c:1,f:3,u:40,t:'ok'},
+ {n:'Steak haché 5%',k:['steak haché 5','steak 5','haché 5'],kc:125,p:21,c:0,f:5,u:100,t:'ok'},
+ {n:'Steak haché 15%',k:['steak haché','steak 15','haché','burger patty'],kc:215,p:18,c:0,f:15,u:100,t:'warn'},
+ {n:'Bœuf rumsteck',k:['rumsteck','boeuf','bœuf','steak'],kc:150,p:26,c:0,f:5,u:150,t:'ok'},
+ {n:'Bavette',k:['bavette'],kc:165,p:26,c:0,f:7,u:150,t:'ok'},
+ {n:'Viande des Grisons',k:['grisons','bresaola'],kc:160,p:35,c:0.5,f:2,u:20,t:'ok'},
+ {n:'Veau escalope',k:['veau'],kc:110,p:22,c:0,f:2,u:130,t:'ok'},
+ {n:'Agneau',k:['agneau','gigot'],kc:250,p:25,c:0,f:17,u:120,t:'warn'},
+ {n:'Merguez',k:['merguez'],kc:300,p:15,c:1,f:26,u:50,t:'warn'},
+ {n:'Kebab viande seule',k:['viande kebab','viande de kebab'],kc:230,p:20,c:3,f:15,u:150,t:'warn'},
+ {n:'Foie de volaille',k:['foie'],kc:120,p:18,c:1,f:5,u:100,t:'ok'},
+ {n:'Lapin',k:['lapin'],kc:136,p:21,c:0,f:5.5,u:150,t:'ok'},
+ {n:'Canard magret sans peau',k:['canard','magret'],kc:130,p:20,c:0,f:5,u:150,t:'ok'},
+ // --- Poissons
+ {n:'Thon au naturel',k:['thon','thon naturel','boîte de thon','boite de thon'],kc:110,p:25,c:0,f:1,u:112,t:'ok'},
+ {n:'Cabillaud',k:['cabillaud','morue'],kc:82,p:18,c:0,f:0.7,u:150,t:'ok'},
+ {n:'Colin',k:['colin','lieu'],kc:80,p:17,c:0,f:1,u:150,t:'ok'},
+ {n:'Merlu',k:['merlu'],kc:85,p:18,c:0,f:1.3,u:150,t:'ok'},
+ {n:'Sole',k:['sole'],kc:85,p:18,c:0,f:1.2,u:150,t:'ok'},
+ {n:'Tilapia',k:['tilapia'],kc:96,p:20,c:0,f:1.7,u:150,t:'ok'},
+ {n:'Saumon',k:['saumon'],kc:200,p:20,c:0,f:13,u:120,t:'ok'},
+ {n:'Saumon fumé',k:['saumon fumé'],kc:180,p:22,c:0,f:10,u:40,t:'warn'},
+ {n:'Sardines à l\'huile',k:['sardine'],kc:210,p:24,c:0,f:13,u:90,t:'ok'},
+ {n:'Maquereau',k:['maquereau'],kc:205,p:19,c:0,f:14,u:120,t:'ok'},
+ {n:'Crevettes',k:['crevette','gambas'],kc:99,p:24,c:0.2,f:0.3,u:100,t:'ok'},
+ {n:'Surimi',k:['surimi'],kc:100,p:8,c:15,f:0.5,u:17,t:'warn'},
+ {n:'Moules',k:['moule'],kc:86,p:12,c:3.7,f:2.2,u:200,t:'ok'},
+ {n:'Calamar',k:['calamar','encornet'],kc:92,p:16,c:3,f:1.4,u:100,t:'ok'},
+ {n:'Truite',k:['truite'],kc:140,p:20,c:0,f:6,u:130,t:'ok'},
+ {n:'Dorade',k:['dorade'],kc:120,p:20,c:0,f:4,u:150,t:'ok'},
+ // --- Oeufs
+ {n:'Œuf entier',k:['oeuf','œuf','oeufs','œufs','oeuf dur','omelette'],kc:143,p:12.6,c:0.7,f:9.5,u:55,t:'ok'},
+ {n:'Blanc d\'œuf',k:['blanc d\'oeuf','blancs d\'oeufs','blanc d\'œuf','blancs d\'œuf','blancs'],kc:52,p:11,c:0.7,f:0.2,u:33,t:'ok'},
+ {n:'Jaune d\'œuf',k:['jaune d\'oeuf','jaune'],kc:322,p:16,c:3.6,f:27,u:17,t:'ok'},
+ // --- Compléments
+ {n:'Whey (dose)',k:['whey','protéine en poudre','shaker','proteine'],kc:380,p:78,c:6,f:6,u:30,t:'ok'},
+ {n:'Whey isolate',k:['isolate','isolat'],kc:370,p:88,c:2,f:1,u:30,t:'ok'},
+ {n:'Caséine',k:['caséine','caseine'],kc:360,p:80,c:5,f:2,u:30,t:'warn'},
+ {n:'Oméga-3 (gélule)',k:['omega','oméga','huile de poisson'],kc:900,p:0,c:0,f:100,u:1,t:'ok'},
+ {n:'Cacao maigre non sucré',k:['cacao'],kc:350,p:22,c:15,f:11,u:5,t:'ok'},
+ {n:'Créatine',k:['créatine','creatine'],kc:0,p:0,c:0,f:0,u:5,t:'warn'},
+ {n:'BCAA',k:['bcaa'],kc:0,p:0,c:0,f:0,u:10,t:'ok'},
+ {n:'Électrolytes zéro',k:['électrolyte','electrolyte'],kc:5,p:0,c:1,f:0,u:5,t:'ok'},
+ // --- Matières grasses / oléagineux
+ {n:'Huile d\'olive',k:['huile d\'olive','huile','filet d\'huile'],kc:900,p:0,c:0,f:100,u:10,t:'ok'},
+ {n:'Huile de coco',k:['coco huile','huile de coco'],kc:890,p:0,c:0,f:99,u:10,t:'ok'},
+ {n:'Beurre de cacahuète',k:['beurre de cacahuète','peanut','cacahuète','cacahuete'],kc:590,p:25,c:12,f:50,u:15,t:'warn'},
+ {n:'Amandes',k:['amande'],kc:580,p:21,c:9,f:50,u:1.2,t:'ok'},
+ {n:'Noix',k:['noix'],kc:655,p:15,c:7,f:65,u:5,t:'ok'},
+ {n:'Noix de cajou',k:['cajou'],kc:575,p:18,c:27,f:44,u:1.5,t:'warn'},
+ {n:'Avocat',k:['avocat'],kc:160,p:2,c:2,f:15,u:140,t:'ok'},
+ {n:'Olives',k:['olive'],kc:145,p:1,c:1,f:15,u:4,t:'warn'},
+ {n:'Graines de chia',k:['chia'],kc:490,p:17,c:8,f:31,u:10,t:'ok'},
+ {n:'Beurre',k:['beurre'],kc:740,p:0.7,c:0.7,f:82,u:10,t:'ban'},
+ {n:'Mayonnaise',k:['mayo','mayonnaise'],kc:700,p:1,c:1,f:77,u:15,t:'warn'},
+ // --- Légumes verts
+ {n:'Brocoli',k:['brocoli'],kc:34,p:2.8,c:4,f:0.4,u:150,t:'ok'},
+ {n:'Haricots verts',k:['haricot vert','haricots verts'],kc:31,p:1.8,c:4,f:0.2,u:150,t:'ok'},
+ {n:'Épinards',k:['épinard','epinard'],kc:23,p:2.9,c:1.4,f:0.4,u:150,t:'ok'},
+ {n:'Courgette',k:['courgette'],kc:17,p:1.2,c:2.2,f:0.3,u:200,t:'ok'},
+ {n:'Concombre',k:['concombre'],kc:15,p:0.7,c:2.5,f:0.1,u:200,t:'ok'},
+ {n:'Salade verte',k:['salade','laitue','roquette','mâche'],kc:15,p:1.3,c:1.5,f:0.2,u:80,t:'ok'},
+ {n:'Asperges',k:['asperge'],kc:20,p:2.2,c:2,f:0.1,u:100,t:'ok'},
+ {n:'Chou-fleur',k:['chou-fleur','chou fleur'],kc:25,p:1.9,c:3,f:0.3,u:150,t:'ok'},
+ {n:'Chou kale',k:['kale'],kc:35,p:2.9,c:4.4,f:1.5,u:80,t:'ok'},
+ {n:'Choux de Bruxelles',k:['bruxelles'],kc:43,p:3.4,c:5,f:0.3,u:150,t:'ok'},
+ {n:'Céleri',k:['céleri','celeri'],kc:16,p:0.7,c:1.4,f:0.2,u:100,t:'ok'},
+ {n:'Poivron',k:['poivron'],kc:28,p:1,c:5,f:0.3,u:150,t:'warn'},
+ {n:'Champignons',k:['champignon'],kc:22,p:3.1,c:1,f:0.3,u:100,t:'ok'},
+ {n:'Tomate',k:['tomate'],kc:18,p:0.9,c:3,f:0.2,u:120,t:'warn'},
+ {n:'Oignon',k:['oignon'],kc:40,p:1.1,c:8,f:0.1,u:80,t:'warn'},
+ {n:'Fenouil',k:['fenouil'],kc:31,p:1.2,c:4,f:0.2,u:150,t:'ok'},
+ {n:'Poireau',k:['poireau'],kc:31,p:1.5,c:5,f:0.3,u:150,t:'warn'},
+ {n:'Endive',k:['endive'],kc:17,p:1,c:2.5,f:0.1,u:100,t:'ok'},
+ {n:'Radis',k:['radis'],kc:16,p:0.7,c:2,f:0.1,u:10,t:'ok'},
+ {n:'Cornichons',k:['cornichon'],kc:12,p:0.5,c:1.5,f:0.1,u:10,t:'warn'},
+ {n:'Petits pois',k:['petits pois','petit pois'],kc:81,p:5,c:14,f:0.4,u:100,t:'ban'},
+ {n:'Carotte',k:['carotte'],kc:41,p:0.9,c:7,f:0.2,u:80,t:'warn'},
+ {n:'Avocat (½)',k:['demi avocat'],kc:112,p:1.4,c:1.4,f:10.5,u:70,t:'ok'},
+ {n:'Soupe de légumes verts',k:['soupe','velouté'],kc:30,p:1.5,c:3.5,f:1,u:300,t:'ok'},
+ // --- Glucides interdits / à éviter
+ {n:'Riz blanc cuit',k:['riz'],kc:130,p:2.7,c:28,f:0.3,u:150,t:'ban'},
+ {n:'Pâtes cuites',k:['pâte','pates','spaghetti','penne','tagliatelle'],kc:157,p:5.8,c:31,f:0.9,u:200,t:'ban'},
+ {n:'Pain',k:['pain','baguette','tartine'],kc:265,p:9,c:50,f:3,u:40,t:'ban'},
+ {n:'Pain complet',k:['pain complet'],kc:247,p:13,c:41,f:3.4,u:40,t:'ban'},
+ {n:'Flocons d\'avoine',k:['avoine','flocon','porridge'],kc:375,p:13,c:60,f:7,u:40,t:'ban'},
+ {n:'Pomme de terre',k:['pomme de terre','patate'],kc:77,p:2,c:17,f:0.1,u:150,t:'ban'},
+ {n:'Patate douce',k:['patate douce'],kc:86,p:1.6,c:20,f:0.1,u:150,t:'ban'},
+ {n:'Frites',k:['frite'],kc:312,p:3.4,c:41,f:15,u:120,t:'ban'},
+ {n:'Quinoa cuit',k:['quinoa'],kc:120,p:4.4,c:21,f:1.9,u:150,t:'ban'},
+ {n:'Lentilles cuites',k:['lentille'],kc:116,p:9,c:20,f:0.4,u:150,t:'ban'},
+ {n:'Pois chiches',k:['pois chiche','houmous'],kc:164,p:9,c:27,f:2.6,u:100,t:'ban'},
+ {n:'Semoule cuite',k:['semoule','couscous'],kc:112,p:3.8,c:23,f:0.2,u:150,t:'ban'},
+ {n:'Galette de riz',k:['galette de riz'],kc:385,p:8,c:80,f:3,u:9,t:'ban'},
+ {n:'Céréales petit-déj',k:['céréale','cereale','corn flakes'],kc:380,p:7,c:84,f:1,u:40,t:'ban'},
+ {n:'Wrap / tortilla',k:['wrap','tortilla'],kc:300,p:8,c:50,f:7,u:60,t:'ban'},
+ // --- Fruits
+ {n:'Banane',k:['banane'],kc:89,p:1.1,c:23,f:0.3,u:120,t:'ban'},
+ {n:'Pomme',k:['pomme'],kc:52,p:0.3,c:14,f:0.2,u:150,t:'warn'},
+ {n:'Fraises',k:['fraise'],kc:32,p:0.7,c:7.7,f:0.3,u:12,t:'warn'},
+ {n:'Framboises',k:['framboise'],kc:52,p:1.2,c:5.4,f:0.7,u:5,t:'warn'},
+ {n:'Myrtilles',k:['myrtille'],kc:57,p:0.7,c:14,f:0.3,u:2,t:'warn'},
+ {n:'Orange',k:['orange'],kc:47,p:0.9,c:12,f:0.1,u:150,t:'ban'},
+ {n:'Citron',k:['citron'],kc:29,p:1.1,c:3,f:0.3,u:10,t:'ok'},
+ {n:'Dattes',k:['datte'],kc:282,p:2.5,c:75,f:0.4,u:8,t:'ban'},
+ {n:'Raisin',k:['raisin'],kc:69,p:0.7,c:18,f:0.2,u:5,t:'ban'},
+ {n:'Pastèque',k:['pastèque','pasteque'],kc:30,p:0.6,c:7.5,f:0.2,u:200,t:'warn'},
+ // --- Laitiers (INTERDITS)
+ {n:'Lait',k:['lait'],kc:46,p:3.3,c:4.8,f:1.5,u:250,t:'ban'},
+ {n:'Yaourt nature',k:['yaourt','yogourt'],kc:60,p:4,c:5,f:3,u:125,t:'ban'},
+ {n:'Skyr',k:['skyr'],kc:60,p:11,c:4,f:0.2,u:150,t:'ban'},
+ {n:'Fromage blanc 0%',k:['fromage blanc'],kc:46,p:8,c:4,f:0.1,u:100,t:'ban'},
+ {n:'Fromage (emmental)',k:['fromage','emmental','gruyère','comté','cheddar'],kc:380,p:28,c:0,f:29,u:30,t:'ban'},
+ {n:'Mozzarella',k:['mozzarella'],kc:250,p:18,c:2,f:19,u:125,t:'ban'},
+ {n:'Crème fraîche',k:['crème','creme'],kc:300,p:2.4,c:3,f:30,u:15,t:'ban'},
+ // --- Boissons
+ {n:'Eau',k:['eau'],kc:0,p:0,c:0,f:0,u:250,t:'ok'},
+ {n:'Café noir',k:['café','cafe','expresso','espresso'],kc:2,p:0.1,c:0,f:0,u:60,t:'ok'},
+ {n:'Thé vert',k:['thé','the vert','tisane','infusion'],kc:1,p:0,c:0,f:0,u:250,t:'ok'},
+ {n:'Coca Zéro',k:['coca zero','coca zéro','pepsi max','soda zéro','zéro'],kc:0.4,p:0,c:0,f:0,u:330,t:'warn'},
+ {n:'Coca-Cola',k:['coca','soda','canette'],kc:42,p:0,c:10.6,f:0,u:330,t:'ban'},
+ {n:'Jus d\'orange',k:['jus'],kc:45,p:0.7,c:10,f:0.2,u:250,t:'ban'},
+ {n:'Boisson énergisante',k:['red bull','monster','energy'],kc:45,p:0,c:11,f:0,u:250,t:'ban'},
+ {n:'Eau gazeuse',k:['eau gazeuse','perrier','badoit'],kc:0,p:0,c:0,f:0,u:330,t:'warn'},
+ {n:'Bouillon dégraissé',k:['bouillon'],kc:5,p:0.5,c:0.5,f:0.2,u:250,t:'warn'},
+ // --- Sucré / snacks
+ {n:'Chocolat noir 85%',k:['chocolat noir','chocolat'],kc:600,p:10,c:20,f:50,u:10,t:'warn'},
+ {n:'Barre protéinée',k:['barre protéinée','barre proteinee','barre'],kc:370,p:30,c:30,f:12,u:60,t:'warn'},
+ {n:'Gâteau / viennoiserie',k:['croissant','gâteau','gateau','viennoiserie','pain au chocolat','brioche'],kc:420,p:7,c:48,f:22,u:60,t:'ban'},
+ {n:'Biscuits',k:['biscuit','cookie','gaufrette'],kc:480,p:6,c:65,f:22,u:10,t:'ban'},
+ {n:'Bonbons',k:['bonbon','haribo'],kc:340,p:6,c:77,f:0,u:5,t:'ban'},
+ {n:'Glace',k:['glace'],kc:210,p:3.5,c:25,f:11,u:80,t:'ban'},
+ {n:'Chips',k:['chips'],kc:536,p:6,c:53,f:34,u:30,t:'ban'},
+ {n:'Gelée zéro',k:['gelée','jelly'],kc:5,p:1,c:0,f:0,u:100,t:'ok'},
+ {n:'Chewing-gum sans sucre',k:['chewing','gum'],kc:200,p:0,c:0,f:0,u:1.5,t:'ok'},
+ {n:'Édulcorant',k:['édulcorant','stevia','sucralose'],kc:0,p:0,c:0,f:0,u:1,t:'ok'},
+ {n:'Sucre',k:['sucre'],kc:400,p:0,c:100,f:0,u:5,t:'ban'},
+ {n:'Miel',k:['miel'],kc:304,p:0.3,c:82,f:0,u:10,t:'ban'},
+ // --- Condiments
+ {n:'Moutarde',k:['moutarde'],kc:66,p:4,c:5,f:3,u:10,t:'warn'},
+ {n:'Sauce soja',k:['soja','sauce soja'],kc:53,p:8,c:5,f:0,u:10,t:'ban'},
+ {n:'Ketchup',k:['ketchup'],kc:110,p:1.2,c:26,f:0.1,u:15,t:'ban'},
+ {n:'Épices / herbes',k:['épice','epice','paprika','curry','cumin','herbe','persil','ail'],kc:250,p:10,c:10,f:5,u:2,t:'ok'},
+ {n:'Vinaigre',k:['vinaigre'],kc:20,p:0,c:0.5,f:0,u:10,t:'ok'},
+ {n:'Sel',k:['sel'],kc:0,p:0,c:0,f:0,u:1,t:'warn'},
+ // --- Végétal protéiné
+ {n:'Tofu ferme',k:['tofu'],kc:145,p:15,c:2,f:8.7,u:100,t:'ok'},
+ {n:'Tempeh',k:['tempeh'],kc:195,p:20,c:8,f:11,u:100,t:'warn'},
+ {n:'Edamame',k:['edamame'],kc:121,p:12,c:9,f:5,u:100,t:'warn'},
+ {n:'Seitan',k:['seitan'],kc:120,p:25,c:4,f:2,u:100,t:'ok'},
+ // --- Fast-food / plats
+ {n:'Big Mac',k:['big mac'],kc:257,p:12,c:20,f:13,u:215,t:'ban'},
+ {n:'Burger (fast-food)',k:['burger','hamburger','cheeseburger'],kc:260,p:13,c:28,f:11,u:120,t:'ban'},
+ {n:'Nuggets',k:['nugget'],kc:280,p:15,c:17,f:17,u:17,t:'ban'},
+ {n:'Pizza',k:['pizza'],kc:266,p:11,c:33,f:10,u:110,t:'ban'},
+ {n:'Kebab complet',k:['kebab','tacos','tacos français'],kc:230,p:12,c:22,f:11,u:400,t:'ban'},
+ {n:'Sushi (pièce)',k:['sushi','maki'],kc:150,p:6,c:28,f:1.5,u:30,t:'ban'},
+ {n:'Sashimi saumon',k:['sashimi'],kc:180,p:20,c:0,f:11,u:15,t:'ok'},
+ {n:'Poulet rôti (KFC/grill sans peau)',k:['poulet grillé','poulet roti','poulet rôti','kfc'],kc:190,p:28,c:0,f:8,u:150,t:'ok'},
+ {n:'Salade César sans croûtons',k:['césar','cesar'],kc:110,p:9,c:3,f:7,u:300,t:'warn'},
+ {n:'Sandwich jambon-beurre',k:['sandwich'],kc:270,p:12,c:32,f:10,u:250,t:'ban'},
+ {n:'Omelette 3 œufs nature',k:['omelette 3'],kc:150,p:12,c:1,f:11,u:180,t:'ok'},
+ {n:'Poke bowl sans riz',k:['poke'],kc:120,p:12,c:4,f:6,u:350,t:'ok'},
+ {n:'Brochette de poulet',k:['brochette','yakitori'],kc:170,p:27,c:2,f:6,u:80,t:'ok'},
+ {n:'Chili sans haricots',k:['chili'],kc:150,p:16,c:4,f:8,u:300,t:'ok'},
+ // --- Recettes maison type
+ {n:'Crêpe protéinée (blancs+whey)',k:['crêpe','crepe','pancake'],kc:180,p:30,c:3,f:4,u:120,t:'ok'},
+ {n:'Muffin œuf-épinards',k:['muffin'],kc:110,p:10,c:2,f:7,u:60,t:'ok'},
+];
+const BAN_DAIRY = ['Lait','Yaourt nature','Skyr','Fromage blanc 0%','Fromage (emmental)','Mozzarella','Crème fraîche','Beurre'];
+
+/* =====================================================================
+   3. EMPLOI DU TEMPS PAR DÉFAUT (modifiable dans l'onglet Plan)
+   ===================================================================== */
+const DEFAULT_SCHEDULE = {
+  1:{wake:'07:00',dep:'07:50',label:'Fac - cours L2 Gestion'},
+  2:{wake:'07:00',dep:'07:50',label:'Fac - cours L2 Gestion'},
+  3:{wake:'07:30',dep:'08:20',label:'Fac - cours'},
+  4:{wake:'07:00',dep:'07:50',label:'Fac - cours L2 Gestion'},
+  5:{wake:'07:30',dep:'08:20',label:'Fac - cours'},
+  6:{wake:'08:30',dep:'',label:'Repos / boxe maison'},
+  0:{wake:'09:00',dep:'',label:'Repos'}
+};
+const EXTRA_DEPS_DEFAULT = { 1:'17:45', 3:'17:45', 5:'17:45' }; // départs entraînement club (optionnels)
+
+/* =====================================================================
+   4. STATE + localStorage
+   ===================================================================== */
+const pad = n => String(n).padStart(2,'0');
+const dKey = (d=new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const hm = (d=new Date()) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fr = (n,dec=1) => Number(n).toFixed(dec).replace('.',',');
+const $ = id => document.getElementById(id);
+
+function defaultState(){
+  return {
+    weights: [], // {date:'YYYY-MM-DD', time:'HH:MM', type:'matin'|'soir', kg}
+    days: {},    // key -> {meals:[], water:0, workouts:{}, extra:[], waterLog:[]}
+    schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
+    extraDeps: JSON.parse(JSON.stringify(EXTRA_DEPS_DEFAULT)),
+    recipes: [],
+    chat: [],
+    ai: { provider:'local', key:'', model:'' },
+    tts: false,
+    firedAlerts: {}
+  };
+}
+let S;
+function load(){
+  try { S = Object.assign(defaultState(), JSON.parse(localStorage.getItem(STORE_KEY)||'{}')); }
+  catch(e){ S = defaultState(); }
+}
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e){ toast('Sauvegarde impossible'); } }
+function today(){
+  const k = dKey();
+  if(!S.days[k]) S.days[k] = {meals:[], water:0, waterLog:[], workouts:{}, extra:[]};
+  return S.days[k];
+}
+
+/* =====================================================================
+   5. CALCULS
+   ===================================================================== */
+function totals(day=today()){
+  return day.meals.reduce((a,m)=>({kc:a.kc+m.kc,p:a.p+m.p,c:a.c+m.c,f:a.f+m.f}),{kc:0,p:0,c:0,f:0});
+}
+function lastWeight(type){
+  const arr = S.weights.filter(w=>!type||w.type===type).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  return arr.length?arr[arr.length-1]:null;
+}
+function currentWeight(){ const w = lastWeight(); return w?w.kg:PROFILE.startWeight; }
+function targetAt(date){
+  const t = date.getTime();
+  const s = new Date(2026,10,15).getTime(), w = new Date(2026,10,22).getTime(), f = new Date(2026,11,12).getTime();
+  if(t<=s) return PROFILE.startWeight;
+  if(t<=w) return PROFILE.startWeight - (PROFILE.startWeight-PROFILE.w1Target)*(t-s)/(w-s);
+  if(t<=f) return PROFILE.w1Target - (PROFILE.w1Target-PROFILE.safeTarget)*(t-w)/(f-w);
+  return PROFILE.safeTarget;
+}
+function bmr(kg=currentWeight()){ return 10*kg + 6.25*PROFILE.height - 5*PROFILE.age + 5; }
+function tdeeBase(){ return Math.round(bmr()*1.45); }
+const WK_ITEMS = [
+  {id:'p_norm',n:'20 pompes normales',kc:12},
+  {id:'p_diam',n:'20 pompes diamant',kc:12},
+  {id:'p_large',n:'20 pompes larges',kc:12},
+  {id:'p_serr',n:'20 pompes serrées',kc:12},
+  {id:'p_pique',n:'20 pompes piquées (pike)',kc:12},
+  {id:'squat',n:'Squats (4×20)',kc:35},
+  {id:'fentes',n:'Fentes (4×12/jambe)',kc:35},
+];
+function pushupsDone(day=today()){ return WK_ITEMS.filter(i=>day.workouts[i.id]).length; }
+function hiitDone(day=today()){ return !!day.workouts.hiit || day.extra.some(e=>/shadow|hiit/i.test(e.type)); }
+function sportKcal(day=today()){
+  let k = WK_ITEMS.reduce((a,i)=>a+(day.workouts[i.id]?i.kc:0),0);
+  if(day.workouts.hiit) k += day.workouts.hiitKcal||190;
+  k += day.extra.reduce((a,e)=>a+e.kc,0);
+  return Math.round(k);
+}
+
+function waterPlan(date=new Date()){
+  const f = new Date(2026,11,12); const diff = Math.round((new Date(date.getFullYear(),date.getMonth(),date.getDate())-f)/864e5);
+  // diff = -7..-1 fight week
+  if(diff>=-7 && diff<=-3) return {goal:5500,label:'WATER LOADING (J'+diff+') : 5–6 L. Sel normal jusqu\'à J-4, coupé dès J-3.',min:5000,max:6000,salt:diff<=-3?'ZÉRO SEL':'normal'};
+  if(diff===-2) return {goal:2000,label:'J-2 : réduction à 2 L. Zéro sel.',min:2000,max:2000,salt:'ZÉRO SEL'};
+  if(diff===-1) return {goal:500,label:'J-1 : 0,5 L en petites gorgées jusqu\'à la pesée. Zéro sel. Réhydratation dès la pesée validée.',min:500,max:500,salt:'ZÉRO SEL'};
+  if(diff===0) return {goal:3000,label:'JOUR DU COMBAT : réhydrate-toi progressivement (eau + électrolytes).',min:3000,max:4000,salt:'électrolytes'};
+  return {goal:3000,label:'Standard : 2 bouteilles (3,0 L) minimum, 2,5 bouteilles (3,75 L) pour drainer.',min:3000,max:3750,salt:'modéré'};
+}
+function stomachLoad(){
+  // estimation du poids en transit : nourriture des ~10 dernières heures + eau des ~3 dernières heures
+  const d = today(); const now = Date.now(); let food=0, water=0;
+  d.meals.forEach(m=>{ const age=(now-m.ts)/36e5; if(age<12) food += (m.g||0)*Math.max(0,1-age/12); });
+  (d.waterLog||[]).forEach(w=>{ const age=(now-w.ts)/36e5; if(age<4) water += w.ml*Math.max(0,1-age/4); });
+  return {foodKg:food/1000, waterKg:water/1000, total:(food+water)/1000};
+}
+function predictMorning(){
+  const evening = lastWeight();
+  const t = totals(); const sp = sportKcal();
+  const nightLoss = 0.6 + (new Date().getHours()>=20?0:0.15); // respiration + urine nocturne ~0,5-0,9 kg
+  const defKg = Math.max(0,(tdeeBase()+sp-t.kc))/7700;
+  let base;
+  if(evening && evening.date===dKey()){
+    base = evening.kg - nightLoss - (evening.type==='soir'?0:0.2);
+    if(evening.type==='matin'){ // on extrapole depuis le matin
+      base = evening.kg - defKg - (t.c<=PROFILE.carbs?0.1:-0.3);
+    }
+  } else {
+    base = currentWeight() - defKg - 0.15;
+  }
+  if(t.c>PROFILE.carbs) base += (t.c-PROFILE.carbs)*3/1000; // 1 g glucide stocké retient ~3 g d'eau
+  return Math.round(base*10)/10;
+}
+function zones(){
+  const d = today(), t = totals(d), wp = waterPlan();
+  const carbScore = t.c<=PROFILE.carbs?1:Math.max(0,1-(t.c-PROFILE.carbs)/40);
+  const dairy = d.meals.some(m=>m.dairy);
+  const waterScore = Math.min(1,d.water/wp.min);
+  const z1 = Math.round((carbScore*0.4 + (dairy?0:0.25) + waterScore*0.35)*100);
+  const protScore = Math.min(1,t.p/PROFILE.prot);
+  const wkScore = pushupsDone(d)/WK_ITEMS.length;
+  const z2 = Math.round((protScore*0.65 + wkScore*0.35)*100);
+  return {z1,z2,dairy,carbScore,waterScore,protScore,wkScore};
+}
+
+/* =====================================================================
+   6. HORAIRES / DÉPART
+   ===================================================================== */
+function depsForDay(dow){
+  const out=[]; const s=S.schedule[dow];
+  if(s&&s.dep) out.push({time:s.dep,label:s.label||'Départ'});
+  if(S.extraDeps[dow]) out.push({time:S.extraDeps[dow],label:'Départ entraînement boxe'});
+  return out.sort((a,b)=>a.time.localeCompare(b.time));
+}
+function nextDeparture(){
+  const now = new Date();
+  for(let i=0;i<8;i++){
+    const d = new Date(now); d.setDate(d.getDate()+i);
+    for(const dep of depsForDay(d.getDay())){
+      const [h,m]=dep.time.split(':').map(Number); const t=new Date(d); t.setHours(h,m,0,0);
+      if(t>now) return {date:t, ...dep};
+    }
+  }
+  return null;
+}
+function minus10(time){ const [h,m]=time.split(':').map(Number); const t=h*60+m-10; return pad(Math.floor((t+1440)%1440/60))+':'+pad((t+1440)%60); }
+
+/* =====================================================================
+   7. ACTIONS (Function Calling)
+   ===================================================================== */
+function foodImpact(it){
+  if(it.dairy) return {lbl:'LAITAGE ⛔',cls:'bg-[#ff3b4733] text-[var(--red)]'};
+  if(it.c>12) return {lbl:'GLUCIDES ⚠️',cls:'bg-[#ffc53333] text-[var(--ylw)]'};
+  if(it.p>=25 && it.c<=5) return {lbl:'TOP CUT 🔥',cls:'bg-[#22e08a33] text-[var(--grn)]'};
+  if(it.kc>500) return {lbl:'LOURD',cls:'bg-[#ffc53333] text-[var(--ylw)]'};
+  return {lbl:'OK',cls:'bg-[#38b6ff33] text-[var(--blu)]'};
+}
+const ACTIONS = {
+  ADD_MEAL(a){
+    const d = today();
+    const items = (a.items||[]).map(i=>({name:i.name,g:Number(i.g||i.grams||0),kc:Number(i.kcal||i.kc||0),p:Number(i.p||i.protein||0),c:Number(i.c||i.carbs||0),f:Number(i.f||i.fat||0),dairy:!!i.dairy}));
+    if(!items.length && a.kcal!=null) items.push({name:a.name||'Repas',g:Number(a.g||0),kc:+a.kcal,p:+(a.p||a.protein||0),c:+(a.c||a.carbs||0),f:+(a.f||a.fat||0),dairy:!!a.dairy});
+    if(!items.length) return 'Aucun aliment reconnu';
+    const meal = {
+      id: Date.now()+Math.random(), ts: Date.now(), time: a.time||hm(),
+      name: a.name || items.map(i=>i.name).join(' + '),
+      items, g: items.reduce((s,i)=>s+i.g,0),
+      kc: Math.round(items.reduce((s,i)=>s+i.kc,0)), p: +items.reduce((s,i)=>s+i.p,0).toFixed(1),
+      c: +items.reduce((s,i)=>s+i.c,0).toFixed(1), f: +items.reduce((s,i)=>s+i.f,0).toFixed(1),
+      dairy: items.some(i=>i.dairy)
+    };
+    d.meals.push(meal); d.meals.sort((x,y)=>x.time.localeCompare(y.time));
+    if(a.saveRecipe) S.recipes.push({name:meal.name,items});
+    save(); renderAll();
+    return meal;
+  },
+  ADD_WATER(a){
+    const ml = Math.round(Number(a.ml||a.amount_ml||0));
+    if(!ml) return 0;
+    const d = today(); d.water = Math.max(0,d.water+ml);
+    if(ml>0) d.waterLog.push({ts:Date.now(),ml});
+    save(); renderAll(); return d.water;
+  },
+  LOG_WEIGHT(a){
+    const kg = Number(String(a.kg).replace(',','.'));
+    if(!(kg>40&&kg<150)) return null;
+    const h = new Date().getHours();
+    const type = a.type || (h<12?'matin':'soir');
+    S.weights = S.weights.filter(w=>!(w.date===dKey()&&w.type===type));
+    S.weights.push({date:dKey(),time:hm(),type,kg});
+    save(); renderAll(); return {kg,type};
+  },
+  LOG_WORKOUT(a){
+    const d = today(); const list=[];
+    (a.items||[]).forEach(id=>{ if(WK_ITEMS.find(i=>i.id===id)){ d.workouts[id]=true; list.push(id);} });
+    if(a.pushups_all){ ['p_norm','p_diam','p_large','p_serr','p_pique'].forEach(id=>d.workouts[id]=true); list.push('pompes'); }
+    if(a.hiit){ d.workouts.hiit=true; d.workouts.hiitKcal = d.workouts.hiitKcal||190; list.push('hiit'); }
+    if(a.type && a.minutes){
+      const met = {boxe:9.5,shadow:8,sparring:10,corde:11,course:9,marche:3.8,muscu:5,sac:9,vélo:7,abdos:4}[a.type]||7;
+      const kc = Math.round(met*currentWeight()*a.minutes/60);
+      d.extra.push({type:a.type,min:a.minutes,kc,time:hm()}); list.push(a.type+' '+a.minutes+'min');
+    }
+    save(); renderAll(); return list;
+  }
+};
+function runActions(actions){
+  const log=[];
+  (actions||[]).forEach(a=>{
+    const fn = ACTIONS[a.type||a.action]; if(!fn) return;
+    try{ const r = fn(a.data||a.args||a); log.push({type:a.type||a.action,r}); }catch(e){ console.error(e); }
+  });
+  if(log.length) toast('✅ '+log.map(l=>l.type).join(', '));
+  return log;
+}
+
+/* =====================================================================
+   8. PARSEUR LOCAL D'ALIMENTS
+   ===================================================================== */
+const NUMWORDS = {'un':1,'une':1,'deux':2,'trois':3,'quatre':4,'cinq':5,'six':6,'sept':7,'huit':8,'neuf':9,'dix':10,'douze':12,'demi':0.5,'demie':0.5,'quart':0.25};
+function norm(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/œ/g,'oe').replace(/’/g,"'"); }
+const FOOD_INDEX = FOODS.flatMap(f=>f.k.map(k=>({key:norm(k),f}))).sort((a,b)=>b.key.length-a.key.length);
+function findFood(txt){
+  const t = norm(txt);
+  for(const e of FOOD_INDEX){
+    const re = new RegExp('(^|[^a-z])'+e.key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(s|x)?([^a-z]|$)');
+    if(re.test(t)) return e.f;
+  }
+  return null;
+}
+function parseFoods(text){
+  let t = norm(text).replace(/(\d),(\d)/g,'$1.$2');
+  const parts = t.split(/\s*(?:,|;|\+| et | avec | puis | plus |\n)\s*/).filter(Boolean);
+  const out=[];
+  for(const part of parts){
+    const f = findFood(part); if(!f) continue;
+    let qty=null, grams=null;
+    let m = part.match(/(\d+(?:\.\d+)?)\s*(kg|g|gr|grammes?|ml|cl|l|litres?)\b/);
+    if(m){
+      const v=parseFloat(m[1]); const u=m[2];
+      grams = u==='kg'?v*1000: u==='cl'?v*10: (u==='l'||u.startsWith('litre'))?v*1000: v;
+    } else {
+      m = part.match(/(\d+(?:\.\d+)?)/);
+      if(m) qty=parseFloat(m[1]);
+      else { for(const w in NUMWORDS){ if(new RegExp('(^|\\s)'+w+'(\\s|$)').test(part)){ qty=NUMWORDS[w]; break; } } }
+      if(/dose|scoop|mesure/.test(part) && qty==null) qty=1;
+      if(/demi.?bouteille/.test(part)) { grams=750; }
+      if(/bouteille/.test(part) && grams==null) { grams=(qty||1)*1500; qty=null; }
+      if(/cuill?ere a soupe|c\.?a\.?s|cas\b/.test(part)) grams=(qty||1)*(f.f>80?10:15);
+      if(/cuill?ere a cafe|c\.?a\.?c/.test(part)) grams=(qty||1)*5;
+      if(/poignee/.test(part)) grams=(qty||1)*30;
+      if(/assiette/.test(part)) grams=(qty||1)*250;
+      if(/boite/.test(part) && grams==null) grams=(qty||1)*f.u;
+      if(grams==null) grams=(qty||1)*f.u;
+    }
+    const r = grams/100;
+    out.push({name:f.n,g:Math.round(grams),kc:Math.round(f.kc*r),p:+(f.p*r).toFixed(1),c:+(f.c*r).toFixed(1),f:+(f.f*r).toFixed(1),dairy:BAN_DAIRY.includes(f.n),tag:f.t});
+  }
+  return out;
+}
+function parseWater(text){
+  const t = norm(text).replace(/(\d),(\d)/g,'$1.$2');
+  if(!/(bu|boire|bois|bouteille|eau|litre|ml|cl|gorg)/.test(t)) return 0;
+  if(/(mange|manger)/.test(t) && !/eau|bouteille/.test(t)) return 0;
+  let m;
+  if(/demi.?(bouteille|litre)/.test(t)) return /bouteille/.test(t)?750:500;
+  if(m=t.match(/(\d+(?:\.\d+)?)\s*(?:e|er|ere|eme)?\s*bouteilles?/)) {
+    if(/(fini|termine|acheve)\s*(ma|la)?\s*\d/.test(t)) return 1500; // "j'ai fini ma 1ère bouteille" = +1,5L
+    return parseFloat(m[1])*1500;
+  }
+  if(/(premiere|deuxieme|seconde|troisieme|une|ma|la)\s+bouteille/.test(t)) return 1500;
+  if(m=t.match(/(\d+(?:\.\d+)?)\s*(ml)\b/)) return parseFloat(m[1]);
+  if(m=t.match(/(\d+(?:\.\d+)?)\s*(cl)\b/)) return parseFloat(m[1])*10;
+  if(m=t.match(/(\d+(?:\.\d+)?)\s*(l|litres?)\b/)) return parseFloat(m[1])*1000;
+  if(/un litre/.test(t)) return 1000;
+  if(/verre/.test(t)) { m=t.match(/(\d+)\s*verre/); return (m?parseInt(m[1]):1)*250; }
+  return 0;
+}
+function parseWeight(text){
+  const t = norm(text).replace(/(\d),(\d)/g,'$1.$2');
+  if(!/(pese|pesee|balance|kg|kilo|poids)/.test(t)) return null;
+  const m = t.match(/(\d{2,3}(?:\.\d+)?)\s*(kg|kilo)?/);
+  if(!m) return null; const kg=parseFloat(m[1]); if(kg<50||kg>130) return null;
+  const type = /soir/.test(t)?'soir':/matin|jeun|reveil/.test(t)?'matin':(new Date().getHours()<12?'matin':'soir');
+  return {kg,type};
+}
+function parseWorkout(text){
+  const t = norm(text); const a={items:[]};
+  if(!/(fait|fini|termine|boucle|valide|enchaine|j'ai)/.test(t)) return null;
+  if(/pompes?/.test(t)){
+    let any=false;
+    if(/diamant/.test(t)){a.items.push('p_diam');any=true;}
+    if(/large/.test(t)){a.items.push('p_large');any=true;}
+    if(/serr/.test(t)){a.items.push('p_serr');any=true;}
+    if(/pique|pike/.test(t)){a.items.push('p_pique');any=true;}
+    if(/normal/.test(t)){a.items.push('p_norm');any=true;}
+    if(!any) a.pushups_all=true;
+  }
+  if(/squat/.test(t)) a.items.push('squat');
+  if(/fente/.test(t)) a.items.push('fentes');
+  if(/circuit|toute? (ma|la) seance|tout le circuit/.test(t)){ a.pushups_all=true; a.items.push('squat','fentes'); }
+  if(/hiit/.test(t)) a.hiit=true;
+  const mm = t.match(/(\d+)\s*(min|minutes|mn|')/);
+  const hh = t.match(/(\d+(?:\.\d+)?)\s*h(eure)?/);
+  const minutes = mm?parseInt(mm[1]):hh?Math.round(parseFloat(hh[1])*60):null;
+  const types = [['shadow','shadow'],['sparring','sparring'],['corde','corde'],['sac','sac'],['boxe','boxe'],['course','course'],['footing','course'],['marche','marche'],['velo','vélo'],['abdos','abdos'],['gainage','abdos'],['muscu','muscu']];
+  for(const [k,v] of types){ if(new RegExp(k).test(t)){ if(v==='shadow' && /hiit/.test(t)) break; a.type=v; a.minutes=minutes||(v==='boxe'?60:15); break; } }
+  if(!a.items.length && !a.pushups_all && !a.hiit && !a.type) return null;
+  return a;
+}
+
+/* =====================================================================
+   9. CONTEXTE TEMPS RÉEL (RAG LOCAL)
+   ===================================================================== */
+function buildContext(){
+  const now = new Date(), d = today(), t = totals(d), wp = waterPlan();
+  const lm = lastWeight('matin'), ls = lastWeight('soir'), cur = currentWeight();
+  const nd = nextDeparture();
+  const daysToWeigh = Math.ceil((WEIGH_DATE-now)/864e5), daysToFight = Math.ceil((FIGHT_DATE-now)/864e5);
+  const meals = d.meals.map(m=>`- ${m.time} ${m.name} : ${m.kc} kcal, P${m.p} G${m.c} L${m.f}${m.dairy?' (LAITAGE!)':''}`).join('\n')||'- (rien mangé pour l\'instant)';
+  const hist = S.weights.slice(-10).map(w=>`${w.date} ${w.type} ${w.kg}kg`).join(' | ')||'aucune';
+  const wk = WK_ITEMS.map(i=>`${i.n}: ${d.workouts[i.id]?'FAIT':'non'}`).join(', ');
+  return `=== ÉTAT EN TEMPS RÉEL (${DAYS[now.getDay()]} ${now.toLocaleDateString('fr-FR')} ${hm(now)}) ===
+Athlète : Chahyn, 19 ans, 182 cm, boxeur, L2 Gestion, entraînement maison au poids du corps. Mange toujours 10 min avant de partir.
+Physique : haut du corps sec et musclé, abdos visibles ; seule zone à travailler = bas du ventre (légère graisse sous-ombilicale + eau sous-cutanée + poids digestif).
+Poids départ 15/11 : 80,0 kg. Poids actuel : ${fr(cur)} kg.
+Dernière pesée matin : ${lm?lm.date+' '+lm.kg+' kg':'aucune'} | Dernière pesée soir : ${ls?ls.date+' '+ls.kg+' kg':'aucune'}
+Historique : ${hist}
+Courbe cible aujourd'hui : ${fr(targetAt(now))} kg (écart ${cur-targetAt(now)>=0?'+':''}${fr(cur-targetAt(now),2)} kg)
+Écart objectif S1 (77,0 kg, pesée club 22/11, dans ${daysToWeigh} j) : ${fr(cur-77,1)} kg à perdre
+Écart objectif combat (74,5 kg, 12/12, dans ${daysToFight} j) : ${fr(cur-74.5,1)} kg à perdre
+Prédiction poids demain matin à jeun : ${fr(predictMorning())} kg
+Poids en transit estimé (estomac/intestins) : ${fr(stomachLoad().total,2)} kg
+--- Nutrition aujourd'hui ---
+Calories : ${t.kc} / 1800 (reste ${1800-t.kc})
+Protéines : ${t.p.toFixed(0)} / 190 g (reste ${(190-t.p).toFixed(0)})
+Glucides : ${t.c.toFixed(0)} / 30 g max (reste ${(30-t.c).toFixed(0)})
+Lipides : ${t.f.toFixed(0)} / 55 g (reste ${(55-t.f).toFixed(0)})
+Repas du jour :
+${meals}
+--- Hydratation ---
+Eau : ${(d.water/1000).toFixed(2)} L = ${(d.water/1500).toFixed(2)} bouteilles de 1,5 L. Objectif du jour : ${wp.goal/1000} L. ${wp.label} Sel : ${wp.salt}.
+--- Entraînement ---
+${wk}. HIIT shadow 15 min : ${d.workouts.hiit?'FAIT':'non'}. Autres : ${d.extra.map(e=>e.type+' '+e.min+'min ('+e.kc+'kcal)').join(', ')||'aucun'}
+Dépense estimée : base ${tdeeBase()} + sport ${sportKcal()} kcal. Déficit du jour : ${tdeeBase()+sportKcal()-t.kc} kcal.
+--- Planning ---
+Prochain départ : ${nd?DAYS[nd.date.getDay()]+' '+nd.time+' ('+nd.label+') → repas à '+minus10(nd.time):'aucun prévu'}
+Réveil demain : ${(S.schedule[(now.getDay()+1)%7]||{}).wake||'?'}
+Règles : 1800 kcal, 190 g P, ≤30 g G (légumes verts uniquement), 55 g L, ZÉRO laitage, zéro pâtes/riz/pain/avoine/sucre.`;
+}
+const SYSTEM_PROMPT = () => `Tu es "Coach Cut", préparateur physique de boxe anglaise et nutritionniste du sport de haut niveau, disponible 24h/24 pour Chahyn. Tu réponds en français, tutoiement, ton direct de coach de coin de ring, zéro blabla, phrases courtes, chiffres précis tirés du contexte. Tu maîtrises : physiologie de la perte de poids (glycogène, eau, sodium, transit), water cut, boxe (technique, shadow, combinaisons, cardio, gestion de combat), musculation au poids du corps, récupération, sommeil, faim, stress, recettes protéinées sans laitage et sans glucides.
+
+SÉCURITÉ (non négociable) : jamais de diurétiques, laxatifs, crachats, combinaisons plastique pour courir, sauna prolongé (>15 min, toujours avec quelqu'un), ni jeûne sec de plus de 24h. Si Chahyn décrit vertiges, palpitations, crampes sévères, confusion, urines très foncées ou perte >1,5 % par jour hors fight week : tu lui dis de stopper, de boire et de consulter. Rappelle la réhydratation (eau + électrolytes + glucides) juste après la pesée officielle.
+
+${buildContext()}
+
+FUNCTION CALLING : si le message de Chahyn rapporte quelque chose qu'il a mangé, bu, pesé ou fait, tu DOIS ajouter à la toute fin de ta réponse un bloc unique au format exact :
+\`\`\`actions
+[{"type":"ADD_MEAL","data":{"name":"Nom court","items":[{"name":"Blanc de poulet","g":200,"kcal":330,"p":62,"c":0,"f":7,"dairy":false}]}},
+ {"type":"ADD_WATER","data":{"ml":1500}},
+ {"type":"LOG_WEIGHT","data":{"kg":78.8,"type":"matin"}},
+ {"type":"LOG_WORKOUT","data":{"items":["p_norm","p_diam","p_large","p_serr","p_pique","squat","fentes"],"hiit":false,"type":"shadow","minutes":15}}]
+\`\`\`
+N'inclus que les actions réellement déclarées (pas d'action pour une simple question). Valeurs nutritionnelles réalistes (base Ciqual). "J'ai fini ma 1ère bouteille" = 1500 ml. Après une action, dis ce qu'il reste (kcal / protéines / glucides / eau). N'écris jamais le bloc actions pour un aliment hypothétique.`;
+
+/* =====================================================================
+   10. APPELS LLM (Claude / OpenAI / Gemini / Groq)
+   ===================================================================== */
+const PROVIDERS = {
+  local:{name:'Moteur local (hors-ligne)',models:['expert-local']},
+  anthropic:{name:'Claude (Anthropic)',models:['claude-sonnet-5-5','claude-opus-5-5','claude-haiku-5-5']},
+  openai:{name:'OpenAI',models:['gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini']},
+  gemini:{name:'Google Gemini',models:['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash']},
+  groq:{name:'Groq',models:['llama-3.3-70b-versatile','llama-3.1-8b-instant']}
+};
+function historyMsgs(n=12){
+  return S.chat.slice(-n).filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role,content:m.raw||m.text}));
+}
+async function callLLM(userText){
+  const {provider,key,model} = S.ai; const sys = SYSTEM_PROMPT();
+  const hist = historyMsgs(); hist.push({role:'user',content:userText});
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(),45000);
+  try{
+    let res, data, text;
+    if(provider==='anthropic'){
+      res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:model||'claude-sonnet-5-5',max_tokens:1500,system:sys,messages:mergeRoles(hist)})});
+      data = await res.json(); if(!res.ok) throw new Error(data.error?.message||res.status);
+      text = data.content.filter(c=>c.type==='text').map(c=>c.text).join('\n');
+    } else if(provider==='openai' || provider==='groq'){
+      const url = provider==='openai'?'https://api.openai.com/v1/chat/completions':'https://api.groq.com/openai/v1/chat/completions';
+      res = await fetch(url,{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json','authorization':'Bearer '+key},body:JSON.stringify({model:model||(provider==='openai'?'gpt-4o-mini':'llama-3.3-70b-versatile'),temperature:0.5,max_tokens:1500,messages:[{role:'system',content:sys},...hist]})});
+      data = await res.json(); if(!res.ok) throw new Error(data.error?.message||res.status);
+      text = data.choices[0].message.content;
+    } else if(provider==='gemini'){
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model||'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(key)}`;
+      res = await fetch(url,{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:mergeRoles(hist).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{temperature:0.5,maxOutputTokens:1500}})});
+      data = await res.json(); if(!res.ok) throw new Error(data.error?.message||res.status);
+      text = (data.candidates?.[0]?.content?.parts||[]).map(p=>p.text).join('\n');
+    }
+    return text||'';
+  } finally { clearTimeout(to); }
+}
+function mergeRoles(msgs){ // Claude/Gemini exigent une alternance stricte
+  const out=[]; for(const m of msgs){ if(out.length&&out[out.length-1].role===m.role) out[out.length-1].content+='\n'+m.content; else out.push({...m}); }
+  if(out.length && out[0].role!=='user') out.shift(); return out;
+}
+function extractActions(text){
+  let actions=[]; let clean=text;
+  const re = /```(?:actions|json)?\s*(\[[\s\S]*?\])\s*```/i; const m = text.match(re);
+  if(m){ try{ actions = JSON.parse(m[1]); clean = text.replace(m[0],'').trim(); }catch(e){} }
+  else { const m2 = text.match(/<actions>([\s\S]*?)<\/actions>/i); if(m2){ try{actions=JSON.parse(m2[1]); clean=text.replace(m2[0],'').trim();}catch(e){} } }
+  return {actions,clean};
+}
+
+/* =====================================================================
+   11. SUPER-MOTEUR EXPERT LOCAL
+   ===================================================================== */
+function ctx(){
+  const t=totals(), d=today(), cur=currentWeight(), now=new Date();
+  return {t,d,cur,now,rk:1800-t.kc,rp:Math.max(0,190-t.p),rc:Math.max(0,30-t.c),rf:Math.max(0,55-t.f),
+    toW1:cur-77,toF:cur-74.5,target:targetAt(now),wp:waterPlan(),h:now.getHours(),nd:nextDeparture(),
+    pred:predictMorning(),dWeigh:Math.ceil((WEIGH_DATE-now)/864e5),dFight:Math.ceil((FIGHT_DATE-now)/864e5)};
+}
+function statusLine(c){
+  return `📊 Reste : **${c.rk} kcal · ${c.rp.toFixed(0)} g P · ${c.rc.toFixed(0)} g G · ${c.rf.toFixed(0)} g L** · 💧 ${(c.d.water/1000).toFixed(2)}/${c.wp.goal/1000} L`;
+}
+function proteinSuggestion(c){
+  if(c.rp<=5) return 'Quota protéines atteint ✅ — si faim : légumes verts + bouillon.';
+  const g = Math.round(c.rp/0.31);
+  return `Pour boucler tes ${c.rp.toFixed(0)} g de protéines : ~${Math.min(g,400)} g de blanc de poulet, ou ${Math.ceil(c.rp/25)} boîtes de thon, ou ${Math.ceil(c.rp/24)} doses de whey à l'eau.`;
+}
+const RECIPES_TXT = {
+  crepe:`🥞 **Crêpe protéinée zéro glucide zéro laitage** (1 pers.)
+• 4 blancs d'œufs (130 g) + 1 œuf entier
+• 30 g whey (vanille ou neutre)
+• 1 c. à café de cacao maigre ou cannelle, édulcorant, 1 trait d'eau
+• Fouette, poêle anti-adhésive + 1 goutte d'huile d'olive essuyée au sopalin, 2 min/face.
+➡️ ≈ **265 kcal · 44 g P · 3 g G · 7 g L**. Garniture : 10 g beurre de cacahuète = +60 kcal si les lipides le permettent.`,
+  gateau:`🧁 **Gâteau mug protéiné (micro-ondes 90 s)**
+• 30 g whey + 2 œufs + 5 g cacao maigre + ½ c. à café de levure + édulcorant + 2 c. à soupe d'eau
+• Mélange dans un mug, 90 s à 800 W. Laisse reposer 1 min.
+➡️ ≈ **300 kcal · 42 g P · 4 g G · 12 g L**. Zéro laitage, zéro farine.`,
+  muffin:`🥚 **Muffins œufs-épinards-dinde** (6 pièces, prépare la veille)
+• 6 œufs + 100 g blancs + 150 g épinards + 100 g jambon de dinde + épices
+• Moules silicone, 20 min à 180 °C.
+➡️ par muffin ≈ **95 kcal · 10 g P · 1 g G · 5,5 g L**. Parfait à avaler 10 min avant de partir.`,
+  pancake:`🥞 **Pancakes blancs-whey-chia**
+• 150 g blancs + 25 g whey + 5 g chia + cannelle → 3 petits pancakes.
+➡️ ≈ **205 kcal · 38 g P · 2 g G · 3 g L**.`,
+  poulet:`🍗 **Poulet citron-paprika batch cooking** (4 repas)
+• 800 g blancs de poulet, jus de 2 citrons, paprika, ail, 1 c. à soupe huile d'olive. Four 200 °C 22 min.
+• Accompagnement : 600 g haricots verts vapeur.
+➡️ par portion (200 g poulet + 150 g HV) ≈ **385 kcal · 65 g P · 6 g G · 10 g L**.`,
+  omelette:`🍳 **Omelette géante "blanc-vert"**
+• 2 œufs + 200 g blancs + 100 g épinards + champignons + 50 g dinde.
+➡️ ≈ **330 kcal · 46 g P · 4 g G · 12 g L**.`
+};
+const COMBOS = ['Jab-Jab-Direct-Crochet G','1-2-Esquive-2','Double jab-Direct-Uppercut D','Crochet G corps-Crochet G tête-Direct','1-2-3-2 + pas de côté','Jab-Uppercut D-Crochet G-Direct','Rafale 20 directs rapides','Esquive-Remise 3-2','1-1-2 + retrait','Jab corps-Jab tête-Direct','Crochets alternés au corps','Uppercuts en rafale','1-2-Rotation-1-2','Feinte jab-Direct-Crochet','Burpee + 1-2-3'];
+
+const KB = [
+ {id:'faim_nuit', re:/(faim|dalle|craving|fringale|grignot|envie de manger|creux).*(soir|nuit|22h|23h|tard|minuit|lit)|(soir|nuit|22h|23h|tard).*(faim|dalle|fringale)/,
+  a:c=>`🌙 **Dalle du soir — protocole zéro impact balance :**
+1. **Bois 500 ml d'eau + 1 tisane chaude** (thé vert déca, verveine). Attends 10 min : 50 % des fringales disparaissent.
+2. Si toujours faim : **${c.rp>20?'1 dose de whey à l\'eau (+ cannelle)':'150 g de blancs d\'œufs en omelette'}** → ~110 kcal, 24 g P, satiété longue, 0 glucide.
+3. Volume : **concombre / céleri / salade + vinaigre** à volonté (< 30 kcal, poids quasi nul le matin car c'est surtout de l'eau éliminée la nuit).
+4. Évite le salé (rétention) et les grosses quantités de légumes fibreux (poids de transit +300 g).
+${c.rk<150?'⚠️ Tu es presque au plafond : reste sur la tisane + 1 dose de whey max.':''}
+Le matin, ce qui compte c'est le **sodium et les glucides**, pas 100 kcal de protéines.
+${statusLine(c)}`},
+ {id:'faim', re:/(faim|dalle|appetit|couper l.appetit|rassasi|satiet|fringale|craquer|craque)/,
+  a:c=>`🔥 **Couper l'appétit sans glucides :**
+• **Protéines à chaque prise** (30–50 g) → hormone de satiété (PYY) ↑. ${proteinSuggestion(c)}
+• **Eau gazeuse ou plate 500 ml** dès que la faim monte — la soif se déguise souvent en faim.
+• **Café noir / thé vert** le matin et en début d'aprèm (pas après 16h, sinon sommeil = faim le lendemain).
+• **Légumes verts volumineux** : 300 g de courgette ou de salade = 50 kcal.
+• **Chewing-gum sans sucre** à la fac.
+• **Dors 8h** : 1 nuit à 5h = +25 % de ghréline (hormone de la faim).
+• Mange **lentement** même 10 min avant de partir : 2 min de mastication de plus = satiété mieux signalée.
+${statusLine(c)}`},
+ {id:'stagne', re:/(stagn|bouge pas|plateau|bloqu|ne descend|descend pas|remonte|pris du poids|grossi|reprise)/,
+  a:c=>`📉 **Poids qui stagne / remonte — diagnostic :**
+Actuel ${fr(c.cur)} kg vs courbe ${fr(c.target)} kg (${c.cur-c.target>=0?'+':''}${fr(c.cur-c.target,2)} kg).
+Causes classées par probabilité :
+1. **Sodium** (plat préparé, sauce soja, charcuterie, fast-food) → +0,5 à 1,5 kg d'eau pendant 24–48 h.
+2. **Glucides** : aujourd'hui ${c.t.c.toFixed(0)} g. Chaque gramme de glycogène stocké retient ~3 g d'eau.
+3. **Transit** : ${fr(stomachLoad().total,2)} kg estimés dans le tube digestif. Pas allé aux toilettes = +0,5–1 kg.
+4. **Pas assez d'eau** : paradoxe — moins tu bois, plus tu retiens. Tu es à ${(c.d.water/1000).toFixed(1)} L.
+5. **Inflammation musculaire** après une grosse séance : +0,3–0,8 kg pendant 48 h.
+6. **Stress / manque de sommeil** : cortisol → rétention.
+➡️ Action : 3,5 L d'eau demain, sel modéré, glucides < 30 g, coucher avant 23h. Compare toujours **matin à jeun vs matin à jeun**.
+Prévision demain matin : **${fr(c.pred)} kg**.`},
+ {id:'pris_jour', re:/(pris|prendre|gagn).*(entre|ce matin|ce soir|journee|g |grammes|kg)|(matin.*soir|soir.*matin)|pourquoi.*(plus lourd|lourd le soir)/,
+  a:c=>{ const lm=lastWeight('matin'), ls=lastWeight('soir'); const diff = lm&&ls&&lm.date===ls.date?ls.kg-lm.kg:null;
+  return `⚖️ **Variation matin → soir :** ${diff!=null?`aujourd'hui **+${fr(diff,1)} kg**.`:''}
+C'est **100 % normal** : le soir tu portes
+• l'eau bue (${(c.d.water/1000).toFixed(1)} L aujourd'hui) pas encore éliminée,
+• la nourriture en transit (${fr(stomachLoad().total,2)} kg estimés),
+• le sel qui retient l'eau.
+Même sans manger, boire 1,5 L = 1,5 kg sur la balance pendant quelques heures. **Seule la pesée du matin à jeun, après les toilettes, compte.** La nuit tu perds 0,5–1 kg (respiration + urine).
+Prévision demain matin : **${fr(c.pred)} kg**.`}},
+ {id:'nuit', re:/(perdre|perd|perte).*(nuit|dormant|sommeil)|(nuit|dormant).*(perd|perte)/,
+  a:c=>`😴 **Perte nocturne estimée : 0,5 à 0,9 kg**
+• Respiration + transpiration : ~40–60 g/heure → ~0,4 kg sur 8 h.
+• Première urine du matin : 0,3–0,5 kg.
+• Plus tu as bu tard, plus la perte "brute" est grande (mais tu te lèveras la nuit).
+Avec tes données : **${fr(c.pred)} kg** attendu demain matin à jeun.
+Astuce : dernier repas ≥ 2 h avant le coucher, pas de sel le soir, chambre fraîche 18 °C.`},
+ {id:'energie', re:/(fatigu|crev|epuis|pas d.energie|sans energie|mou|plat|vid|flemme|cerveau|concentr|brouillard)/,
+  a:c=>`⚡ **Manque d'énergie en low-carb — le "keto flu" (jours 2 à 5) :**
+C'est le manque de **sodium, potassium et magnésium**, pas de sucre.
+1. **1 bouillon dégraissé chaud** ou une pincée de sel dans 500 ml d'eau (sauf fight week J-3 à J-1 !).
+2. **Potassium** : épinards, avocat (½), champignons.
+3. **Magnésium** : 300 mg le soir (pharmacie), aide aussi les crampes et le sommeil.
+4. **Café noir** 30 min avant la séance.
+5. **Ne descends pas sous 1 800 kcal** : tu es à ${c.t.kc} kcal aujourd'hui.
+6. Sieste 20 min si possible entre deux cours.
+Si vertiges, palpitations ou malaise : stop, bois, mange, et parle-en à ton coach ou à un médecin.`},
+ {id:'force', re:/(force|frappe|puissance|explosi|punch|muscle|perdre (du|mes) muscle|catabol)/,
+  a:c=>`💪 **Garder ta force de frappe sans glucides :**
+• **190 g de protéines/jour** = ton bouclier anti-catabolisme. Aujourd'hui : ${c.t.p.toFixed(0)} g. ${proteinSuggestion(c)}
+• La frappe = **technique + vitesse + rotation des hanches**, pas du glycogène : 10 min de shadow technique lent avant le HIIT.
+• Garde **l'intensité, réduis le volume** : 5 séries de pompes explosives (claquées si possible) plutôt que 10 séries molles.
+• **Créatine** : à éviter pendant le cut (retient 1–2 kg d'eau intramusculaire) — à reprendre après la pesée.
+• Après la pesée officielle : **recharge glucidique** (riz, banane, miel) → tu retrouveras 100 % de ta puissance pour le combat.
+• Sommeil 8 h : c'est là que la testostérone et la GH remontent.`},
+ {id:'jambes', re:/(jambe|cuisse|mollet).*(lourd|mort|cass|dur|courbatu)|courbatu/,
+  a:c=>`🦵 **Jambes lourdes avant la boxe :**
+1. **5 min de corde imaginaire / sautillements légers** pour relancer la circulation.
+2. **Mobilité 5 min** : rotations chevilles, hanches, 10 squats lents, 10 fentes dynamiques.
+3. **Hydratation + sel** (hors J-3/J-1) : jambes lourdes = souvent déshydratation + manque de sodium.
+4. Pendant la séance : reste sur la pointe des pieds mais **réduis l'amplitude** des déplacements, privilégie le travail de pivot.
+5. Le soir : jambes surélevées 10 min contre le mur, douche froide sur les mollets.
+${c.d.water<2000?`⚠️ Tu n'es qu'à ${(c.d.water/1000).toFixed(1)} L d'eau : bois 500 ml maintenant.`:''}`},
+ {id:'crampe', re:/(crampe|contracture|spasme)/,
+  a:c=>`🧂 **Crampes en cutting :**
+Cause n°1 = **électrolytes** (sodium, potassium, magnésium), pas le manque d'eau seul.
+• Maintenant : étire doucement le muscle + 500 ml d'eau avec une pincée de sel (si pas en J-3/J-1).
+• Chaque jour : magnésium 300 mg le soir, épinards/avocat pour le potassium.
+• Évite de boire 3 L d'eau "pure" sans aucun sel : tu dilues ton sodium.
+• En fight week (J-3 à J-1, zéro sel) : électrolytes zéro sucre (sans sodium) + magnésium.
+Si la crampe dure > 10 min ou revient en boucle : avis médical.`},
+ {id:'shadow', re:/(shadow|enchainement|combinaison|combo|transpirer|suer|cardio sans courir|hiit)/,
+  a:c=>{ const pick=[...COMBOS].sort(()=>Math.random()-.5).slice(0,6);
+  return `🥊 **Shadow boxing explosif — 15 min "sudation max"** (lance le timer dans l'onglet Train)
+Échauffement 3 min : jumping jacks, rotations épaules, jab léger.
+Puis 15 × (30 s explosif / 30 s récup active en garde, pieds mobiles) :
+${pick.map((p,i)=>`${i+1}. ${p}`).join('\n')}
+Rounds 7–15 : répète en accélérant, ajoute 3 burpees en fin de chaque effort.
+Retour au calme 3 min + gainage 3 × 30 s.
+➡️ ≈ **180–220 kcal**, et **0,3–0,6 kg de sueur** (que tu dois re-boire, sauf J-1).
+Conseil : garde ta garde haute même fatigué — c'est là que se gagne le combat.`}},
+ {id:'pompes', re:/(pompe|push.?up|circuit|poids du corps|muscu maison|pectoraux|pecs|epaule)/,
+  a:c=>`💥 **Circuit maison (≈ 25 min) — maintien pecs/épaules/triceps :**
+1. 20 pompes normales
+2. 20 pompes diamant (triceps)
+3. 20 pompes larges (pecs)
+4. 20 pompes serrées
+5. 20 pompes piquées (épaules)
+6. 4 × 20 squats
+7. 4 × 12 fentes par jambe
+Repos 45 s entre les blocs. Si 20 est trop facile → tempo 3 s en descente ou pause 1 s en bas.
+Aujourd'hui : **${pushupsDone(c.d)}/7 blocs** cochés. Dis-moi "j'ai fini mes pompes" et je coche tout.`},
+ {id:'ventre', re:/(ventre|bas du ventre|abdo|bide|gras|graisse|sous.?cutan|poignee d.amour)/,
+  a:c=>`🎯 **Bas du ventre — ce qui marche vraiment :**
+Ta photo montre un haut du corps sec : ta zone sous-ombilicale est surtout **eau sous-cutanée + poids digestif + une fine couche de gras**.
+• **Eau** : < 30 g glucides (aujourd'hui ${c.t.c.toFixed(0)} g) + 3 L d'eau + sel modéré = dégonflement visible en 3–5 jours.
+• **Digestif** : zéro laitage (lactose = gaz/gonflement), peu de crudités crues le soir, pas de chewing-gum en excès (air avalé), pas de soda.
+• **Gras** : déficit global (pas de "perte localisée" par les abdos). Ton déficit du jour : **${tdeeBase()+sportKcal()-c.t.kc} kcal**.
+• **Gainage** 3 × 45 s + vacuum abdominal 5 × 20 s le matin à jeun : resserre visuellement la sangle.
+Jauge Zone 1 actuelle : **${zones().z1} %**.`},
+ {id:'fastfood', re:/(fast.?food|mcdo|mcdonald|burger king|kfc|quick|kebab|tacos|resto|restaurant|dehors|exterieur|crous|cantine|fac|universit|sushi|pizza)/,
+  a:c=>`🍔 **Manger dehors / à la fac sans casser le cut :**
+• **KFC / grill** : poulet grillé sans peau ×2–3 pièces + salade, eau. Zéro frites, zéro sauce.
+• **McDo** : salade + 2 steaks sans pain demandés à part (pas de Big Mac), eau ou Coca Zéro.
+• **Kebab** : assiette viande + salade, **sans frites, sans pain, sans sauce blanche (laitage)**. Harissa OK.
+• **Japonais** : sashimis (pas de sushis/makis = riz), soupe miso (salée → éviter en fight week), edamame en petite quantité.
+• **CROUS / cantine** : protéine du jour (viande/poisson) + double légumes verts, laisse le féculent et le yaourt.
+• **Supermarché** : thon au naturel en boîte, poulet rôti, œufs durs, blanc de dinde, salade en sachet.
+Ce qui te reste : **${c.rk} kcal · ${c.rp.toFixed(0)} g P · ${c.rc.toFixed(0)} g G**.`},
+ {id:'sauna', re:/(sauna|hammam|sudation|suer|sweat|k.?way|combinaison|bain chaud|bain)/,
+  a:c=>`♨️ **Sudation — version sécurisée :**
+• Avant J-2, **aucun intérêt** : tu reprends tout en buvant. Ton objectif S1 se fait avec glucides bas + eau + sel modéré.
+• J-1 seulement, si et seulement si il manque ≤ 1 kg : **bain chaud 20 min (40 °C) puis enveloppé dans une serviette 15 min**, ou sauna **2–3 × 10 min max**, **jamais seul**, pesée entre chaque.
+• Shadow boxing habillé chaud (sweat) 15 min : 0,3–0,6 kg.
+• ❌ Jamais de combinaison plastique pour courir, jamais de diurétiques/laxatifs, jamais de sauna > 15 min d'affilée.
+• Dès la pesée validée : 500 ml eau + électrolytes toutes les 20 min, puis repas glucidique.
+Écart actuel avec 74,5 kg : **${fr(c.toF)} kg**, il te reste ${c.dFight} jours — ça se fait proprement.`},
+ {id:'watercut', re:/(water ?cut|water ?load|fight week|semaine du combat|coupe d.eau|derniere semaine|pesee officielle|sel)/,
+  a:c=>`💧 **Protocole Water Cut (semaine du combat) :**
+• **J-7 à J-3 (5–9 déc)** : 5–6 L/jour (3,5–4 bouteilles). Sel normal jusqu'à J-4 ; ton corps se met en mode "j'élimine".
+• **J-3 (9 déc)** : coupure **totale du sel**.
+• **J-2 (10 déc)** : 2 L, zéro sel, glucides ~0, aliments secs (poulet, blancs).
+• **J-1 (11 déc)** : 0,5 L en petites gorgées jusqu'à la pesée. Repas légers et secs.
+• **Après la pesée** : 1 L eau + électrolytes dans la 1ère heure, puis riz/banane/miel/pâtes, 4–6 L dans les 24 h.
+Ce protocole fait perdre 2–3 kg d'eau en sécurité **si** tu arrives à J-7 vers 76 kg. Aujourd'hui le plan est : ${c.wp.label}`},
+ {id:'whatnow', re:/(je mange quoi|quoi manger|que manger|qu.est.ce que je (peux|dois) manger|idee (de )?repas|menu|repas|manger maintenant|avant de partir|petit.?dej|dejeuner|diner)/,
+  a:c=>{ const nd=c.nd; let s='';
+   if(c.rk<200) s='Tu es quasi au plafond : **légumes verts + 1 dose de whey max**.';
+   else if(c.rp>80) s=`**Gros repas protéiné** : 250 g blanc de poulet + 200 g haricots verts + 5 ml huile d'olive ≈ 460 kcal, 80 g P, 8 g G.`;
+   else if(c.rp>40) s=`**Repas moyen** : 1 boîte de thon + 2 œufs durs + salade/concombre ≈ 400 kcal, 50 g P, 2 g G.`;
+   else s=`**Snack** : 1 dose de whey à l'eau ou 150 g de blancs d'œufs ≈ 115 kcal, 24 g P.`;
+   return `🍽️ **Maintenant (${hm()}) :**
+${s}
+${nd?`Prochain départ ${DAYS[nd.date.getDay()]} **${nd.time}** → repas express à **${minus10(nd.time)}** : 3 œufs durs préparés la veille + shaker whey à l'eau (≈ 330 kcal · 45 g P · 2 g G) + 500 ml d'eau.`:''}
+${statusLine(c)}`}},
+ {id:'recette', re:/(recette|gateau|crepe|pancake|muffin|dessert|sucre|chocolat|cuisin|plat maison|patisserie|cake|brownie)/,
+  a:c=>{ const t=norm(c._q||''); let r;
+   if(/crepe/.test(t)) r=RECIPES_TXT.crepe; else if(/pancake/.test(t)) r=RECIPES_TXT.pancake; else if(/muffin/.test(t)) r=RECIPES_TXT.muffin;
+   else if(/gateau|cake|brownie|dessert|chocolat|sucre/.test(t)) r=RECIPES_TXT.gateau; else if(/omelette/.test(t)) r=RECIPES_TXT.omelette;
+   else if(/poulet|plat|batch/.test(t)) r=RECIPES_TXT.poulet; else r=RECIPES_TXT.crepe+'\n\n'+RECIPES_TXT.gateau;
+   return r+`\n\n👉 Tu peux l'enregistrer via **Fuel → Créer une recette** ou me dire "j'ai mangé [la recette]".\n${statusLine(c)}`}},
+ {id:'stress', re:/(stress|angoiss|anxi|peur|nerv|pression|trac|motivation|demotiv|abandonner|mental|confiance)/,
+  a:c=>`🧠 **Gestion mentale :**
+• **Respiration 4-7-8** (inspire 4 s, bloque 7 s, expire 8 s) × 4 cycles : baisse le cortisol en 2 min.
+• Fixe-toi des **micro-objectifs** : aujourd'hui juste 190 g P, 3 L d'eau, la séance. Le reste suit.
+• Visualisation 5 min avant de dormir : ton entrée sur le ring, ton jab qui touche, ta main levée.
+• Le stress fait retenir de l'eau → c'est **aussi une stratégie de pesée** de rester calme.
+Tu es à ${fr(c.toW1)} kg de la pesée club et ${fr(c.toF)} kg du combat. Ton physique est déjà prêt en haut — on ne fait qu'affiner. 💪`},
+ {id:'sommeil', re:/(dorm|sommeil|insomni|nuit blanche|couche|reveil)/,
+  a:c=>`😴 **Sommeil = arme secrète du cut :**
+• 7h30–9h : la GH (hormone de croissance) protège tes muscles pendant le déficit.
+• Coupe la caféine après 15–16h.
+• Dernier repas 2 h avant le coucher, riche en protéines (caséine interdite → œufs/poisson).
+• Chambre 18 °C, écran off 30 min avant.
+• Magnésium 300 mg le soir.
+Réveil prévu demain : **${(S.schedule[(c.now.getDay()+1)%7]||{}).wake||'—'}**.`},
+ {id:'eau', re:/(combien.*(boire|eau)|bouteille|hydrat|boire|eau|soif|pipi|urine)/,
+  a:c=>`💧 **Hydratation :** ${(c.d.water/1000).toFixed(2)} L = **${(c.d.water/1500).toFixed(1)} bouteille(s) de 1,5 L**.
+Objectif du jour : **${c.wp.goal/1000} L**. ${c.wp.label}
+Cadence : bouteille 1 finie à **14h**, bouteille 2 finie à **20h**, bouteille 3 = bonus drainage.
+${c.h>=14&&c.d.water<1500?'⚠️ Tu es en retard sur la bouteille 1 : bois 500 ml maintenant.':''}${c.h>=20&&c.d.water<3000?'⚠️ Il te manque '+((3000-c.d.water)/1000).toFixed(2)+' L pour le minimum.':''}
+Urine jaune pâle = parfait. Foncée = bois. Transparente toute la journée = tu peux rester à 3 L.`},
+ {id:'proteine', re:/(proteine|whey|combien de prot|source de prot)/,
+  a:c=>`🥩 **Protéines : ${c.t.p.toFixed(0)}/190 g.** ${proteinSuggestion(c)}
+Top sources cut (pour 100 g) : poulet 31 g, dinde 29 g, thon 25 g, crevettes 24 g, cabillaud 18 g, blancs d'œufs 11 g, whey 78 g/100 g (≈ 24 g/dose).
+Répartis en 4–5 prises de 35–50 g.`},
+ {id:'glucides', re:/(glucide|carb|sucre|keto|cetose)/,
+  a:c=>`🥦 **Glucides : ${c.t.c.toFixed(0)}/30 g max.**
+Pourquoi si bas : chaque gramme de glycogène stocké retient ~3 g d'eau. Vider le glycogène = **−1,5 à −2 kg d'eau en 3–4 jours**, c'est le gros de ta semaine 1.
+Sources autorisées : brocoli, haricots verts, épinards, courgette, salade, concombre, asperges, champignons.
+Interdits : pâtes, riz, pain, avoine, sucre, fruits sucrés, sodas.
+Il te reste **${c.rc.toFixed(0)} g** → ≈ ${Math.round(c.rc/4*100)} g de brocoli.`},
+ {id:'laitage', re:/(lait|yaourt|fromage|skyr|laitage|lactose)/,
+  a:c=>`🚫 **Zéro laitage jusqu'au combat.** Lactose = gonflement intestinal + rétention sous-cutanée chez beaucoup de monde.
+Remplacements : whey isolate (quasi sans lactose) à l'eau, lait d'amande non sucré (petite quantité), crème → jaune d'œuf + moutarde.
+${c.d.meals.some(m=>m.dairy)?'⚠️ J\'ai détecté un laitage aujourd\'hui : bois 500 ml de plus et reste strict demain.':'✅ Aucun laitage aujourd\'hui.'}`},
+ {id:'objectif', re:/(objectif|ou j.en suis|bilan|recap|resume|status|statut|progress|avance|retard|combien.*(reste|perdre))/,
+  a:c=>`📊 **Bilan ${DAYS[c.now.getDay()]} ${hm()} :**
+⚖️ Poids : **${fr(c.cur)} kg** · courbe cible : ${fr(c.target)} kg → ${c.cur<=c.target?'**EN AVANCE** ✅':'**en retard** de '+fr(c.cur-c.target,2)+' kg'}
+🎯 Pesée club (77,0) dans ${c.dWeigh} j : **${c.toW1>0?fr(c.toW1)+' kg à perdre':'validé ✅'}**
+🥊 Combat (74,5) dans ${c.dFight} j : **${c.toF>0?fr(c.toF)+' kg à perdre':'validé ✅'}**
+🔮 Demain matin à jeun : **${fr(c.pred)} kg**
+🍗 ${c.t.kc}/1800 kcal · ${c.t.p.toFixed(0)}/190 P · ${c.t.c.toFixed(0)}/30 G · ${c.t.f.toFixed(0)}/55 L
+💧 ${(c.d.water/1000).toFixed(2)}/${c.wp.goal/1000} L
+💪 Pompes ${pushupsDone(c.d)}/7 · HIIT ${hiitDone(c.d)?'✅':'❌'}`},
+ {id:'avant_boxe', re:/(avant (la )?(boxe|seance|entrainement)|pre.?workout|echauff)/,
+  a:c=>`🔥 **Avant la séance :**
+• 60–90 min avant : ${c.rp>30?'30 g whey + 1 œuf dur':'café noir + 500 ml eau'} (pas de gros repas).
+• Café noir 30 min avant = +5 % de performance.
+• Échauffement 10 min : corde/sautillements, rotations, 3 rounds de shadow léger.
+• Bouteille sur toi : vise 500–750 ml pendant la séance.`},
+ {id:'apres', re:/(apres (la )?(boxe|seance|entrainement|sport)|recup|post.?workout|recuperation)/,
+  a:c=>`🛁 **Récupération post-séance :**
+• Dans l'heure : 40–50 g de protéines (shaker whey + 2 œufs, ou 200 g poulet).
+• 500 ml–1 L d'eau selon la sueur.
+• Étirements 5 min + douche froide jambes.
+• Sommeil > 7h30.
+${statusLine(c)}`},
+ {id:'triche', re:/(cheat|triche|ecart|craqu|j.ai abuse|je me suis lache)/,
+  a:c=>`😬 **Après un écart :**
+1. Pas de panique : 1 repas ≠ du gras. C'est surtout **eau + glycogène + transit** (+0,5 à 1,5 kg temporaires).
+2. Reviens immédiatement au plan : prochain repas 100 % protéines + légumes verts.
+3. **+1 L d'eau** aujourd'hui, sel modéré.
+4. 15 min de HIIT shadow pour vider une partie du glycogène.
+5. Pas de jeûne compensatoire : ça fait perdre du muscle.
+Le poids revient en 24–48 h si tu restes clean.`},
+ {id:'salut', re:/^(salut|yo|hello|bonjour|bonsoir|wesh|coucou|hey|cc)\b/,
+  a:c=>`Yo Chahyn 🥊 ${c.h<12?'Bien dormi ?':c.h<18?'Ça avance ?':'Débrief du soir ?'}
+${statusLine(c)}
+Dis-moi ce que tu as mangé, bu, pesé ou fait — je mets tout à jour. Ou pose n'importe quelle question.`},
+];
+function localBrain(q, actionLog){
+  const c = ctx(); c._q = q; const nq = norm(q);
+  let parts = [];
+  // Feedback actions
+  actionLog.forEach(l=>{
+    if(l.type==='ADD_MEAL' && l.r && l.r.items){
+      const m=l.r; const c2=ctx();
+      parts.push(`✅ **Ajouté à ${m.time} :** ${m.items.map(i=>`${i.name} ${i.g} g`).join(', ')}
+➡️ **${m.kc} kcal · ${m.p} g P · ${m.c} g G · ${m.f} g L**${m.dairy?'\n🚫 **Laitage détecté** : gonflement + rétention garantis. Bois 500 ml de plus.':''}${m.items.some(i=>i.tag==='ban'&&!i.dairy)?'\n⚠️ Aliment hors plan (glucides) : je compte, mais reste strict au prochain repas.':''}
+${statusLine(c2)}
+${c2.rk<0?'🔴 **Plafond calorique dépassé** de '+(-c2.rk)+' kcal — plus que des légumes verts et de l\'eau aujourd\'hui.':''}${c2.t.c>30?'\n🔴 **Glucides > 30 g** : ~'+Math.round((c2.t.c-30)*3)+' g d\'eau retenus demain matin.':''}`);
+    }
+    if(l.type==='ADD_WATER'){
+      const w=l.r; parts.push(`💧 **${(w/1000).toFixed(2)} L** bus = ${(w/1500).toFixed(2)} bouteille(s). ${w>=3000?'Minimum 3 L validé ✅':`Encore ${((3000-w)/1000).toFixed(2)} L pour le minimum.`}`);
+    }
+    if(l.type==='LOG_WEIGHT' && l.r){
+      const r=l.r, target=targetAt(new Date()); const prev = S.weights.filter(w=>w.type===r.type).slice(-2)[0];
+      let expl='';
+      const diff = r.kg-target;
+      if(r.type==='soir'){ const lm=lastWeight('matin'); if(lm&&lm.date===dKey()) expl=`Écart avec ce matin : +${fr(r.kg-lm.kg,1)} kg = eau bue + nourriture en transit (${fr(stomachLoad().total,2)} kg estimés). Normal.`; }
+      else expl = diff<=0?'Tu es **sous la courbe** : la baisse vient surtout du glycogène et de l\'eau qui partent (glucides < 30 g) + un peu de gras via le déficit.':`Tu es **au-dessus de la courbe** de ${fr(diff,2)} kg : probablement sodium/transit. Serre glucides et sel, monte à 3,5 L d'eau.`;
+      parts.push(`⚖️ **Pesée ${r.type} : ${fr(r.kg)} kg** (cible du jour ${fr(target)} kg).
+${expl}
+🎯 Reste **${fr(Math.max(0,r.kg-77))} kg** pour la pesée club, **${fr(Math.max(0,r.kg-74.5))} kg** pour le combat.
+🔮 Demain matin estimé : **${fr(predictMorning())} kg**.`);
+    }
+    if(l.type==='LOG_WORKOUT'){
+      parts.push(`💪 **Séance enregistrée :** ${l.r.join(', ')||'—'}. Dépense sport du jour : **${sportKcal()} kcal**, déficit total **${tdeeBase()+sportKcal()-totals().kc} kcal**.`);
+    }
+  });
+  // Questions
+  const isQuestion = /\?|comment|pourquoi|quoi|quel|quelle|combien|est.ce|dois|peux|conseil|aide|donne|explique|recette|idee/.test(nq);
+  if(isQuestion || !actionLog.length){
+    const hits = KB.filter(k=>k.re.test(nq));
+    if(hits.length) parts.push(...hits.slice(0,2).map(h=>h.a(c)));
+    else if(!actionLog.length){
+      // tentative : aliment cité sans "mangé" -> infos nutritionnelles
+      const f = findFood(q);
+      if(f){ const it=parseFoods(q)[0];
+        parts.push(`🔎 **${f.n}** (${it.g} g) : **${it.kc} kcal · ${it.p} g P · ${it.c} g G · ${it.f} g L**.
+Verdict cut : ${f.t==='ok'?'✅ validé':f.t==='warn'?'⚠️ avec modération':'⛔ à éviter jusqu\'au combat'}${BAN_DAIRY.includes(f.n)?' (laitage)':''}.
+Pour l'ajouter : "j'ai mangé ${it.g} g de ${f.n.toLowerCase()}".`);
+      } else {
+        parts.push(`Je n'ai pas de fiche précise sur ça en mode hors-ligne, voici l'essentiel pour toi maintenant :
+${KB.find(k=>k.id==='objectif').a(c)}
+💡 Branche une clé API (⚙️) pour une réponse libre sur n'importe quel sujet. Sinon demande-moi : faim du soir, recette, shadow, fast-food, stagnation, water cut, crampes, sommeil, énergie…`);
+      }
+    }
+  }
+  return parts.join('\n\n');
+}
+function detectLocalActions(text){
+  const actions=[]; const n=norm(text);
+  const w = parseWeight(text);
+  if(w && !/(combien|si je|objectif|devrai)/.test(n)) actions.push({type:'LOG_WEIGHT',data:w});
+  const isEat = /(mange|manger|bouffe|avale|pris|prends|dejeune|dine|grignote|cree|fait un|fais un|prepare|cuisine|repas|shaker)/.test(n) && !/(je peux|puis.je|dois.je|est.ce|quoi|combien|si je|recette)/.test(n);
+  if(isEat){ const items=parseFoods(text).filter(i=>i.name!=='Eau'); if(items.length){ const isRecipe=/(cree|gateau|recette|crepe|pancake|muffin|prepare)/.test(n); actions.push({type:'ADD_MEAL',data:{items,name:isRecipe?'Recette maison':undefined,saveRecipe:isRecipe}}); } }
+  const water = parseWater(text);
+  if(water && !/(combien|dois.je|faut.il|objectif)/.test(n)) actions.push({type:'ADD_WATER',data:{ml:water}});
+  const wk = parseWorkout(text); if(wk) actions.push({type:'LOG_WORKOUT',data:wk});
+  return actions;
+}
+
+/* =====================================================================
+   12. CHAT UI
+   ===================================================================== */
+function md(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+}
+function renderChat(){
+  const el=$('chat');
+  if(!S.chat.length){
+    el.innerHTML = `<div class="msg-a p-4 text-sm">Yo Chahyn 🥊 Je suis ton coach cut 24h/24.<br><br>Parle-moi naturellement :<br>• « J'ai mangé 200 g de poulet et 3 œufs »<br>• « J'ai fini ma 1ère bouteille »<br>• « Je me suis pesé à 78,8 »<br>• « J'ai fini mes pompes et 15 min de shadow »<br>• « J'ai la dalle à 22h, je fais quoi ? »<br><br>Je mets l'app à jour tout seul.</div>`;
+  } else {
+    el.innerHTML = S.chat.slice(-60).map(m=>`<div class="flex ${m.role==='user'?'justify-end':''}"><div class="${m.role==='user'?'msg-u':'msg-a'} px-4 py-3 text-sm max-w-[88%] leading-relaxed">${md(m.text)}${m.meta?`<div class="text-[10px] mut mt-2">${m.meta}</div>`:''}</div></div>`).join('');
+  }
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+const SUGGESTS = ['Bilan du jour','J\'ai la dalle à 22h','Recette crêpe protéinée','Shadow explosif','Je mange quoi avant de partir ?','Pourquoi je stagne ?','Manger au fast-food','Protocole water cut'];
+function renderSuggests(){ $('suggests').innerHTML = SUGGESTS.map(s=>`<button class="btn !py-2 !text-xs whitespace-nowrap" onclick="sendChat(${JSON.stringify(s).replace(/"/g,'&quot;')})">${s}</button>`).join(''); }
+let busy=false;
+async function sendChat(preset){
+  const input=$('chatIn'); const text=(preset||input.value).trim(); if(!text||busy) return;
+  input.value=''; busy=true;
+  S.chat.push({role:'user',text,ts:Date.now()}); renderChat();
+  const typing = document.createElement('div'); typing.className='msg-a px-4 py-3 text-sm w-20 pulse'; typing.textContent='• • •'; $('chat').appendChild(typing);
+  let reply='', meta='';
+  const useApi = S.ai.provider!=='local' && S.ai.key && navigator.onLine;
+  if(useApi){
+    try{
+      const raw = await callLLM(text);
+      const {actions,clean} = extractActions(raw);
+      const log = runActions(actions);
+      reply = clean || 'OK.'; meta = `${PROVIDERS[S.ai.provider].name}${log.length?' · actions : '+log.map(l=>l.type).join(', '):''}`;
+      S.chat.push({role:'assistant',text:reply,raw,meta,ts:Date.now()});
+    }catch(e){
+      console.error(e);
+      const acts=detectLocalActions(text); const log=runActions(acts);
+      reply = localBrain(text,log); meta=`Moteur local (API indisponible : ${String(e.message||e).slice(0,80)})`;
+      S.chat.push({role:'assistant',text:reply,meta,ts:Date.now()});
+    }
+  } else {
+    await new Promise(r=>setTimeout(r,250));
+    const acts=detectLocalActions(text); const log=runActions(acts);
+    reply = localBrain(text,log); meta=`Moteur expert local${log.length?' · actions : '+log.map(l=>l.type).join(', '):''}`;
+    S.chat.push({role:'assistant',text:reply,meta,ts:Date.now()});
+  }
+  if(S.chat.length>200) S.chat=S.chat.slice(-200);
+  save(); busy=false; renderChat(); speak(reply);
+}
+
+/* --- Voix --- */
+let recog=null, listening=false;
+function toggleMic(){
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('Reconnaissance vocale non supportée (utilise Chrome)'); return; }
+  if(listening){ recog&&recog.stop(); return; }
+  recog = new SR(); recog.lang='fr-FR'; recog.interimResults=true; recog.continuous=false;
+  recog.onstart=()=>{listening=true;$('micBtn').classList.add('btn-red','pulse');};
+  recog.onend=()=>{listening=false;$('micBtn').classList.remove('btn-red','pulse'); if($('chatIn').value.trim()) sendChat();};
+  recog.onerror=e=>{toast('Micro : '+e.error);};
+  recog.onresult=e=>{ $('chatIn').value = Array.from(e.results).map(r=>r[0].transcript).join(''); };
+  recog.start();
+}
+function toggleTTS(){ S.tts=!S.tts; save(); $('ttsBtn').textContent=S.tts?'🔊':'🔇'; if(!S.tts) speechSynthesis.cancel(); toast(S.tts?'Voix activée':'Voix coupée'); }
+function speak(text){
+  if(!S.tts||!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const clean = text.replace(/\*\*/g,'').replace(/[^\p{L}\p{N}\s.,;:!?'%°\-–+/]/gu,' ').slice(0,900);
+  const u = new SpeechSynthesisUtterance(clean); u.lang='fr-FR'; u.rate=1.05;
+  const v = speechSynthesis.getVoices().find(v=>v.lang.startsWith('fr')); if(v) u.voice=v;
+  speechSynthesis.speak(u);
+}
+
+/* =====================================================================
+   13. RENDU DES MODULES
+   ===================================================================== */
+let chart;
+function renderDash(){
+  const now=new Date(); const cur=currentWeight(); const lw=lastWeight();
+  const cd=(d)=>{ const ms=d-now; if(ms<=0) return ['GO','C\'est le jour !']; const dd=Math.floor(ms/864e5), hh=Math.floor(ms%864e5/36e5), mm=Math.floor(ms%36e5/6e4); return [`${dd}j ${hh}h`,`${mm} min · ${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`]; };
+  const [a,b]=cd(WEIGH_DATE); $('cdWeigh').textContent=a; $('cdWeighH').textContent=b;
+  const [c,d]=cd(FIGHT_DATE); $('cdFight').textContent=c; $('cdFightH').textContent=d;
+  $('curW').textContent=fr(cur);
+  $('curWinfo').innerHTML = lw?`<span class="mut">${lw.type==='matin'?'☀️ Matin':'🌙 Soir'} · ${lw.date.slice(8)}/${lw.date.slice(5,7)} ${lw.time}</span> · <b>−${fr(PROFILE.startWeight-cur)} kg</b> depuis le 15/11`:'<span class="mut">Aucune pesée — pèse-toi demain matin à jeun</span>';
+  const tgt=targetAt(now); const diff=cur-tgt;
+  $('deltaTarget').textContent=(diff>0?'+':'')+fr(diff,2)+' kg';
+  $('deltaTarget').style.color = diff<=0?'var(--grn)':diff<0.5?'var(--ylw)':'var(--red)';
+  $('deltaTargetTxt').textContent = diff<=0?'En avance ✅':'En retard';
+  $('totalProg').style.width = Math.max(0,Math.min(100,(PROFILE.startWeight-cur)/(PROFILE.startWeight-PROFILE.safeTarget)*100))+'%';
+  // zones
+  const z=zones(); const st=stomachLoad(); const pred=predictMorning();
+  $('z1v').textContent=z.z1+'%'; $('z1b').style.width=z.z1+'%'; $('z1').setAttribute('opacity',(0.2+z.z1/100*0.7).toFixed(2));
+  $('z1').setAttribute('fill', z.z1>=75?'#22e08a':z.z1>=45?'#ffc533':'#ff3b47');
+  $('z1t').textContent = z.dairy?'⛔ Laitage détecté':(totals().c>30?'⚠️ Glucides > 30 g':'Dégonflement en cours');
+  $('z2v').textContent=z.z2+'%'; $('z2b').style.width=z.z2+'%'; $('z2').setAttribute('fill', z.z2>=75?'#22e08a':z.z2>=45?'#ffc533':'#ff3b47');
+  $('z2t').textContent = z.z2>=75?'Force maintenue ✅':'Protéines + pompes à valider';
+  $('z3v').textContent=fr(st.total,2)+' kg'; $('z3b').style.width=Math.min(100,st.total/2.5*100)+'%';
+  $('predMorning').textContent=fr(pred)+' kg';
+  // next departure
+  const nd=nextDeparture();
+  if(nd){ $('nextDepTime').textContent=nd.time; $('nextDepLabel').textContent=`${nd.date.toDateString()===now.toDateString()?'Aujourd\'hui':DAYS[nd.date.getDay()]} · ${nd.label}`; $('nextDepMeal').textContent=`🍗 Repas protéiné à ${minus10(nd.time)} + 500 ml d'eau`; }
+  else { $('nextDepTime').textContent='—'; $('nextDepLabel').textContent='Aucun départ programmé'; $('nextDepMeal').textContent=''; }
+  const wp=waterPlan();
+  const dW=Math.ceil((WEIGH_DATE-now)/864e5);
+  $('phaseTxt').innerHTML = `${dW>0?`<b class="text-[var(--red)]">SEMAINE 1 — URGENCE PESÉE CLUB</b><br>Vide le glycogène (< 30 g G), 3–3,75 L d'eau, 190 g P. Objectif : ${fr(targetAt(now))} kg aujourd'hui.`:`<b class="text-[var(--grn)]">PHASE 2 — VERS LE COMBAT</b><br>Perte régulière ~0,1 kg/jour, force maintenue.`}<br><span class="mut">💧 ${wp.label}</span>`;
+  renderChart();
+}
+function renderChart(){
+  const labels=[]; const target=[]; const morning=[]; const evening=[];
+  for(let d=new Date(2026,10,15); d<=new Date(2026,11,12); d.setDate(d.getDate()+1)){
+    const k=dKey(d); labels.push(`${d.getDate()}/${d.getMonth()+1}`); target.push(+targetAt(d).toFixed(2));
+    const m=S.weights.find(w=>w.date===k&&w.type==='matin'); const s=S.weights.find(w=>w.date===k&&w.type==='soir');
+    morning.push(m?m.kg:null); evening.push(s?s.kg:null);
+  }
+  const data={labels,datasets:[
+    {label:'Cible',data:target,borderColor:'#ff3b47',borderDash:[6,4],pointRadius:0,borderWidth:2,tension:0},
+    {label:'Matin',data:morning,borderColor:'#22e08a',backgroundColor:'#22e08a',spanGaps:true,pointRadius:4,borderWidth:3,tension:.3},
+    {label:'Soir',data:evening,borderColor:'#38b6ff',backgroundColor:'#38b6ff',spanGaps:true,pointRadius:3,borderWidth:2,tension:.3}
+  ]};
+  if(typeof Chart==='undefined'){ return; }
+  if(chart){ chart.data=data; chart.update('none'); return; }
+  chart = new Chart($('wChart'),{type:'line',data,options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c1c27',titleColor:'#fff',bodyColor:'#e8e8f0',callbacks:{label:c=>c.raw!=null?`${c.dataset.label} : ${fr(c.raw,1)} kg`:''}}},
+    scales:{x:{ticks:{color:'#8a8aa0',maxTicksLimit:8,font:{size:10}},grid:{color:'#1f1f2a'}},y:{min:73.5,max:81,ticks:{color:'#8a8aa0',font:{size:10}},grid:{color:'#1f1f2a'}}}}});
+}
+function zoneInfo(n){
+  const z=zones(), t=totals(), st=stomachLoad(), d=today(), el=$('zoneDetail'); el.classList.remove('hidden');
+  if(n===1) el.innerHTML=`<b>① Bas du ventre & eau sous-cutanée — ${z.z1}%</b><br>Glucides ${t.c.toFixed(0)}/30 g ${t.c<=30?'✅':'❌'} · Laitage ${z.dairy?'❌ détecté':'✅ zéro'} · Eau ${(d.water/1000).toFixed(2)}/${waterPlan().min/1000} L ${z.waterScore>=1?'✅':'⏳'}<br><span class="mut">Les 3 leviers qui dégonflent la zone sous-ombilicale en quelques jours.</span>`;
+  if(n===2) el.innerHTML=`<b>② Pecs / épaules / force — ${z.z2}%</b><br>Protéines ${t.p.toFixed(0)}/190 g · Circuit pompes ${pushupsDone()}/7 · HIIT ${hiitDone()?'✅':'❌'}<br><span class="mut">Vert = tu ne perds pas de muscle malgré le déficit.</span>`;
+  if(n===3) el.innerHTML=`<b>③ Estomac / transit</b><br>Nourriture en digestion : ${fr(st.foodKg,2)} kg · Eau pas encore éliminée : ${fr(st.waterKg,2)} kg<br>Prédiction demain matin à jeun : <b class="text-[var(--blu)]">${fr(predictMorning())} kg</b><br><span class="mut">Basé sur ton dernier poids, ton déficit du jour, les glucides stockés et ~0,6 kg de perte nocturne.</span>`;
+}
+
+function bottleSVG(pct,i,goalTxt,color){
+  const h = 118*Math.min(1,pct);
+  return `<div class="card2 text-center !p-2">
+  <div class="bottle"><svg viewBox="0 0 64 150">
+    <defs><clipPath id="bc${i}"><path d="M24 4 h16 v12 q0 6 8 12 q8 6 8 16 v94 q0 8 -8 8 h-32 q-8 0 -8 -8 v-94 q0 -10 8 -16 q8 -6 8 -12 z"/></clipPath></defs>
+    <rect x="0" y="${146-h}" width="64" height="${h}" fill="${color}" clip-path="url(#bc${i})" opacity=".9"><animate attributeName="y" from="146" to="${146-h}" dur=".6s" fill="freeze"/></rect>
+    <path d="M24 4 h16 v12 q0 6 8 12 q8 6 8 16 v94 q0 8 -8 8 h-32 q-8 0 -8 -8 v-94 q0 -10 8 -16 q8 -6 8 -12 z" fill="none" stroke="#3a3a4c" stroke-width="2"/>
+    <rect x="22" y="0" width="20" height="6" rx="2" fill="#38b6ff"/>
+  </svg></div>
+  <div class="text-xs font-black mt-1">${Math.round(pct*100)}%</div>
+  <div class="text-[10px] mut leading-tight">${goalTxt}</div></div>`;
+}
+const MACROS = [['kc','Calories','kcal',PROFILE.kcal,'var(--red)'],['p','Protéines','g',PROFILE.prot,'var(--grn)'],['c','Glucides','g max',PROFILE.carbs,'var(--ylw)'],['f','Lipides','g',PROFILE.fat,'var(--pur)']];
+function renderFuel(){
+  const d=today(), t=totals(d), wp=waterPlan();
+  const nb = Math.max(3,Math.ceil(wp.goal/1500));
+  const labels = ['Obj. 14h00','Obj. 20h00 · 3 L','Bonus drainage','Water load','Water load'];
+  let html=''; for(let i=0;i<Math.min(nb,4);i++){ const pct=Math.max(0,Math.min(1,(d.water-i*1500)/1500)); html+=bottleSVG(pct,i,labels[i]||'Bonus',i<2?'#38b6ff':'#22e08a'); }
+  $('bottles').className = `grid gap-2 mt-3 ${nb>=4?'grid-cols-4':'grid-cols-3'}`;
+  $('bottles').innerHTML=html;
+  $('waterTotal').textContent=(d.water/1000).toFixed(2).replace('.',',');
+  $('waterGoalTxt').textContent=(wp.goal/1000).toString().replace('.',',')+' L';
+  const h=new Date().getHours()+new Date().getMinutes()/60;
+  const expected = h<8?0:h<14?1500*(h-8)/6:h<20?1500+1500*(h-14)/6:3000;
+  $('waterPace').innerHTML = d.water>=expected?'<span class="text-[var(--grn)]">✅ Dans le rythme</span>':`<span class="text-[var(--ylw)]">⏳ En retard de ${Math.round(expected-d.water)} ml sur la cadence</span>`;
+  // macros
+  const left = PROFILE.kcal-t.kc;
+  $('kcalLeft').textContent = left; $('kcalLeft').setAttribute('fill', left<0?'#ff3b47':'#fff');
+  $('kcalRing').style.strokeDashoffset = 326.7*(1-Math.min(1,t.kc/PROFILE.kcal));
+  $('macroBars').innerHTML = MACROS.slice(1).map(([k,n,u,max,col])=>{ const v=t[k]; const over=v>max&&k==='c';
+    return `<div><div class="flex justify-between text-xs"><b>${n}</b><span class="${over?'text-[var(--red)] font-bold':'mut'}">${v.toFixed(0)} / ${max} ${u}</span></div><div class="bar mt-1"><i style="width:${Math.min(100,v/max*100)}%;background:${over?'var(--red)':col}"></i></div></div>`;}).join('');
+  // timeline
+  $('tlCount').textContent = d.meals.length+' prise'+(d.meals.length>1?'s':'');
+  $('timeline').innerHTML = d.meals.length? d.meals.map(m=>{ const imp=foodImpact(m); return `<div class="tl-item"><div class="card2">
+    <div class="flex justify-between items-start gap-2"><div><div class="text-[11px] font-black text-[var(--red)]">${m.time}</div><div class="font-bold text-sm">${m.name}</div></div>
+    <div class="text-right"><div class="font-black">${m.kc}</div><div class="text-[10px] mut">kcal</div></div></div>
+    <div class="flex gap-3 text-[11px] mt-2"><span class="text-[var(--grn)]">P ${m.p}</span><span class="text-[var(--ylw)]">G ${m.c}</span><span class="text-[var(--pur)]">L ${m.f}</span><span class="mut">${m.g} g</span></div>
+    <div class="flex justify-between items-center mt-2"><span class="chip ${imp.cls}">${imp.lbl}</span><button class="text-[11px] mut" onclick="delMeal(${m.id})">Supprimer</button></div>
+    ${m.items.length>1?`<div class="text-[11px] mut mt-2">${m.items.map(i=>`${i.name} ${i.g}g`).join(' · ')}</div>`:''}
+  </div></div>`;}).join('') : '<div class="text-sm mut text-center py-4">Rien pour l\'instant. Ajoute un repas ou dis-le au coach.</div>';
+  // quick foods
+  const quick=[['Poulet 200 g','200 g poulet'],['3 œufs','3 oeufs'],['Whey','1 whey'],['Thon (boîte)','1 boite de thon'],['Blancs 150 g','150 g blancs d\'oeufs'],['Brocoli 200 g','200 g brocoli'],['Haricots 200 g','200 g haricots verts'],['Huile 10 g','10 g huile d\'olive'],['Cabillaud 200 g','200 g cabillaud'],['Dinde 150 g','150 g dinde']];
+  $('quickFoods').innerHTML = quick.map(([l,q])=>`<button class="btn !py-2 !text-xs whitespace-nowrap" onclick="quickAdd('${q.replace(/'/g,"\\'")}')">${l}</button>`).join('');
+  // favorites
+  $('favRecipes').innerHTML = S.recipes.length? S.recipes.map((r,i)=>{ const k=r.items.reduce((a,x)=>a+x.kc,0), p=r.items.reduce((a,x)=>a+x.p,0), c=r.items.reduce((a,x)=>a+x.c,0);
+    return `<div class="card2 flex items-center justify-between gap-2"><div><div class="font-bold text-sm">${r.name}</div><div class="text-[11px] mut">${Math.round(k)} kcal · P ${p.toFixed(0)} · G ${c.toFixed(0)}</div></div>
+    <div class="flex gap-2"><button class="btn !py-1 !px-3 btn-grn" onclick="addRecipe(${i})">＋</button><button class="btn !py-1 !px-3" onclick="delRecipe(${i})">✕</button></div></div>`;}).join('') : '<div class="text-sm mut">Aucune recette. Crée ton gâteau / ta crêpe protéinée.</div>';
+}
+function renderTrain(){
+  const d=today();
+  $('checklist').innerHTML = WK_ITEMS.map(i=>`<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('${i.id}')"><span class="chk ${d.workouts[i.id]?'on':''}">${d.workouts[i.id]?'✓':''}</span><span class="font-bold text-sm flex-1">${i.n}</span><span class="text-[11px] mut">~${i.kc} kcal</span></button>`).join('')
+   + `<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('hiit')"><span class="chk ${d.workouts.hiit?'on':''}">${d.workouts.hiit?'✓':''}</span><span class="font-bold text-sm flex-1">HIIT Shadow 15 min</span><span class="text-[11px] mut">~${d.workouts.hiitKcal||190} kcal</span></button>`;
+  const n=pushupsDone(d); $('wkProg').textContent=`${n}/7`; $('wkBar').style.width=(n/7*100)+'%';
+  const base=tdeeBase(), sp=sportKcal(d), t=totals(d);
+  $('eBase').textContent=base; $('eSport').textContent='+'+sp; $('eDef').textContent=(base+sp-t.kc);
+  $('extraWorkouts').innerHTML = d.extra.map((e,i)=>`<div class="card2 flex justify-between text-sm"><span>${e.time} · <b>${e.type}</b> ${e.min} min</span><span class="text-[var(--ylw)] font-bold">${e.kc} kcal <button class="mut ml-2" onclick="delExtra(${i})">✕</button></span></div>`).join('');
+}
+function renderPlan(){
+  const order=[1,2,3,4,5,6,0];
+  $('schedule').innerHTML = order.map(dw=>{ const s=S.schedule[dw]; return `<div class="card2">
+    <div class="flex justify-between items-center"><b>${DAYS[dw]}</b><span class="text-[11px] mut">${s.dep?'🍗 Repas '+minus10(s.dep):'Pas de départ'}</span></div>
+    <div class="grid grid-cols-3 gap-2 mt-2">
+      <label class="text-[10px] mut">Réveil<input type="time" value="${s.wake||''}" onchange="setSched(${dw},'wake',this.value)"></label>
+      <label class="text-[10px] mut">Départ<input type="time" value="${s.dep||''}" onchange="setSched(${dw},'dep',this.value)"></label>
+      <label class="text-[10px] mut">Départ boxe<input type="time" value="${S.extraDeps[dw]||''}" onchange="setExtraDep(${dw},this.value)"></label>
+    </div>
+    <input class="mt-2 !text-sm !py-2" value="${(s.label||'').replace(/"/g,'&quot;')}" placeholder="Libellé (ex : Fac 8h)" onchange="setSched(${dw},'label',this.value)">
+  </div>`;}).join('');
+  const al = buildAlerts(new Date()); const now=hm();
+  $('todayAlerts').innerHTML = al.map(a=>`<div class="card2 flex gap-3 items-start ${a.time<now?'opacity-50':''}"><div class="font-black text-[var(--red)] w-12">${a.time}</div><div class="text-sm flex-1"><b>${a.title}</b><div class="text-[11px] mut">${a.body}</div></div></div>`).join('');
+  $('notifState').textContent = !('Notification' in window)?'Notifications non supportées sur ce navigateur — alertes visuelles + sons uniquement.':Notification.permission==='granted'?'✅ Notifications activées':Notification.permission==='denied'?'❌ Bloquées dans les réglages du navigateur':'⏳ Pas encore autorisées';
+}
+function renderAll(){ renderDash(); renderFuel(); renderTrain(); renderPlan(); }
+
+/* =====================================================================
+   14. INTERACTIONS UI
+   ===================================================================== */
+function go(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); $('tab-'+t).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  window.scrollTo(0,0); if(t==='coach') renderChat();
+  try{ sessionStorage.setItem('cc_tab',t); }catch(e){}
+}
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.opacity=1; clearTimeout(t._h); t._h=setTimeout(()=>t.style.opacity=0,2200); }
+function addWater(ml){ ACTIONS.ADD_WATER({ml}); if(ml>0) toast(`💧 +${ml} ml`); }
+function quickAdd(q){ const items=parseFoods(q); if(items.length){ const m=ACTIONS.ADD_MEAL({items}); toast(`✅ ${m.name} · ${m.kc} kcal`);} }
+function delMeal(id){ const d=today(); d.meals=d.meals.filter(m=>m.id!==id); save(); renderAll(); }
+function toggleWk(id){ const d=today(); d.workouts[id]=!d.workouts[id]; save(); renderAll(); }
+function delExtra(i){ today().extra.splice(i,1); save(); renderAll(); }
+function quickWorkout(type,min){ ACTIONS.LOG_WORKOUT({type,minutes:min}); toast(`💪 ${type} ${min} min ajouté`); }
+function setSched(dw,k,v){ S.schedule[dw][k]=v; save(); renderPlan(); renderDash(); }
+function setExtraDep(dw,v){ if(v) S.extraDeps[dw]=v; else delete S.extraDeps[dw]; save(); renderPlan(); renderDash(); }
+function addRecipe(i){ const r=S.recipes[i]; ACTIONS.ADD_MEAL({name:r.name,items:JSON.parse(JSON.stringify(r.items))}); toast('✅ '+r.name+' ajouté'); }
+function delRecipe(i){ S.recipes.splice(i,1); save(); renderFuel(); }
+function resetToday(){ if(confirm('Effacer repas, eau et séances d\'aujourd\'hui ?')){ delete S.days[dKey()]; save(); renderAll(); } }
+function exportData(){ const b=new Blob([JSON.stringify({...S,ai:{...S.ai,key:''}},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`cut-${dKey()}.json`; a.click(); }
+function importData(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const key=S.ai.key; S=Object.assign(defaultState(),JSON.parse(r.result)); if(!S.ai.key) S.ai.key=key; save(); renderAll(); toast('Import OK'); }catch(err){ toast('Fichier invalide'); } }; r.readAsText(f); }
+
+function openModal(html){ $('modalBody').innerHTML=html; $('modal').classList.remove('hidden'); $('modal').classList.add('flex'); }
+function closeModal(){ $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); }
+function openWeigh(type){
+  openModal(`<div class="font-black text-lg mb-1">${type==='matin'?'☀️ Pesée du matin (à jeun, après toilettes)':'🌙 Pesée du soir'}</div>
+  <div class="text-xs mut mb-4">Cible du jour : ${fr(targetAt(new Date()))} kg</div>
+  <input id="wIn" type="number" step="0.1" inputmode="decimal" placeholder="78.8" value="${fr(currentWeight()).replace(',','.')}" class="!text-3xl !font-black text-center">
+  <button class="btn btn-red w-full mt-4 !py-3" onclick="saveWeigh('${type}')">Enregistrer</button>`);
+  setTimeout(()=>$('wIn').select(),100);
+}
+function saveWeigh(type){ const v=parseFloat($('wIn').value); const r=ACTIONS.LOG_WEIGHT({kg:v,type}); if(!r){toast('Poids invalide');return;} closeModal(); toast(`⚖️ ${fr(v)} kg enregistré`);
+  S.chat.push({role:'assistant',text:localBrain('',[{type:'LOG_WEIGHT',r}]),meta:'Analyse automatique',ts:Date.now()}); save(); }
+function foodOptions(){ return FOODS.map((f,i)=>`<option value="${i}">${f.n}</option>`).join(''); }
+function openMealModal(){
+  openModal(`<div class="font-black text-lg mb-3">Ajouter un aliment</div>
+  <label class="text-xs mut">Écris-le librement</label>
+  <textarea id="freeMeal" rows="2" placeholder="200g de poulet, 3 oeufs, 150g brocoli"></textarea>
+  <button class="btn btn-red w-full mt-2" onclick="addFree()">Analyser et ajouter</button>
+  <div class="text-center mut text-xs my-4">— ou —</div>
+  <input id="foodSearch" placeholder="🔎 Rechercher (${FOODS.length} aliments)" oninput="filterFoods()">
+  <select id="foodSel" size="6" class="mt-2 !h-40">${foodOptions()}</select>
+  <div class="flex gap-2 mt-2"><input id="foodG" type="number" inputmode="numeric" placeholder="grammes" value="100"><button class="btn btn-grn whitespace-nowrap" onclick="addSel()">＋ Ajouter</button></div>
+  <div id="foodPrev" class="text-xs mut mt-2"></div>`);
+  $('foodSel').onchange=prevSel; $('foodG').oninput=prevSel;
+}
+function filterFoods(){ const q=norm($('foodSearch').value); $('foodSel').innerHTML=FOODS.map((f,i)=>({f,i})).filter(({f})=>!q||norm(f.n+' '+f.k.join(' ')).includes(q)).map(({f,i})=>`<option value="${i}">${f.n}</option>`).join(''); }
+function prevSel(){ const f=FOODS[$('foodSel').value]; if(!f) return; const g=+$('foodG').value||f.u; const r=g/100; $('foodPrev').innerHTML=`${f.n} ${g} g → <b class="text-white">${Math.round(f.kc*r)} kcal · P ${(f.p*r).toFixed(1)} · G ${(f.c*r).toFixed(1)} · L ${(f.f*r).toFixed(1)}</b> ${f.t==='ban'?'⛔':f.t==='warn'?'⚠️':'✅'}`; }
+function addSel(){ const f=FOODS[$('foodSel').value]; if(!f){toast('Choisis un aliment');return;} const g=+$('foodG').value||f.u; const r=g/100;
+  ACTIONS.ADD_MEAL({items:[{name:f.n,g,kcal:Math.round(f.kc*r),p:+(f.p*r).toFixed(1),c:+(f.c*r).toFixed(1),f:+(f.f*r).toFixed(1),dairy:BAN_DAIRY.includes(f.n)}]}); closeModal(); toast('✅ Ajouté'); }
+function addFree(){ const items=parseFoods($('freeMeal').value); if(!items.length){toast('Aucun aliment reconnu');return;} const m=ACTIONS.ADD_MEAL({items}); closeModal(); toast(`✅ ${m.kc} kcal ajoutées`); }
+let recipeDraft=[];
+function openRecipeModal(){
+  recipeDraft=[];
+  openModal(`<div class="font-black text-lg mb-3">🧁 Créateur de recette</div>
+  <input id="rName" placeholder="Nom (ex : Gâteau protéiné cacao)">
+  <div class="flex gap-2 mt-2"><input id="rIng" placeholder="30g whey, 2 oeufs, 5g cacao"><button class="btn btn-grn" onclick="addIng()">＋</button></div>
+  <div class="text-[11px] mut mt-1">Ajoute les ingrédients un par un ou tous d'un coup.</div>
+  <div id="rList" class="space-y-2 mt-3"></div>
+  <div id="rTot" class="card2 mt-3 text-sm"></div>
+  <div class="grid grid-cols-2 gap-2 mt-3"><button class="btn" onclick="saveRecipe(false)">💾 Enregistrer</button><button class="btn btn-red" onclick="saveRecipe(true)">Enregistrer + manger</button></div>`);
+  renderRecipeDraft();
+}
+function addIng(){ const items=parseFoods($('rIng').value); if(!items.length){toast('Ingrédient inconnu');return;} recipeDraft.push(...items); $('rIng').value=''; renderRecipeDraft(); }
+function renderRecipeDraft(){
+  $('rList').innerHTML=recipeDraft.map((i,k)=>`<div class="card2 flex justify-between text-sm"><span>${i.name} · ${i.g} g</span><span>${i.kc} kcal <button class="mut ml-2" onclick="recipeDraft.splice(${k},1);renderRecipeDraft()">✕</button></span></div>`).join('');
+  const t=recipeDraft.reduce((a,i)=>({kc:a.kc+i.kc,p:a.p+i.p,c:a.c+i.c,f:a.f+i.f}),{kc:0,p:0,c:0,f:0});
+  $('rTot').innerHTML=`Total : <b>${Math.round(t.kc)} kcal</b> · P ${t.p.toFixed(1)} g · G ${t.c.toFixed(1)} g · L ${t.f.toFixed(1)} g ${t.c>15?'<span class="text-[var(--ylw)]">⚠️ glucides</span>':''}${recipeDraft.some(i=>i.dairy)?'<span class="text-[var(--red)]"> ⛔ laitage</span>':''}`;
+}
+function saveRecipe(eat){ if(!recipeDraft.length){toast('Ajoute des ingrédients');return;} const name=$('rName').value.trim()||'Recette maison';
+  S.recipes.push({name,items:JSON.parse(JSON.stringify(recipeDraft))}); save();
+  if(eat) ACTIONS.ADD_MEAL({name,items:recipeDraft}); closeModal(); renderAll(); toast('💾 Recette enregistrée'); }
+function openAISettings(){
+  const p=S.ai.provider;
+  openModal(`<div class="font-black text-lg mb-1">⚙️ Cerveau de l'IA</div>
+  <div class="text-xs mut mb-4">La clé reste uniquement sur ton téléphone (localStorage). Sans clé, le moteur expert local répond hors-ligne.</div>
+  <label class="text-xs mut">Fournisseur</label>
+  <select id="aiProv" onchange="aiModels()">${Object.entries(PROVIDERS).map(([k,v])=>`<option value="${k}" ${k===p?'selected':''}>${v.name}</option>`).join('')}</select>
+  <label class="text-xs mut mt-3 block">Modèle</label>
+  <select id="aiModel"></select>
+  <input id="aiModelCustom" class="mt-2" placeholder="ou nom de modèle personnalisé" value="">
+  <label class="text-xs mut mt-3 block">Clé API</label>
+  <input id="aiKey" type="password" placeholder="sk-… / AIza…" value="${S.ai.key||''}">
+  <button class="btn btn-red w-full mt-4 !py-3" onclick="saveAI()">Enregistrer</button>
+  <button class="btn w-full mt-2" onclick="testAI()">Tester la connexion</button>
+  <details class="mt-4 text-xs mut"><summary>Voir le contexte injecté</summary><pre class="whitespace-pre-wrap mt-2 text-[10px]">${buildContext().replace(/</g,'&lt;')}</pre></details>`);
+  aiModels();
+}
+function aiModels(){ const p=$('aiProv').value; $('aiModel').innerHTML=PROVIDERS[p].models.map(m=>`<option ${m===S.ai.model?'selected':''}>${m}</option>`).join(''); if(!PROVIDERS[p].models.includes(S.ai.model)) $('aiModelCustom').value=p===S.ai.provider?S.ai.model:''; }
+function saveAI(){ S.ai={provider:$('aiProv').value,key:$('aiKey').value.trim(),model:$('aiModelCustom').value.trim()||$('aiModel').value}; save(); updateAIMode(); closeModal(); toast('IA configurée'); }
+async function testAI(){ saveAI(); if(S.ai.provider==='local'){toast('Mode local actif');return;} toast('Test en cours…'); try{ const r=await callLLM('Réponds juste "OK coach" sans bloc actions.'); toast('✅ '+r.slice(0,40)); }catch(e){ toast('❌ '+String(e.message||e).slice(0,60)); } }
+function updateAIMode(){ const on=S.ai.provider!=='local'&&S.ai.key; $('aiMode').innerHTML = on?`<span class="text-[var(--grn)]">● ${PROVIDERS[S.ai.provider].name} · ${S.ai.model}</span>`:'<span class="text-[var(--ylw)]">● Moteur expert local (hors-ligne)</span>'; $('ttsBtn').textContent=S.tts?'🔊':'🔇'; }
+
+/* =====================================================================
+   15. HIIT TIMER
+   ===================================================================== */
+const H = {round:0,phase:'idle',sec:30,timer:null,elapsed:0,kcal:0};
+let actx;
+function beep(freq=880,dur=.18,times=1){
+  try{ actx = actx||new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<times;i++){ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=freq; o.type='square'; g.gain.value=.15; o.connect(g); g.connect(actx.destination); const t=actx.currentTime+i*(dur+.08); o.start(t); o.stop(t+dur);} }catch(e){}
+  if(navigator.vibrate) navigator.vibrate(times>1?[200,100,200]:150);
+}
+function hiitStart(){
+  if(H.timer) return; if(H.phase==='idle'||H.phase==='done'){ H.round=1; H.phase='work'; H.sec=30; H.elapsed=0; H.kcal=0; beep(1000,.3,2); }
+  H.timer=setInterval(hiitTick,1000); renderHiit();
+}
+function hiitPause(){ clearInterval(H.timer); H.timer=null; }
+function hiitReset(){ hiitPause(); Object.assign(H,{round:0,phase:'idle',sec:30,elapsed:0,kcal:0}); renderHiit(); }
+function hiitTick(){
+  H.sec--; H.elapsed++; H.kcal += (H.phase==='work'?12:5)*currentWeight()/(60*60); // MET 12 / 5
+  if(H.sec<=3&&H.sec>0) beep(600,.08);
+  if(H.sec<=0){
+    if(H.phase==='work'){ H.phase='rest'; H.sec=30; beep(500,.35); }
+    else { if(H.round>=15){ H.phase='done'; hiitPause(); beep(1200,.4,3); const d=today(); d.workouts.hiit=true; d.workouts.hiitKcal=Math.round(H.kcal); save(); renderAll(); toast('🔥 HIIT terminé !'); speak('HIIT terminé. Bois 500 millilitres.'); }
+      else { H.round++; H.phase='work'; H.sec=30; beep(1000,.3,2); } }
+  }
+  renderHiit();
+}
+function renderHiit(){
+  $('hiitSec').textContent=H.phase==='done'?'✓':H.sec;
+  $('hiitPhase').textContent={idle:'PRÊT',work:'EFFORT 🔥',rest:'RÉCUP ACTIVE',done:'TERMINÉ'}[H.phase];
+  $('hiitPhase').style.color=H.phase==='work'?'var(--red)':H.phase==='rest'?'var(--blu)':'var(--grn)';
+  $('hiitRing').style.stroke=H.phase==='rest'?'var(--blu)':'var(--red)';
+  $('hiitRing').style.strokeDashoffset = H.phase==='idle'?0:339.3*(1-H.sec/30);
+  $('hiitRound').textContent=`Round ${H.round}/15`;
+  $('hiitCombo').textContent = H.phase==='work'?COMBOS[(H.round-1)%COMBOS.length]:H.phase==='rest'?'Garde haute, pieds mobiles, respire':'';
+  $('hiitTotal').textContent=`${pad(Math.floor(H.elapsed/60))}:${pad(H.elapsed%60)}`;
+  $('hiitKcal').textContent=Math.round(H.kcal)+' kcal';
+}
+
+/* =====================================================================
+   16. MOTEUR DE NOTIFICATIONS
+   ===================================================================== */
+function buildAlerts(date){
+  const dw=date.getDay(); const s=S.schedule[dw]||{}; const out=[];
+  if(s.wake) out.push({time:s.wake,key:'wake',title:'☀️ Briefing du matin',body:'Pèse-toi à jeun après les toilettes, puis lance ta 1ère bouteille de 1,5 L (500 ml tout de suite).'});
+  depsForDay(dw).forEach(dep=>out.push({time:minus10(dep.time),key:'meal'+dep.time,priority:true,title:'🚨 DÉPART DANS 10 MIN !',body:'Prends ta dose de protéines tout de suite (Poulet / Oeufs durs / Shaker Whey à l\'eau) + bois 500 ml sur ta bouteille de 1,5L. Zéro glucide !'}));
+  [['11:00','b11','💧 Rappel eau 11h','Tu devrais être à ~750 ml. Avance sur la bouteille 1.'],
+   ['14:00','b14','💧 Fin bouteille 1 (14h)','Objectif : 1,5 L bus. Attaque la bouteille 2.'],
+   ['17:00','b17','💧 Rappel eau 17h','Tu devrais être à ~2,25 L.'],
+   ['20:00','b20','💧 Fin bouteille 2 (20h)','3,0 L minimum obligatoire. Bonus : bouteille 3 pour drainer.'],
+   ['21:30','report','🌙 Rapport du soir','Pesée du soir + débrief complet avec le Coach IA.']].forEach(([t,k,ti,b])=>out.push({time:t,key:k,title:ti,body:b}));
+  return out.sort((a,b)=>a.time.localeCompare(b.time));
+}
+function checkAlerts(){
+  const now=new Date(); const t=hm(now); const k=dKey(now);
+  S.firedAlerts[k]=S.firedAlerts[k]||[];
+  buildAlerts(now).forEach(a=>{
+    if(a.time===t && !S.firedAlerts[k].includes(a.key)){
+      S.firedAlerts[k].push(a.key); save(); fireAlert(a);
+    }
+  });
+  // nettoyage
+  Object.keys(S.firedAlerts).forEach(x=>{ if(x<dKey(new Date(Date.now()-3*864e5))) delete S.firedAlerts[x]; });
+}
+function fireAlert(a){
+  let body=a.body;
+  if(a.key.startsWith('b')){ const w=today().water; body+=` (actuel : ${(w/1000).toFixed(2)} L)`; }
+  if(a.key==='report'){ const t=totals(); body+=` Bilan : ${t.kc} kcal, ${t.p.toFixed(0)} g P, ${t.c.toFixed(0)} g G.`; }
+  beep(a.priority?1100:800,.25,a.priority?4:2);
+  $('alertTitle').textContent=a.title; $('alertText').textContent=body; $('alertBanner').classList.remove('hidden');
+  if('Notification' in window && Notification.permission==='granted'){
+    try{
+      if(navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r=>r.showNotification(a.title,{body,tag:a.key,requireInteraction:!!a.priority,vibrate:[300,100,300]}));
+      else new Notification(a.title,{body,tag:a.key,requireInteraction:!!a.priority});
+    }catch(e){}
+  }
+  if(S.tts) speak(a.title+'. '+body);
+}
+async function enableNotif(){
+  if(!('Notification' in window)){ toast('Non supporté ici'); return; }
+  const p = await Notification.requestPermission(); renderPlan(); toast(p==='granted'?'🔔 Activées':'Refusées');
+  try{ actx = actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch(e){}
+}
+function testNotif(){ fireAlert({key:'test',priority:true,title:'🚨 DÉPART DANS 10 MIN !',body:'Prends ta dose de protéines tout de suite (Poulet / Oeufs durs / Shaker Whey à l\'eau) + bois 500 ml sur ta bouteille de 1,5L. Zéro glucide !'}); }
+
+/* =====================================================================
+   17. PWA : manifest + service worker (générés à la volée)
+   ===================================================================== */
+function setupPWA(){
+  const icon = 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#0a0a0f"/><circle cx="256" cy="256" r="170" fill="#ff3b47"/><text x="256" y="300" font-size="150" text-anchor="middle" font-family="Arial" font-weight="900" fill="#fff">CUT</text></svg>');
+  const manifest = {name:'Cut Commander',short_name:'Cut',start_url:location.href.split('#')[0],display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:icon,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
+  const l=document.createElement('link'); l.rel='manifest'; l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest)); document.head.appendChild(l);
+  const al=document.createElement('link'); al.rel='apple-touch-icon'; al.href=icon; document.head.appendChild(al);
+  // Service worker : seulement possible si l'app est servie en https/localhost avec un fichier sw.js à côté.
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+}
+
+/* =====================================================================
+   18. INIT
+   ===================================================================== */
+function tick(){
+  const n=new Date(); $('hdrClock').textContent=hm(n);
+  $('hdrDate').textContent=n.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+}
+function init(){
+  load(); today(); save();
+  setupPWA(); tick(); renderAll(); renderSuggests(); updateAIMode();
+  let tab='dash'; try{ tab=sessionStorage.getItem('cc_tab')||'dash'; }catch(e){}
+  go(tab);
+  setInterval(()=>{ tick(); checkAlerts(); },15000);
+  setInterval(()=>{ renderDash(); },60000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ tick(); checkAlerts(); renderAll(); } });
+  checkAlerts();
+  if('speechSynthesis' in window) speechSynthesis.getVoices();
+  renderHiit();
+}
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
