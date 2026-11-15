@@ -651,7 +651,7 @@ function defaultState(){
     routines: {},
     recipes: [],
     chat: [],
-    ai: { provider: DEFAULT_KEY?'gemini':'local', key: DEFAULT_KEY, model:'gemini-2.5-flash' },
+    ai: { provider: DEFAULT_KEY?'gemini':'local', key: DEFAULT_KEY, model:'gemini-flash-latest' },
     tts: false,
     firedAlerts: {}
   };
@@ -662,7 +662,8 @@ function load(){
   catch(e){ S = defaultState(); }
   S.settings = Object.assign({}, DEFAULT_SETTINGS, S.settings||{});
   if(!S.events || !Object.keys(S.events).length) S.events = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
-  if(DEFAULT_KEY && !S.ai.key){ S.ai = {provider:'gemini', key:DEFAULT_KEY, model:'gemini-2.5-flash'}; }
+  if(S.ai.provider==='gemini' && /^gemini-2/.test(S.ai.model||'')) S.ai.model='gemini-flash-latest';
+  if(DEFAULT_KEY && !S.ai.key){ S.ai = {provider:'gemini', key:DEFAULT_KEY, model:'gemini-flash-latest'}; }
   delete S.schedule; delete S.extraDeps;
 }
 function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e){ toast('Sauvegarde impossible'); } }
@@ -1029,7 +1030,7 @@ N'inclus que les actions réellement déclarées (pas d'action pour une simple q
    10. APPELS LLM (Claude / OpenAI / Gemini / Groq)
    ===================================================================== */
 const PROVIDERS = {
-  gemini:{name:'Google Gemini',models:['gemini-2.5-flash','gemini-2.5-pro','gemini-flash-latest']},
+  gemini:{name:'Google Gemini',models:['gemini-flash-latest','gemini-3.8-flash','gemini-flash-lite-latest']},
   local:{name:'Coach hors-ligne (sans clé)',models:['expert-local']},
   anthropic:{name:'Claude (Anthropic)',models:['claude-sonnet-5-5','claude-opus-5-5','claude-haiku-5-5']},
   openai:{name:'OpenAI',models:['gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini']},
@@ -1054,13 +1055,13 @@ async function callLLM(userText){
       data = await res.json(); if(!res.ok) throw new Error(data.error?.message||res.status);
       text = data.choices[0].message.content;
     } else if(provider==='gemini'){
-      const body = JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:mergeRoles(hist).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{temperature:0.5,maxOutputTokens:2000}});
-      for(const mdl of [model||'gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash']){
+      const body = JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:mergeRoles(hist).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{temperature:0.5,maxOutputTokens:4096}});
+      for(const mdl of [...new Set([model,'gemini-flash-latest','gemini-3.8-flash','gemini-flash-lite-latest'].filter(Boolean))]){
         res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body});
-        data = await res.json(); if(res.ok || res.status!==404) break;
+        data = await res.json(); if(res.ok || ![404,429,500,503].includes(res.status)) break;
       }
       if(!res.ok) throw new Error(data.error?.message||res.status);
-      text = (data.candidates?.[0]?.content?.parts||[]).map(p=>p.text).join('\n');
+      text = (data.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||'').join('\n');
     }
     return text||'';
   } finally { clearTimeout(to); }
@@ -1737,7 +1738,7 @@ function openAISettings(){
   <select id="aiModel"></select>
   <input id="aiModelCustom" class="mt-2" placeholder="ou nom de modèle personnalisé" value="">
   <label class="text-xs mut mt-3 block">Clé API</label>
-  <input id="aiKey" type="password" placeholder="sk-… / AIza…" value="${S.ai.key||''}">
+  <input id="aiKey" type="password" placeholder="Colle ta clé ici (AQ.… / AIza… / sk-…)" value="${S.ai.key||''}">
   <button class="btn btn-red w-full mt-4 !py-3" onclick="saveAI()">Enregistrer</button>
   <button class="btn w-full mt-2" onclick="testAI()">Tester la connexion</button>
   <details class="mt-4 text-xs mut"><summary>Voir le contexte injecté</summary><pre class="whitespace-pre-wrap mt-2 text-[10px]">${buildContext().replace(/</g,'&lt;')}</pre></details>`);
