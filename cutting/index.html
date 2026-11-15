@@ -651,7 +651,7 @@ function defaultState(){
     routines: {},
     recipes: [],
     chat: [],
-    ai: { provider: DEFAULT_KEY?'gemini':'local', key: DEFAULT_KEY, model:'gemini-flash-latest' },
+    ai: { provider: DEFAULT_KEY?'gemini':'local', key: DEFAULT_KEY, model:'gemini-flash-lite-latest' },
     tts: false,
     firedAlerts: {}
   };
@@ -662,8 +662,8 @@ function load(){
   catch(e){ S = defaultState(); }
   S.settings = Object.assign({}, DEFAULT_SETTINGS, S.settings||{});
   if(!S.events || !Object.keys(S.events).length) S.events = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
-  if(S.ai.provider==='gemini' && /^gemini-2/.test(S.ai.model||'')) S.ai.model='gemini-flash-latest';
-  if(DEFAULT_KEY && !S.ai.key){ S.ai = {provider:'gemini', key:DEFAULT_KEY, model:'gemini-flash-latest'}; }
+  if(S.ai.provider==='gemini' && /^gemini-2|^gemini-flash-latest/.test(S.ai.model||'')) S.ai.model='gemini-flash-lite-latest';
+  if(DEFAULT_KEY && !S.ai.key){ S.ai = {provider:'gemini', key:DEFAULT_KEY, model:'gemini-flash-lite-latest'}; }
   delete S.schedule; delete S.extraDeps;
 }
 function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e){ toast('Sauvegarde impossible'); } }
@@ -1030,7 +1030,7 @@ N'inclus que les actions réellement déclarées (pas d'action pour une simple q
    10. APPELS LLM (Claude / OpenAI / Gemini / Groq)
    ===================================================================== */
 const PROVIDERS = {
-  gemini:{name:'Google Gemini',models:['gemini-flash-latest','gemini-3.8-flash','gemini-flash-lite-latest']},
+  gemini:{name:'Google Gemini',models:['gemini-flash-lite-latest','gemini-flash-latest','gemini-3.8-flash']},
   local:{name:'Coach hors-ligne (sans clé)',models:['expert-local']},
   anthropic:{name:'Claude (Anthropic)',models:['claude-sonnet-5-5','claude-opus-5-5','claude-haiku-5-5']},
   openai:{name:'OpenAI',models:['gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini']},
@@ -1042,7 +1042,7 @@ function historyMsgs(n=12){
 async function callLLM(userText){
   const {provider,key,model} = S.ai; const sys = SYSTEM_PROMPT();
   const hist = historyMsgs(); hist.push({role:'user',content:userText});
-  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(),45000);
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(),70000);
   try{
     let res, data, text;
     if(provider==='anthropic'){
@@ -1056,9 +1056,14 @@ async function callLLM(userText){
       text = data.choices[0].message.content;
     } else if(provider==='gemini'){
       const body = JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:mergeRoles(hist).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{temperature:0.5,maxOutputTokens:4096}});
-      for(const mdl of [...new Set([model,'gemini-flash-latest','gemini-3.8-flash','gemini-flash-lite-latest'].filter(Boolean))]){
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body});
-        data = await res.json(); if(res.ok || ![404,429,500,503].includes(res.status)) break;
+      for(const mdl of [...new Set([model,'gemini-flash-lite-latest','gemini-flash-latest','gemini-3.8-flash'].filter(Boolean))]){
+        const c2 = new AbortController(); const t2 = setTimeout(()=>c2.abort(),20000);
+        try{
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',signal:c2.signal,headers:{'content-type':'application/json'},body});
+          data = await res.json();
+        }catch(err){ res={ok:false,status:504}; data={error:{message:'trop lent'}}; }
+        finally{ clearTimeout(t2); }
+        if(res.ok || ![404,429,500,503,504].includes(res.status)) break;
       }
       if(!res.ok) throw new Error(data.error?.message||res.status);
       text = (data.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||'').join('\n');
