@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Cut Commander</title>
+<title>Objectif Combat</title>
 <script src="https://cdn.tailwindcss.com/3.4.1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -56,8 +56,8 @@
 <header class="sticky top-0 z-30 px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-3" style="background:linear-gradient(180deg,#0a0a0f 75%,transparent)">
   <div class="flex items-center justify-between">
     <div>
-      <div class="text-[11px] font-bold tracking-[.2em] text-[var(--red)]">CUT COMMANDER</div>
-      <div class="text-lg font-black leading-tight" id="hdrTitle">Chahyn · Fight Camp</div>
+      <div class="flex items-center gap-2"><img id="hdrLogo" class="w-10 h-10 rounded-xl" alt=""><div><div class="text-[11px] font-bold tracking-[.2em] text-[var(--red)]">OBJECTIF COMBAT</div>
+      <div class="text-lg font-black leading-tight" id="hdrTitle">Salut Chahyn 👊</div></div></div>
     </div>
     <div class="text-right">
       <div class="text-2xl font-black" id="hdrClock">--:--</div>
@@ -70,6 +70,18 @@
 
 <!-- ================= TAB DASHBOARD ================= -->
 <section id="tab-dash" class="tab active space-y-4">
+
+  <div class="card" style="background:linear-gradient(135deg,#2a0d12,#14141c)">
+    <div class="text-[11px] font-black tracking-widest text-[var(--red)]">AUJOURD'HUI</div>
+    <div class="text-lg font-black mt-1" id="todayHeadline">—</div>
+    <div class="space-y-2 mt-3" id="todayTodo"></div>
+    <button class="btn btn-red w-full mt-3 !py-4 !text-base" onclick="openRoutine()" id="routineBtn">▶ Séance du matin · 15 min</button>
+    <div class="grid grid-cols-3 gap-2 mt-2">
+      <button class="btn !text-xs" onclick="addWater(500)">💧 +500 ml</button>
+      <button class="btn !text-xs" onclick="openMealModal()">🍗 J'ai mangé</button>
+      <button class="btn !text-xs" onclick="openWeigh(new Date().getHours()<12?'matin':'soir')">⚖️ Pesée</button>
+    </div>
+  </div>
 
   <div class="grid grid-cols-2 gap-3">
     <div class="card relative overflow-hidden">
@@ -89,12 +101,12 @@
   <div class="card">
     <div class="flex items-end justify-between">
       <div>
-        <div class="text-[11px] font-bold mut">DERNIER POIDS</div>
+        <div class="text-[11px] font-bold mut">MON POIDS</div>
         <div class="text-5xl font-black leading-none mt-1"><span id="curW">80,0</span><span class="text-lg mut"> kg</span></div>
         <div class="text-xs mt-1" id="curWinfo">—</div>
       </div>
       <div class="text-right">
-        <div class="text-[11px] font-bold mut">VS COURBE CIBLE</div>
+        <div class="text-[11px] font-bold mut">PAR RAPPORT AU PLAN</div>
         <div class="text-2xl font-black" id="deltaTarget">—</div>
         <div class="text-xs mut" id="deltaTargetTxt">—</div>
       </div>
@@ -111,7 +123,7 @@
 
   <div class="card">
     <div class="flex items-center justify-between mb-2">
-      <div class="font-black">Courbe de coupe</div>
+      <div class="font-black">Ma courbe de poids</div>
       <div class="flex gap-2 text-[11px]">
         <span class="flex items-center gap-1"><i class="w-3 h-1 rounded bg-[var(--red)] inline-block"></i>Cible</span>
         <span class="flex items-center gap-1"><i class="w-3 h-1 rounded bg-[var(--grn)] inline-block"></i>Matin</span>
@@ -168,7 +180,7 @@
   <div class="card">
     <div class="flex justify-between items-center">
       <div class="font-black">Prochain départ</div>
-      <button class="text-xs text-[var(--red)] font-bold" onclick="go('plan')">Modifier →</button>
+      <button class="text-xs text-[var(--red)] font-bold" onclick="go('plan')">Agenda →</button>
     </div>
     <div class="flex items-center gap-4 mt-3">
       <div class="text-4xl font-black" id="nextDepTime">--:--</div>
@@ -180,7 +192,7 @@
   </div>
 
   <div class="card" id="phaseCard">
-    <div class="font-black">Phase du jour</div>
+    <div class="font-black">Ta phase</div>
     <div class="text-sm mt-2" id="phaseTxt">—</div>
   </div>
 </section>
@@ -190,7 +202,7 @@
 
   <div class="card">
     <div class="flex justify-between items-center">
-      <div class="font-black">Bouteilles 1,5 L</div>
+      <div class="font-black">💧 Mes bouteilles de 1,5 L</div>
       <div class="text-xs mut">Objectif : <b class="text-white" id="waterGoalTxt">3,0 L</b></div>
     </div>
     <div class="grid grid-cols-3 gap-2 mt-3" id="bottles"></div>
@@ -230,7 +242,7 @@
 
   <div class="card">
     <div class="flex justify-between items-center mb-3">
-      <div class="font-black">Timeline du jour</div>
+      <div class="font-black">Ce que j'ai mangé aujourd'hui</div>
       <div class="text-xs mut" id="tlCount">0 prise</div>
     </div>
     <div id="timeline" class="space-y-3"></div>
@@ -248,7 +260,7 @@
     <div class="flex items-center gap-2">
       <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl" style="background:linear-gradient(135deg,#ff3b47,#a874ff)">🥊</div>
       <div>
-        <div class="font-black leading-tight">Coach IA</div>
+        <div class="font-black leading-tight">Ton coach</div>
         <div class="text-[11px]" id="aiMode">Moteur local</div>
       </div>
     </div>
@@ -269,7 +281,7 @@
 <!-- ================= TAB TRAIN ================= -->
 <section id="tab-train" class="tab space-y-4">
   <div class="card text-center">
-    <div class="font-black">HIIT Shadow Boxing · 15 min</div>
+    <div class="font-black">Fractionné shadow-boxing · 15 min</div>
     <div class="text-xs mut">30 s explosif / 30 s récup active · 15 rounds</div>
     <div class="relative mx-auto mt-4 w-56 h-56">
       <svg viewBox="0 0 120 120" class="w-full h-full">
@@ -282,9 +294,9 @@
         <div class="text-xs mut" id="hiitRound">Round 0/15</div>
       </div>
     </div>
-    <div class="text-sm font-bold mt-2 min-h-[40px]" id="hiitCombo">Appuie sur START</div>
+    <div class="text-sm font-bold mt-2 min-h-[40px]" id="hiitCombo">Appuie sur GO</div>
     <div class="grid grid-cols-3 gap-2 mt-3">
-      <button class="btn btn-red" onclick="hiitStart()" id="hiitStartBtn">START</button>
+      <button class="btn btn-red" onclick="hiitStart()" id="hiitStartBtn">GO</button>
       <button class="btn" onclick="hiitPause()">PAUSE</button>
       <button class="btn" onclick="hiitReset()">RESET</button>
     </div>
@@ -296,7 +308,7 @@
 
   <div class="card">
     <div class="flex justify-between items-center mb-3">
-      <div class="font-black">Circuit poids du corps</div>
+      <div class="font-black">Circuit pompes (coche à la main)</div>
       <div class="text-xs font-bold" id="wkProg">0/7</div>
     </div>
     <div class="bar mb-3"><i id="wkBar" style="background:var(--grn)"></i></div>
@@ -304,15 +316,15 @@
   </div>
 
   <div class="card">
-    <div class="font-black mb-2">Dépense du jour</div>
+    <div class="font-black mb-2">Calories dépensées aujourd'hui</div>
     <div class="grid grid-cols-3 gap-2 text-center">
-      <div class="card2"><div class="text-[11px] mut">Base (TDEE)</div><div class="font-black" id="eBase">0</div></div>
+      <div class="card2"><div class="text-[11px] mut">Au repos</div><div class="font-black" id="eBase">0</div></div>
       <div class="card2"><div class="text-[11px] mut">Sport</div><div class="font-black text-[var(--ylw)]" id="eSport">0</div></div>
       <div class="card2"><div class="text-[11px] mut">Déficit</div><div class="font-black text-[var(--grn)]" id="eDef">0</div></div>
     </div>
     <div class="mt-3 space-y-2" id="extraWorkouts"></div>
     <div class="grid grid-cols-2 gap-2 mt-3">
-      <button class="btn" onclick="quickWorkout('boxe',60)">🥊 Boxe club 60'</button>
+      <button class="btn" onclick="quickWorkout('boxe',60)">🥊 Boxe Arsenal</button>
       <button class="btn" onclick="quickWorkout('shadow',15)">👊 Shadow 15'</button>
     </div>
   </div>
@@ -331,9 +343,20 @@
   </div>
 
   <div class="card">
-    <div class="font-black mb-1">Emploi du temps</div>
-    <div class="text-xs mut mb-3">Réveil + heure exacte de départ. Le repas « dernière minute » est calé 10 min avant.</div>
+    <div class="font-black mb-1">Mon agenda (fac + boxe)</div>
+    <div class="text-xs mut mb-3">Repris de ton calendrier. Pour chaque sortie, l'app calcule ton heure de départ et ton repas 10 min avant.</div>
     <div id="schedule" class="space-y-2"></div>
+    <button class="btn w-full mt-3" onclick="openEventModal()">＋ Ajouter un cours / une séance</button>
+  </div>
+
+  <div class="card">
+    <div class="font-black mb-2">Mes réglages</div>
+    <div class="grid grid-cols-2 gap-2">
+      <label class="text-[11px] mut">Trajet maison → fac (min)<input type="number" id="setTravelFac" onchange="setSetting('travelFac',+this.value)"></label>
+      <label class="text-[11px] mut">Trajet maison → boxe (min)<input type="number" id="setTravelBoxe" onchange="setSetting('travelBoxe',+this.value)"></label>
+      <label class="text-[11px] mut">Réveil jours sans cours<input type="time" id="setWakeFree" onchange="setSetting('wakeFree',this.value)"></label>
+      <label class="text-[11px] mut">Réveil = départ moins (min)<input type="number" id="setWakeBefore" onchange="setSetting('wakeBefore',+this.value)"></label>
+    </div>
   </div>
 
   <div class="card">
@@ -356,11 +379,11 @@
 <!-- NAV -->
 <nav class="fixed bottom-0 inset-x-0 z-40 border-t border-[var(--line)] pb-[env(safe-area-inset-bottom)]" style="background:rgba(10,10,15,.94);backdrop-filter:blur(14px)">
   <div class="grid grid-cols-5 max-w-xl mx-auto">
-    <button data-t="dash" class="on py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('dash')"><span class="text-xl">📊</span>Cut</button>
-    <button data-t="fuel" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('fuel')"><span class="text-xl">🍗</span>Fuel</button>
-    <button data-t="coach" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('coach')"><span class="text-xl">🤖</span>Coach</button>
-    <button data-t="train" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('train')"><span class="text-xl">🥊</span>Train</button>
-    <button data-t="plan" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('plan')"><span class="text-xl">⏰</span>Plan</button>
+    <button data-t="dash" class="on py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('dash')"><span class="text-xl">🏠</span>Accueil</button>
+    <button data-t="fuel" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('fuel')"><span class="text-xl">🍗</span>Repas</button>
+    <button data-t="coach" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('coach')"><span class="text-xl">💬</span>Coach</button>
+    <button data-t="train" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('train')"><span class="text-xl">🥊</span>Sport</button>
+    <button data-t="plan" class="py-2 flex flex-col items-center text-[11px] font-bold mut" onclick="go('plan')"><span class="text-xl">📅</span>Agenda</button>
   </div>
 </nav>
 
@@ -378,7 +401,30 @@
   </div>
 </div>
 
-<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-[100px] z-[70] bg-white text-black font-bold text-sm px-4 py-2 rounded-full opacity-0 pointer-events-none"></div>
+<!-- SÉANCE DU MATIN GUIDÉE -->
+<div id="routine" class="fixed inset-0 z-[55] hidden flex-col bg-[var(--bg)] px-5 pt-[calc(env(safe-area-inset-top)+16px)] pb-[calc(env(safe-area-inset-bottom)+20px)]">
+  <div class="flex justify-between items-center">
+    <div class="text-xs font-black tracking-widest text-[var(--red)]">SÉANCE DU MATIN</div>
+    <button class="text-sm mut font-bold" onclick="closeRoutine()">✕ Quitter</button>
+  </div>
+  <div class="bar mt-3"><i id="rtBar" style="background:var(--red)"></i></div>
+  <div class="flex justify-between text-[11px] mut mt-1"><span id="rtStep">Étape 1/17</span><span id="rtLeft">~15 min</span></div>
+  <div class="flex-1 flex flex-col items-center justify-center text-center">
+    <div class="text-6xl" id="rtEmoji">💧</div>
+    <div class="text-3xl font-black mt-4" id="rtTitle">—</div>
+    <div class="text-sm mut mt-2 max-w-xs" id="rtDesc">—</div>
+    <div class="text-7xl font-black mt-6 text-[var(--red)]" id="rtBig">—</div>
+    <div id="rtExtra" class="mt-4 w-full max-w-xs"></div>
+  </div>
+  <div class="text-xs mut text-center mb-2" id="rtNext"></div>
+  <div class="grid grid-cols-3 gap-2">
+    <button class="btn !py-4" onclick="rtPrev()">⏮</button>
+    <button class="btn btn-grn !py-4 !text-lg col-span-1" id="rtMain" onclick="rtMainBtn()">C'est fait ✓</button>
+    <button class="btn !py-4" onclick="rtSkip()">Passer ⏭</button>
+  </div>
+</div>
+
+<div id="toast"class="fixed left-1/2 -translate-x-1/2 bottom-[100px] z-[70] bg-white text-black font-bold text-sm px-4 py-2 rounded-full opacity-0 pointer-events-none"></div>
 
 <script>
 /* =====================================================================
@@ -395,6 +441,7 @@ const WEIGH_DATE = new Date(2026, 10, 22, 9, 0);   // J+7 pesée club
 const FIGHT_DATE = new Date(2026, 11, 12, 18, 0);  // 12 déc combat
 const DAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 const STORE_KEY = 'cutCommander_v1';
+const DEFAULT_KEY = '';   // clé Gemini pré-remplie (laissée vide dans le dépôt GitHub)
 
 /* =====================================================================
    2. BASE ALIMENTS (kcal, P, G, L pour 100 g ; unit = poids d'une unité en g)
@@ -578,18 +625,33 @@ const FOODS = [
 const BAN_DAIRY = ['Lait','Yaourt nature','Skyr','Fromage blanc 0%','Fromage (emmental)','Mozzarella','Crème fraîche','Beurre'];
 
 /* =====================================================================
-   3. EMPLOI DU TEMPS PAR DÉFAUT (modifiable dans l'onglet Plan)
+   3. AGENDA RÉEL (repris du calendrier de Chahyn) — [début, fin, intitulé, type]
+   type : fac | boxe | exam | combat
    ===================================================================== */
-const DEFAULT_SCHEDULE = {
-  1:{wake:'07:00',dep:'07:50',label:'Fac - cours L2 Gestion'},
-  2:{wake:'07:00',dep:'07:50',label:'Fac - cours L2 Gestion'},
-  3:{wake:'07:30',dep:'08:20',label:'Fac - cours'},
-  4:{wake:'07:00',dep:'07:50',label:'Fac - cours L2 Gestion'},
-  5:{wake:'07:30',dep:'08:20',label:'Fac - cours'},
-  6:{wake:'08:30',dep:'',label:'Repos / boxe maison'},
-  0:{wake:'09:00',dep:'',label:'Repos'}
+const DEFAULT_EVENTS = {
+ '2026-11-16':[['10:00','11:00','TD Statistiques','fac'],['11:00','12:30','TD Investissement','fac'],['21:45','23:00','Boxe – Arsenal','boxe']],
+ '2026-11-17':[['10:00','11:00','TD Informatique','fac'],['11:00','12:30','TD Anglais','fac']],
+ '2026-11-18':[['11:00','12:30','⚠️ Contrôle Comptabilité','fac'],['14:00','16:00','CM Statistiques','fac'],['16:00','18:00','CM Enjeux du développement','fac'],['18:00','20:00','Conférence Métiers','fac'],['21:00','22:15','Boxe – Arsenal','boxe']],
+ '2026-11-19':[['10:00','11:00','TD Étude','fac'],['14:30','16:00','CM Comptabilité','fac']],
+ '2026-11-20':[['14:00','16:00','CM Droit des affaires','fac'],['16:00','18:00','CM Entrepreneuriat','fac'],['21:30','22:45','Boxe – Arsenal','boxe']],
+ '2026-11-22':[['10:00','11:00','⚖️ PESÉE AU CLUB – objectif 77,0 kg','boxe']],
+ '2026-11-23':[['10:00','11:00','TD Statistiques','fac'],['21:45','23:00','Boxe – Arsenal','boxe']],
+ '2026-11-24':[['09:00','10:00','TD Étude','fac'],['11:00','12:30','TD Anglais','fac']],
+ '2026-11-25':[['11:00','12:30','TD Comptabilité','fac'],['14:00','16:00','CM Statistiques','fac'],['16:00','18:00','CM Enjeux du développement','fac'],['21:00','22:15','Boxe – Arsenal','boxe']],
+ '2026-11-26':[['11:00','12:30','TD Anglais','fac']],
+ '2026-11-27':[['16:00','18:00','CM Entrepreneuriat','fac'],['21:30','22:45','Boxe – Arsenal','boxe']],
+ '2026-11-30':[['09:00','17:00','PPE – Salle 108 PEG','fac'],['21:45','23:00','Boxe – Arsenal','boxe']],
+ '2026-12-01':[['09:00','17:00','PPE – Salle 110 PEG','fac']],
+ '2026-12-02':[['11:00','12:30','TD Comptabilité','fac'],['14:00','20:00','Forum Stage','fac'],['21:00','22:15','Boxe – Arsenal','boxe']],
+ '2026-12-03':[['09:30','17:00','PPE – Salle 224 PEG','fac']],
+ '2026-12-04':[['09:30','15:30','PPE – Salle 224 PEG','fac'],['16:00','18:00','CM Entrepreneuriat','fac'],['21:30','22:45','Boxe – Arsenal','boxe']],
+ '2026-12-07':[['21:45','23:00','Boxe – Arsenal (technique, sans forcer)','boxe']],
+ '2026-12-09':[['21:00','22:15','Boxe – Arsenal (léger, J-3)','boxe']],
+ '2026-12-11':[['21:30','22:45','Boxe – à éviter : veille de combat','boxe']],
+ '2026-12-12':[['18:00','23:00','🥊 COMBAT – objectif 74,5–75 kg','combat']],
 };
-const EXTRA_DEPS_DEFAULT = { 1:'17:45', 3:'17:45', 5:'17:45' }; // départs entraînement club (optionnels)
+const EXAM_DAYS = ['2026-12-07','2026-12-08','2026-12-09','2026-12-10','2026-12-11','2026-12-14','2026-12-15','2026-12-16','2026-12-17','2026-12-18'];
+const DEFAULT_SETTINGS = {travelFac:40, travelBoxe:30, wakeFree:'08:30', wakeBefore:60};
 
 /* =====================================================================
    4. STATE + localStorage
@@ -604,11 +666,12 @@ function defaultState(){
   return {
     weights: [], // {date:'YYYY-MM-DD', time:'HH:MM', type:'matin'|'soir', kg}
     days: {},    // key -> {meals:[], water:0, workouts:{}, extra:[], waterLog:[]}
-    schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
-    extraDeps: JSON.parse(JSON.stringify(EXTRA_DEPS_DEFAULT)),
+    events: JSON.parse(JSON.stringify(DEFAULT_EVENTS)),
+    settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+    routines: {},
     recipes: [],
     chat: [],
-    ai: { provider:'local', key:'', model:'' },
+    ai: { provider: DEFAULT_KEY?'gemini':'local', key: DEFAULT_KEY, model:'gemini-2.5-flash' },
     tts: false,
     firedAlerts: {}
   };
@@ -617,6 +680,10 @@ let S;
 function load(){
   try { S = Object.assign(defaultState(), JSON.parse(localStorage.getItem(STORE_KEY)||'{}')); }
   catch(e){ S = defaultState(); }
+  S.settings = Object.assign({}, DEFAULT_SETTINGS, S.settings||{});
+  if(!S.events || !Object.keys(S.events).length) S.events = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+  if(DEFAULT_KEY && !S.ai.key){ S.ai = {provider:'gemini', key:DEFAULT_KEY, model:'gemini-2.5-flash'}; }
+  delete S.schedule; delete S.extraDeps;
 }
 function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e){ toast('Sauvegarde impossible'); } }
 function today(){
@@ -712,22 +779,44 @@ function zones(){
 /* =====================================================================
    6. HORAIRES / DÉPART
    ===================================================================== */
-function depsForDay(dow){
-  const out=[]; const s=S.schedule[dow];
-  if(s&&s.dep) out.push({time:s.dep,label:s.label||'Départ'});
-  if(S.extraDeps[dow]) out.push({time:S.extraDeps[dow],label:'Départ entraînement boxe'});
-  return out.sort((a,b)=>a.time.localeCompare(b.time));
+function toMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+function fromMin(x){ x=(x+1440)%1440; return pad(Math.floor(x/60))+':'+pad(x%60); }
+function eventsFor(date){ return (S.events[dKey(date)]||[]).map(e=>({start:e[0],end:e[1],label:e[2],type:e[3]})).sort((a,b)=>a.start.localeCompare(b.start)); }
+function depsForDay(date){
+  // Un départ = première activité d'une sortie (si 2 cours s'enchaînent à moins de 90 min, tu ne rentres pas chez toi).
+  const evs = eventsFor(date); const out=[]; let lastEnd=null, lastType=null;
+  for(const e of evs){
+    const sameTrip = lastEnd!=null && lastType===e.type && toMin(e.start)-lastEnd < 90;
+    if(!sameTrip){
+      const travel = e.type==='fac'?S.settings.travelFac:S.settings.travelBoxe;
+      out.push({time:fromMin(toMin(e.start)-travel), label:e.label, type:e.type, start:e.start});
+    }
+    lastEnd = Math.max(lastEnd||0,toMin(e.end)); lastType=e.type;
+  }
+  return out;
+}
+function wakeTime(date){
+  const d = depsForDay(date); const first = d.find(x=>toMin(x.time)<14*60);
+  if(first) return fromMin(Math.min(toMin(first.time)-S.settings.wakeBefore, toMin('09:30')));
+  return S.settings.wakeFree;
 }
 function nextDeparture(){
   const now = new Date();
-  for(let i=0;i<8;i++){
+  for(let i=0;i<10;i++){
     const d = new Date(now); d.setDate(d.getDate()+i);
-    for(const dep of depsForDay(d.getDay())){
+    for(const dep of depsForDay(d)){
       const [h,m]=dep.time.split(':').map(Number); const t=new Date(d); t.setHours(h,m,0,0);
       if(t>now) return {date:t, ...dep};
     }
   }
   return null;
+}
+function agendaText(date){
+  const evs=eventsFor(date); const deps=depsForDay(date);
+  let t = evs.length? evs.map(e=>`${e.start}-${e.end} ${e.label}`).join(' ; ') : 'rien de prévu';
+  if(EXAM_DAYS.includes(dKey(date))) t += ' ; EXAMENS du semestre (horaires à confirmer)';
+  if(deps.length) t += ' | départs : '+deps.map(d=>d.time+' (repas '+minus10(d.time)+')').join(', ');
+  return t;
 }
 function minus10(time){ const [h,m]=time.split(':').map(Number); const t=h*60+m-10; return pad(Math.floor((t+1440)%1440/60))+':'+pad((t+1440)%60); }
 
@@ -789,13 +878,15 @@ const ACTIONS = {
     save(); renderAll(); return list;
   }
 };
+const ACTION_FR={ADD_MEAL:'repas',ADD_WATER:'eau',LOG_WEIGHT:'poids',LOG_WORKOUT:'séance'};
+function apiErrFR(e){ const m=String(e.message||e); if(/blocked|PERMISSION|403/i.test(m)) return 'clé refusée par Google (API non activée)'; if(/API key|401|invalid/i.test(m)) return 'clé invalide'; if(/quota|429/i.test(m)) return 'quota dépassé'; if(/abort/i.test(m)) return 'trop lent'; return m.slice(0,60); }
 function runActions(actions){
   const log=[];
   (actions||[]).forEach(a=>{
     const fn = ACTIONS[a.type||a.action]; if(!fn) return;
     try{ const r = fn(a.data||a.args||a); log.push({type:a.type||a.action,r}); }catch(e){ console.error(e); }
   });
-  if(log.length) toast('✅ '+log.map(l=>l.type).join(', '));
+  if(log.length) toast('✅ Mis à jour : '+log.map(l=>ACTION_FR[l.type]||l.type).join(', '));
   return log;
 }
 
@@ -930,7 +1021,11 @@ ${wk}. HIIT shadow 15 min : ${d.workouts.hiit?'FAIT':'non'}. Autres : ${d.extra.
 Dépense estimée : base ${tdeeBase()} + sport ${sportKcal()} kcal. Déficit du jour : ${tdeeBase()+sportKcal()-t.kc} kcal.
 --- Planning ---
 Prochain départ : ${nd?DAYS[nd.date.getDay()]+' '+nd.time+' ('+nd.label+') → repas à '+minus10(nd.time):'aucun prévu'}
-Réveil demain : ${(S.schedule[(now.getDay()+1)%7]||{}).wake||'?'}
+Agenda aujourd'hui : ${agendaText(now)}
+Agenda demain : ${agendaText(new Date(now.getTime()+864e5))} · réveil prévu ${wakeTime(new Date(now.getTime()+864e5))}
+Séances de boxe à venir (club Arsenal, en soirée ; il y va au minimum 2 fois/semaine, souvent 3-4) : ${Object.keys(S.events).filter(k=>k>=dKey(now)).sort().slice(0,40).flatMap(k=>S.events[k].filter(e=>e[3]==='boxe').map(e=>k.slice(8)+'/'+k.slice(5,7)+' '+e[0])).slice(0,6).join(', ')||'aucune'}
+Examens du semestre : 7 au 18 décembre (le combat du 12/12 tombe pendant les examens → gérer stress et sommeil).
+Séance du matin (15 min guidée) aujourd'hui : ${(S.routines||{})[dKey(now)]?'FAITE':'pas encore faite'}
 Règles : 1800 kcal, 190 g P, ≤30 g G (légumes verts uniquement), 55 g L, ZÉRO laitage, zéro pâtes/riz/pain/avoine/sucre.`;
 }
 const SYSTEM_PROMPT = () => `Tu es "Coach Cut", préparateur physique de boxe anglaise et nutritionniste du sport de haut niveau, disponible 24h/24 pour Chahyn. Tu réponds en français, tutoiement, ton direct de coach de coin de ring, zéro blabla, phrases courtes, chiffres précis tirés du contexte. Tu maîtrises : physiologie de la perte de poids (glycogène, eau, sodium, transit), water cut, boxe (technique, shadow, combinaisons, cardio, gestion de combat), musculation au poids du corps, récupération, sommeil, faim, stress, recettes protéinées sans laitage et sans glucides.
@@ -952,10 +1047,10 @@ N'inclus que les actions réellement déclarées (pas d'action pour une simple q
    10. APPELS LLM (Claude / OpenAI / Gemini / Groq)
    ===================================================================== */
 const PROVIDERS = {
-  local:{name:'Moteur local (hors-ligne)',models:['expert-local']},
+  gemini:{name:'Google Gemini',models:['gemini-2.5-flash','gemini-2.5-pro','gemini-flash-latest']},
+  local:{name:'Coach hors-ligne (sans clé)',models:['expert-local']},
   anthropic:{name:'Claude (Anthropic)',models:['claude-sonnet-5-5','claude-opus-5-5','claude-haiku-5-5']},
   openai:{name:'OpenAI',models:['gpt-4o','gpt-4o-mini','gpt-4.1','gpt-4.1-mini']},
-  gemini:{name:'Google Gemini',models:['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash']},
   groq:{name:'Groq',models:['llama-3.3-70b-versatile','llama-3.1-8b-instant']}
 };
 function historyMsgs(n=12){
@@ -977,9 +1072,12 @@ async function callLLM(userText){
       data = await res.json(); if(!res.ok) throw new Error(data.error?.message||res.status);
       text = data.choices[0].message.content;
     } else if(provider==='gemini'){
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model||'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(key)}`;
-      res = await fetch(url,{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:mergeRoles(hist).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{temperature:0.5,maxOutputTokens:1500}})});
-      data = await res.json(); if(!res.ok) throw new Error(data.error?.message||res.status);
+      const body = JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:mergeRoles(hist).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{temperature:0.5,maxOutputTokens:2000}});
+      for(const mdl of [model||'gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash']){
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',signal:ctrl.signal,headers:{'content-type':'application/json'},body});
+        data = await res.json(); if(res.ok || res.status!==404) break;
+      }
+      if(!res.ok) throw new Error(data.error?.message||res.status);
       text = (data.candidates?.[0]?.content?.parts||[]).map(p=>p.text).join('\n');
     }
     return text||'';
@@ -1043,6 +1141,14 @@ const RECIPES_TXT = {
 const COMBOS = ['Jab-Jab-Direct-Crochet G','1-2-Esquive-2','Double jab-Direct-Uppercut D','Crochet G corps-Crochet G tête-Direct','1-2-3-2 + pas de côté','Jab-Uppercut D-Crochet G-Direct','Rafale 20 directs rapides','Esquive-Remise 3-2','1-1-2 + retrait','Jab corps-Jab tête-Direct','Crochets alternés au corps','Uppercuts en rafale','1-2-Rotation-1-2','Feinte jab-Direct-Crochet','Burpee + 1-2-3'];
 
 const KB = [
+ {id:'droit_aliment', re:/(je peu[xt]?|j.peu|puis.je|on peut|ai.je le droit|c.est autorise|c.est bon|je mange|manger) .*(\?|$)/,
+  test:q=>!!findFood(q),
+  a:c=>{ const f=findFood(c._q); const it=parseFoods(c._q)[0]||{g:f.u,kc:Math.round(f.kc*f.u/100),p:+(f.p*f.u/100).toFixed(1),c:+(f.c*f.u/100).toFixed(1),f:+(f.f*f.u/100).toFixed(1)};
+   const alt = {ban:{'Pâtes cuites':'des tagliatelles de courgette ou du konjac','Riz blanc cuit':'du riz de chou-fleur','Pain':'des feuilles de salade en wrap ou une omelette fine','Flocons d\'avoine':'une crêpe blancs d\'œufs + whey'}};
+   const verdict = f.t==='ok'?'✅ **Oui**, c\'est validé pour ton cut.':f.t==='warn'?'⚠️ **Oui, mais en petite quantité.**':'⛔ **Non, pas jusqu\'au combat.**';
+   const why = BAN_DAIRY.includes(f.n)?'C\'est un laitage : ça gonfle le ventre et retient l\'eau sous la peau.':f.c>10?`${it.g} g = **${it.c} g de glucides** alors que ta limite est 30 g/jour (il t'en reste ${c.rc.toFixed(0)}). Chaque gramme stocké retient ~3 g d'eau → +${Math.round(it.c*3)} g sur la balance demain.`:`${it.g} g = ${it.kc} kcal · ${it.p} g P · ${it.c} g G · ${it.f} g L.`;
+   const remplace = (alt.ban[f.n])?`\n👉 À la place : **${alt.ban[f.n]}**.`:(f.t==='ban'?'\n👉 À la place : poulet/thon/œufs + légumes verts à volonté.':'');
+   return `${verdict}\n${why}${remplace}\n\n_Je n'ai rien ajouté à ton journal. Si tu en manges, dis-moi « j'ai mangé … »._\n${statusLine(c)}`; }},
  {id:'faim_nuit', re:/(faim|dalle|craving|fringale|grignot|envie de manger|creux).*(soir|nuit|22h|23h|tard|minuit|lit)|(soir|nuit|22h|23h|tard).*(faim|dalle|fringale)/,
   a:c=>`🌙 **Dalle du soir — protocole zéro impact balance :**
 1. **Bois 500 ml d'eau + 1 tisane chaude** (thé vert déca, verveine). Attends 10 min : 50 % des fringales disparaissent.
@@ -1208,7 +1314,7 @@ Tu es à ${fr(c.toW1)} kg de la pesée club et ${fr(c.toF)} kg du combat. Ton ph
 • Dernier repas 2 h avant le coucher, riche en protéines (caséine interdite → œufs/poisson).
 • Chambre 18 °C, écran off 30 min avant.
 • Magnésium 300 mg le soir.
-Réveil prévu demain : **${(S.schedule[(c.now.getDay()+1)%7]||{}).wake||'—'}**.`},
+Réveil prévu demain : **${wakeTime(new Date(c.now.getTime()+864e5))}**.`},
  {id:'eau', re:/(combien.*(boire|eau)|bouteille|hydrat|boire|eau|soif|pipi|urine)/,
   a:c=>`💧 **Hydratation :** ${(c.d.water/1000).toFixed(2)} L = **${(c.d.water/1500).toFixed(1)} bouteille(s) de 1,5 L**.
 Objectif du jour : **${c.wp.goal/1000} L**. ${c.wp.label}
@@ -1297,8 +1403,8 @@ ${expl}
   // Questions
   const isQuestion = /\?|comment|pourquoi|quoi|quel|quelle|combien|est.ce|dois|peux|conseil|aide|donne|explique|recette|idee/.test(nq);
   if(isQuestion || !actionLog.length){
-    const hits = KB.filter(k=>k.re.test(nq));
-    if(hits.length) parts.push(...hits.slice(0,2).map(h=>h.a(c)));
+    const hits = KB.filter(k=>k.re.test(nq) && (!k.test || k.test(q)));
+    if(hits.length) parts.push(...hits.slice(0, hits[0].id==='droit_aliment'?1:2).map(h=>h.a(c)));
     else if(!actionLog.length){
       // tentative : aliment cité sans "mangé" -> infos nutritionnelles
       const f = findFood(q);
@@ -1309,20 +1415,28 @@ Pour l'ajouter : "j'ai mangé ${it.g} g de ${f.n.toLowerCase()}".`);
       } else {
         parts.push(`Je n'ai pas de fiche précise sur ça en mode hors-ligne, voici l'essentiel pour toi maintenant :
 ${KB.find(k=>k.id==='objectif').a(c)}
-💡 Branche une clé API (⚙️) pour une réponse libre sur n'importe quel sujet. Sinon demande-moi : faim du soir, recette, shadow, fast-food, stagnation, water cut, crampes, sommeil, énergie…`);
+💡 Quand ta clé Gemini sera débloquée (⚙️), je pourrai répondre librement à tout. Sinon demande-moi : faim du soir, recette, shadow, fast-food, stagnation, water cut, crampes, sommeil, énergie…`);
       }
     }
   }
   return parts.join('\n\n');
 }
+function isQuestionMsg(n){
+  return /\?\s*$/.test(n.trim()) || /^(est.ce|je peu[xt]?|j.peu|puis.je|peut.on|on peut|je dois|dois.je|faut.il|combien|comment|pourquoi|quoi|quel|quelle|c.est quoi|tu penses|t.en penses|si je|ai.je le droit)/.test(n.trim());
+}
 function detectLocalActions(text){
   const actions=[]; const n=norm(text);
+  // marqueurs du passé : "j'ai", "je viens de", "je me suis", "fini", "bu", "mangé"…
+  const past = /(j.?ai |jai |je viens d|j.?viens d|je me suis|je me suis pese|c.est fait|termine|fini|^bu |^mange )/.test(n);
+  const question = isQuestionMsg(n);
+  if(!past && question) return actions;            // "Je peux manger des pâtes ?" → aucune action
+  if(!past && !/^\s*(\d|un |une |deux |trois |\d)/.test(n)) return actions; // phrase neutre → aucune action
   const w = parseWeight(text);
-  if(w && !/(combien|si je|objectif|devrai)/.test(n)) actions.push({type:'LOG_WEIGHT',data:w});
-  const isEat = /(mange|manger|bouffe|avale|pris|prends|dejeune|dine|grignote|cree|fait un|fais un|prepare|cuisine|repas|shaker)/.test(n) && !/(je peux|puis.je|dois.je|est.ce|quoi|combien|si je|recette)/.test(n);
+  if(w && /(pese|balance|kg|kilo)/.test(n)) actions.push({type:'LOG_WEIGHT',data:w});
+  const isEat = /(mange|bouffe|avale|pris|dejeune|dine|grignote|cree|prepare|cuisine|repas|shaker|bu un shaker)/.test(n);
   if(isEat){ const items=parseFoods(text).filter(i=>i.name!=='Eau'); if(items.length){ const isRecipe=/(cree|gateau|recette|crepe|pancake|muffin|prepare)/.test(n); actions.push({type:'ADD_MEAL',data:{items,name:isRecipe?'Recette maison':undefined,saveRecipe:isRecipe}}); } }
   const water = parseWater(text);
-  if(water && !/(combien|dois.je|faut.il|objectif)/.test(n)) actions.push({type:'ADD_WATER',data:{ml:water}});
+  if(water && /(bu|fini|termine|vide|bois)/.test(n)) actions.push({type:'ADD_WATER',data:{ml:water}});
   const wk = parseWorkout(text); if(wk) actions.push({type:'LOG_WORKOUT',data:wk});
   return actions;
 }
@@ -1336,13 +1450,13 @@ function md(s){
 function renderChat(){
   const el=$('chat');
   if(!S.chat.length){
-    el.innerHTML = `<div class="msg-a p-4 text-sm">Yo Chahyn 🥊 Je suis ton coach cut 24h/24.<br><br>Parle-moi naturellement :<br>• « J'ai mangé 200 g de poulet et 3 œufs »<br>• « J'ai fini ma 1ère bouteille »<br>• « Je me suis pesé à 78,8 »<br>• « J'ai fini mes pompes et 15 min de shadow »<br>• « J'ai la dalle à 22h, je fais quoi ? »<br><br>Je mets l'app à jour tout seul.</div>`;
+    el.innerHTML = `<div class="msg-a p-4 text-sm">Yo Chahyn 🥊 C'est ton coach. Je connais ton poids, tes repas, ton eau, tes cours et tes séances à l'Arsenal.<br><br>Pose-moi n'importe quelle question, ou raconte-moi ce que tu as fait :<br>• « J'ai mangé 200 g de poulet et 3 œufs »<br>• « J'ai fini ma 1ère bouteille »<br>• « Je me suis pesé à 78,8 »<br>• « J'ai fini mes pompes et 15 min de shadow »<br>• « Je peux manger des pâtes ? » (je réponds sans rien ajouter)<br><br>Quand tu dis « j'ai… », je mets l'app à jour tout seul.</div>`;
   } else {
     el.innerHTML = S.chat.slice(-60).map(m=>`<div class="flex ${m.role==='user'?'justify-end':''}"><div class="${m.role==='user'?'msg-u':'msg-a'} px-4 py-3 text-sm max-w-[88%] leading-relaxed">${md(m.text)}${m.meta?`<div class="text-[10px] mut mt-2">${m.meta}</div>`:''}</div></div>`).join('');
   }
   window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
-const SUGGESTS = ['Bilan du jour','J\'ai la dalle à 22h','Recette crêpe protéinée','Shadow explosif','Je mange quoi avant de partir ?','Pourquoi je stagne ?','Manger au fast-food','Protocole water cut'];
+const SUGGESTS = ['Où j\'en suis ?','Je mange quoi avant de partir ?','J\'ai la dalle ce soir','Recette crêpe protéinée','Avant la boxe ce soir','Pourquoi je stagne ?','Manger à la fac','Semaine du combat'];
 function renderSuggests(){ $('suggests').innerHTML = SUGGESTS.map(s=>`<button class="btn !py-2 !text-xs whitespace-nowrap" onclick="sendChat(${JSON.stringify(s).replace(/"/g,'&quot;')})">${s}</button>`).join(''); }
 let busy=false;
 async function sendChat(preset){
@@ -1357,18 +1471,18 @@ async function sendChat(preset){
       const raw = await callLLM(text);
       const {actions,clean} = extractActions(raw);
       const log = runActions(actions);
-      reply = clean || 'OK.'; meta = `${PROVIDERS[S.ai.provider].name}${log.length?' · actions : '+log.map(l=>l.type).join(', '):''}`;
+      reply = clean || 'OK.'; meta = `Coach en ligne (${PROVIDERS[S.ai.provider].name})${log.length?' · mis à jour : '+log.map(l=>ACTION_FR[l.type]).join(', '):''}`;
       S.chat.push({role:'assistant',text:reply,raw,meta,ts:Date.now()});
     }catch(e){
       console.error(e);
       const acts=detectLocalActions(text); const log=runActions(acts);
-      reply = localBrain(text,log); meta=`Moteur local (API indisponible : ${String(e.message||e).slice(0,80)})`;
+      reply = localBrain(text,log); meta=`Coach hors-ligne (connexion IA impossible : ${apiErrFR(e)})`;
       S.chat.push({role:'assistant',text:reply,meta,ts:Date.now()});
     }
   } else {
     await new Promise(r=>setTimeout(r,250));
     const acts=detectLocalActions(text); const log=runActions(acts);
-    reply = localBrain(text,log); meta=`Moteur expert local${log.length?' · actions : '+log.map(l=>l.type).join(', '):''}`;
+    reply = localBrain(text,log); meta=`Coach hors-ligne${log.length?' · mis à jour : '+log.map(l=>ACTION_FR[l.type]).join(', '):''}`;
     S.chat.push({role:'assistant',text:reply,meta,ts:Date.now()});
   }
   if(S.chat.length>200) S.chat=S.chat.slice(-200);
@@ -1379,14 +1493,19 @@ async function sendChat(preset){
 let recog=null, listening=false;
 function toggleMic(){
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ toast('Reconnaissance vocale non supportée (utilise Chrome)'); return; }
+  const fallback = (why)=>{ $('chatIn').focus(); openModal(`<div class="font-black text-lg mb-2">🎙️ Micro indisponible ici</div><div class="text-sm">${why}</div>
+    <div class="card2 mt-3 text-sm"><b>Solution immédiate :</b> appuie dans la zone de texte, puis sur le <b>🎤 du clavier Samsung</b> (en haut du clavier). Tu parles, le texte s'écrit, tu envoies.</div>
+    <div class="card2 mt-2 text-sm"><b>Solution définitive :</b> ouvre l'app depuis son lien <b>https://</b> dans <b>Chrome</b> (pas depuis le fichier téléchargé). Le micro intégré marchera.</div>
+    <button class="btn btn-red w-full mt-4" onclick="closeModal();$('chatIn').focus()">OK</button>`); };
+  if(!SR) return fallback('Ton navigateur ne propose pas la reconnaissance vocale (Samsung Internet ne la gère pas).');
+  if(!window.isSecureContext) return fallback('L\'app est ouverte depuis un fichier (content://). Android bloque le micro dans ce cas.');
   if(listening){ recog&&recog.stop(); return; }
   recog = new SR(); recog.lang='fr-FR'; recog.interimResults=true; recog.continuous=false;
-  recog.onstart=()=>{listening=true;$('micBtn').classList.add('btn-red','pulse');};
+  recog.onstart=()=>{listening=true;$('micBtn').classList.add('btn-red','pulse');toast('🎙️ Je t\'écoute…');};
   recog.onend=()=>{listening=false;$('micBtn').classList.remove('btn-red','pulse'); if($('chatIn').value.trim()) sendChat();};
-  recog.onerror=e=>{toast('Micro : '+e.error);};
+  recog.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed') fallback('Autorise le micro : icône 🔒 à gauche de l\'adresse → Autorisations → Micro.'); else toast('Micro : '+e.error); };
   recog.onresult=e=>{ $('chatIn').value = Array.from(e.results).map(r=>r[0].transcript).join(''); };
-  recog.start();
+  try{ recog.start(); }catch(err){ fallback(String(err.message||err)); }
 }
 function toggleTTS(){ S.tts=!S.tts; save(); $('ttsBtn').textContent=S.tts?'🔊':'🔇'; if(!S.tts) speechSynthesis.cancel(); toast(S.tts?'Voix activée':'Voix coupée'); }
 function speak(text){
@@ -1403,6 +1522,7 @@ function speak(text){
    ===================================================================== */
 let chart;
 function renderDash(){
+  renderToday();
   const now=new Date(); const cur=currentWeight(); const lw=lastWeight();
   const cd=(d)=>{ const ms=d-now; if(ms<=0) return ['GO','C\'est le jour !']; const dd=Math.floor(ms/864e5), hh=Math.floor(ms%864e5/36e5), mm=Math.floor(ms%36e5/6e4); return [`${dd}j ${hh}h`,`${mm} min · ${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`]; };
   const [a,b]=cd(WEIGH_DATE); $('cdWeigh').textContent=a; $('cdWeighH').textContent=b;
@@ -1429,7 +1549,7 @@ function renderDash(){
   else { $('nextDepTime').textContent='—'; $('nextDepLabel').textContent='Aucun départ programmé'; $('nextDepMeal').textContent=''; }
   const wp=waterPlan();
   const dW=Math.ceil((WEIGH_DATE-now)/864e5);
-  $('phaseTxt').innerHTML = `${dW>0?`<b class="text-[var(--red)]">SEMAINE 1 — URGENCE PESÉE CLUB</b><br>Vide le glycogène (< 30 g G), 3–3,75 L d'eau, 190 g P. Objectif : ${fr(targetAt(now))} kg aujourd'hui.`:`<b class="text-[var(--grn)]">PHASE 2 — VERS LE COMBAT</b><br>Perte régulière ~0,1 kg/jour, force maintenue.`}<br><span class="mut">💧 ${wp.label}</span>`;
+  $('phaseTxt').innerHTML = `${dW>0?`<b class="text-[var(--red)]">SEMAINE 1 — PESÉE AU CLUB DIMANCHE 22</b><br>Glucides sous 30 g, 3–3,75 L d'eau, 190 g P. Objectif : ${fr(targetAt(now))} kg aujourd'hui.`:`<b class="text-[var(--grn)]">PHASE 2 — VERS LE COMBAT</b><br>Perte régulière ~0,1 kg/jour, force maintenue.`}<br><span class="mut">💧 ${wp.label}</span>`;
   renderChart();
 }
 function renderChart(){
@@ -1508,23 +1628,27 @@ function renderFuel(){
 function renderTrain(){
   const d=today();
   $('checklist').innerHTML = WK_ITEMS.map(i=>`<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('${i.id}')"><span class="chk ${d.workouts[i.id]?'on':''}">${d.workouts[i.id]?'✓':''}</span><span class="font-bold text-sm flex-1">${i.n}</span><span class="text-[11px] mut">~${i.kc} kcal</span></button>`).join('')
-   + `<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('hiit')"><span class="chk ${d.workouts.hiit?'on':''}">${d.workouts.hiit?'✓':''}</span><span class="font-bold text-sm flex-1">HIIT Shadow 15 min</span><span class="text-[11px] mut">~${d.workouts.hiitKcal||190} kcal</span></button>`;
+   + `<button class="w-full card2 flex items-center gap-3 text-left" onclick="toggleWk('hiit')"><span class="chk ${d.workouts.hiit?'on':''}">${d.workouts.hiit?'✓':''}</span><span class="font-bold text-sm flex-1">Fractionné shadow 15 min</span><span class="text-[11px] mut">~${d.workouts.hiitKcal||190} kcal</span></button>`;
   const n=pushupsDone(d); $('wkProg').textContent=`${n}/7`; $('wkBar').style.width=(n/7*100)+'%';
   const base=tdeeBase(), sp=sportKcal(d), t=totals(d);
   $('eBase').textContent=base; $('eSport').textContent='+'+sp; $('eDef').textContent=(base+sp-t.kc);
   $('extraWorkouts').innerHTML = d.extra.map((e,i)=>`<div class="card2 flex justify-between text-sm"><span>${e.time} · <b>${e.type}</b> ${e.min} min</span><span class="text-[var(--ylw)] font-bold">${e.kc} kcal <button class="mut ml-2" onclick="delExtra(${i})">✕</button></span></div>`).join('');
 }
 function renderPlan(){
-  const order=[1,2,3,4,5,6,0];
-  $('schedule').innerHTML = order.map(dw=>{ const s=S.schedule[dw]; return `<div class="card2">
-    <div class="flex justify-between items-center"><b>${DAYS[dw]}</b><span class="text-[11px] mut">${s.dep?'🍗 Repas '+minus10(s.dep):'Pas de départ'}</span></div>
-    <div class="grid grid-cols-3 gap-2 mt-2">
-      <label class="text-[10px] mut">Réveil<input type="time" value="${s.wake||''}" onchange="setSched(${dw},'wake',this.value)"></label>
-      <label class="text-[10px] mut">Départ<input type="time" value="${s.dep||''}" onchange="setSched(${dw},'dep',this.value)"></label>
-      <label class="text-[10px] mut">Départ boxe<input type="time" value="${S.extraDeps[dw]||''}" onchange="setExtraDep(${dw},this.value)"></label>
-    </div>
-    <input class="mt-2 !text-sm !py-2" value="${(s.label||'').replace(/"/g,'&quot;')}" placeholder="Libellé (ex : Fac 8h)" onchange="setSched(${dw},'label',this.value)">
-  </div>`;}).join('');
+  const base=new Date(); let html='';
+  for(let i=0;i<14;i++){
+    const d=new Date(base); d.setDate(d.getDate()+i); const k=dKey(d); const evs=eventsFor(d); const deps=depsForDay(d);
+    const exam=EXAM_DAYS.includes(k);
+    if(!evs.length && !exam && i>6) continue;
+    html += `<div class="card2 ${i===0?'ring-1 ring-[var(--red)]':''}">
+      <div class="flex justify-between items-center"><b>${i===0?'Aujourd\'hui':i===1?'Demain':DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}</b><span class="text-[11px] mut">⏰ réveil ${wakeTime(d)}</span></div>
+      ${exam?'<div class="chip bg-[#a874ff33] text-[var(--pur)] mt-1">📚 Examens</div>':''}
+      ${evs.length?evs.map((e,j)=>`<div class="flex items-center gap-2 mt-2 text-sm"><span class="w-1.5 h-8 rounded" style="background:${e.type==='boxe'?'var(--blu)':e.type==='combat'?'var(--red)':'var(--ylw)'}"></span><div class="flex-1"><div class="font-bold">${e.label}</div><div class="text-[11px] mut">${e.start} – ${e.end}</div></div><button class="mut text-xs px-2" onclick="delEvent('${k}',${j})">✕</button></div>`).join(''):'<div class="text-xs mut mt-1">Pas de cours · repos actif</div>'}
+      ${deps.map(dp=>`<div class="text-[11px] mt-2 text-[var(--grn)]">🚪 Départ ${dp.time} · 🍗 repas ${minus10(dp.time)}</div>`).join('')}
+    </div>`;
+  }
+  $('schedule').innerHTML=html;
+  $('setTravelFac').value=S.settings.travelFac; $('setTravelBoxe').value=S.settings.travelBoxe; $('setWakeFree').value=S.settings.wakeFree; $('setWakeBefore').value=S.settings.wakeBefore;
   const al = buildAlerts(new Date()); const now=hm();
   $('todayAlerts').innerHTML = al.map(a=>`<div class="card2 flex gap-3 items-start ${a.time<now?'opacity-50':''}"><div class="font-black text-[var(--red)] w-12">${a.time}</div><div class="text-sm flex-1"><b>${a.title}</b><div class="text-[11px] mut">${a.body}</div></div></div>`).join('');
   $('notifState').textContent = !('Notification' in window)?'Notifications non supportées sur ce navigateur — alertes visuelles + sons uniquement.':Notification.permission==='granted'?'✅ Notifications activées':Notification.permission==='denied'?'❌ Bloquées dans les réglages du navigateur':'⏳ Pas encore autorisées';
@@ -1547,8 +1671,22 @@ function delMeal(id){ const d=today(); d.meals=d.meals.filter(m=>m.id!==id); sav
 function toggleWk(id){ const d=today(); d.workouts[id]=!d.workouts[id]; save(); renderAll(); }
 function delExtra(i){ today().extra.splice(i,1); save(); renderAll(); }
 function quickWorkout(type,min){ ACTIONS.LOG_WORKOUT({type,minutes:min}); toast(`💪 ${type} ${min} min ajouté`); }
-function setSched(dw,k,v){ S.schedule[dw][k]=v; save(); renderPlan(); renderDash(); }
-function setExtraDep(dw,v){ if(v) S.extraDeps[dw]=v; else delete S.extraDeps[dw]; save(); renderPlan(); renderDash(); }
+function setSetting(k,v){ S.settings[k]=v; save(); renderAll(); }
+function delEvent(k,j){ if(!confirm('Supprimer cet évènement ?')) return; S.events[k].splice(j,1); save(); renderAll(); }
+function openEventModal(){
+  openModal(`<div class="font-black text-lg mb-3">Ajouter à mon agenda</div>
+  <label class="text-xs mut">Date</label><input type="date" id="evD" value="${dKey()}">
+  <div class="grid grid-cols-2 gap-2 mt-2"><label class="text-xs mut">Début<input type="time" id="evS" value="10:00"></label><label class="text-xs mut">Fin<input type="time" id="evE" value="12:00"></label></div>
+  <label class="text-xs mut mt-2 block">Quoi ?</label><input id="evL" placeholder="Ex : Examen de Statistiques">
+  <div class="grid grid-cols-3 gap-2 mt-3">
+    <button class="btn" onclick="saveEvent('fac')">📚 Fac</button><button class="btn" onclick="saveEvent('exam')">📝 Examen</button><button class="btn btn-blu" onclick="saveEvent('boxe')">🥊 Boxe</button>
+  </div>`);
+}
+function saveEvent(type){
+  const k=$('evD').value, a=$('evS').value, b=$('evE').value; const l=$('evL').value.trim()||(type==='boxe'?'Boxe – Arsenal':type==='exam'?'Examen':'Cours');
+  if(!k||!a) return toast('Date et heure obligatoires');
+  (S.events[k]=S.events[k]||[]).push([a,b||a,l,type==='exam'?'fac':type]); save(); closeModal(); renderAll(); toast('📅 Ajouté');
+}
 function addRecipe(i){ const r=S.recipes[i]; ACTIONS.ADD_MEAL({name:r.name,items:JSON.parse(JSON.stringify(r.items))}); toast('✅ '+r.name+' ajouté'); }
 function delRecipe(i){ S.recipes.splice(i,1); save(); renderFuel(); }
 function resetToday(){ if(confirm('Effacer repas, eau et séances d\'aujourd\'hui ?')){ delete S.days[dKey()]; save(); renderAll(); } }
@@ -1624,7 +1762,7 @@ function openAISettings(){
 function aiModels(){ const p=$('aiProv').value; $('aiModel').innerHTML=PROVIDERS[p].models.map(m=>`<option ${m===S.ai.model?'selected':''}>${m}</option>`).join(''); if(!PROVIDERS[p].models.includes(S.ai.model)) $('aiModelCustom').value=p===S.ai.provider?S.ai.model:''; }
 function saveAI(){ S.ai={provider:$('aiProv').value,key:$('aiKey').value.trim(),model:$('aiModelCustom').value.trim()||$('aiModel').value}; save(); updateAIMode(); closeModal(); toast('IA configurée'); }
 async function testAI(){ saveAI(); if(S.ai.provider==='local'){toast('Mode local actif');return;} toast('Test en cours…'); try{ const r=await callLLM('Réponds juste "OK coach" sans bloc actions.'); toast('✅ '+r.slice(0,40)); }catch(e){ toast('❌ '+String(e.message||e).slice(0,60)); } }
-function updateAIMode(){ const on=S.ai.provider!=='local'&&S.ai.key; $('aiMode').innerHTML = on?`<span class="text-[var(--grn)]">● ${PROVIDERS[S.ai.provider].name} · ${S.ai.model}</span>`:'<span class="text-[var(--ylw)]">● Moteur expert local (hors-ligne)</span>'; $('ttsBtn').textContent=S.tts?'🔊':'🔇'; }
+function updateAIMode(){ const on=S.ai.provider!=='local'&&S.ai.key; $('aiMode').innerHTML = on?`<span class="text-[var(--grn)]">● Connecté (${PROVIDERS[S.ai.provider].name})</span>`:'<span class="text-[var(--ylw)]">● Mode hors-ligne</span>'; $('ttsBtn').textContent=S.tts?'🔊':'🔇'; }
 
 /* =====================================================================
    15. HIIT TIMER
@@ -1647,14 +1785,14 @@ function hiitTick(){
   if(H.sec<=3&&H.sec>0) beep(600,.08);
   if(H.sec<=0){
     if(H.phase==='work'){ H.phase='rest'; H.sec=30; beep(500,.35); }
-    else { if(H.round>=15){ H.phase='done'; hiitPause(); beep(1200,.4,3); const d=today(); d.workouts.hiit=true; d.workouts.hiitKcal=Math.round(H.kcal); save(); renderAll(); toast('🔥 HIIT terminé !'); speak('HIIT terminé. Bois 500 millilitres.'); }
+    else { if(H.round>=15){ H.phase='done'; hiitPause(); beep(1200,.4,3); const d=today(); d.workouts.hiit=true; d.workouts.hiitKcal=Math.round(H.kcal); save(); renderAll(); toast('🔥 Fractionné terminé !'); speak('Terminé. Bois 500 millilitres.'); }
       else { H.round++; H.phase='work'; H.sec=30; beep(1000,.3,2); } }
   }
   renderHiit();
 }
 function renderHiit(){
   $('hiitSec').textContent=H.phase==='done'?'✓':H.sec;
-  $('hiitPhase').textContent={idle:'PRÊT',work:'EFFORT 🔥',rest:'RÉCUP ACTIVE',done:'TERMINÉ'}[H.phase];
+  $('hiitPhase').textContent={idle:'PRÊT',work:'À FOND 🔥',rest:'RÉCUP ACTIVE',done:'TERMINÉ'}[H.phase];
   $('hiitPhase').style.color=H.phase==='work'?'var(--red)':H.phase==='rest'?'var(--blu)':'var(--grn)';
   $('hiitRing').style.stroke=H.phase==='rest'?'var(--blu)':'var(--red)';
   $('hiitRing').style.strokeDashoffset = H.phase==='idle'?0:339.3*(1-H.sec/30);
@@ -1665,17 +1803,111 @@ function renderHiit(){
 }
 
 /* =====================================================================
+   15b. SÉANCE DU MATIN GUIDÉE (≈15 min, étape par étape)
+   ===================================================================== */
+const ROUTINE = [
+ {e:'⚖️',t:'Pesée à jeun',d:'Après les toilettes, avant de boire quoi que ce soit.',kind:'weigh'},
+ {e:'💧',t:'Bois 500 ml',d:'Un tiers de ta 1ère bouteille de 1,5 L. Ça relance le drainage.',kind:'water'},
+ {e:'🔥',t:'Jumping jacks',d:'Rythme régulier, respire par le nez.',sec:60},
+ {e:'🔄',t:'Rotations',d:'Épaules, bras, hanches, chevilles. Réveille les articulations.',sec:45},
+ {e:'💪',t:'Pompes normales',d:'Corps gainé, poitrine près du sol, remonte fort.',reps:'20'},
+ {e:'😮‍💨',t:'Récup',d:'Secoue les bras, respire.',sec:30,rest:true},
+ {e:'💎',t:'Pompes diamant',d:'Mains en losange sous la poitrine → triceps.',reps:'20'},
+ {e:'😮‍💨',t:'Récup',d:'Respire.',sec:30,rest:true},
+ {e:'🦅',t:'Pompes larges',d:'Mains plus larges que les épaules → pectoraux.',reps:'20'},
+ {e:'😮‍💨',t:'Récup',d:'Respire.',sec:30,rest:true},
+ {e:'🦵',t:'Squats',d:'Cuisses parallèles au sol, dos droit.',reps:'25'},
+ {e:'🔺',t:'Pompes piquées',d:'Fesses en l\'air, tête vers le sol → épaules.',reps:'15'},
+ {e:'😮‍💨',t:'Récup',d:'Respire.',sec:30,rest:true},
+ {e:'🚶',t:'Fentes',d:'Genou arrière qui frôle le sol. Alterne les jambes.',reps:'12 / jambe'},
+ {e:'🧱',t:'Gainage',d:'Sur les avant-bras, fesses alignées, abdos serrés.',sec:45},
+ {e:'🥊',t:'Shadow explosif',d:'Garde haute, enchaîne les combos qui s\'affichent.',sec:120,shadow:true},
+ {e:'🌀',t:'Vacuum abdo',d:'Expire tout, rentre le nombril 20 s, relâche 10 s. ×2. Resserre le bas du ventre.',sec:60},
+ {e:'🧘',t:'Étirements',d:'Pecs contre un mur, quadriceps, épaules.',sec:60},
+];
+const RT = {i:0, left:0, timer:null, paused:false};
+function openRoutine(){ RT.i=0; $('routine').classList.remove('hidden'); $('routine').classList.add('flex'); try{ actx = actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch(e){} if(navigator.wakeLock) navigator.wakeLock.request('screen').then(l=>RT.lock=l).catch(()=>{}); rtShow(); }
+function closeRoutine(){ clearInterval(RT.timer); RT.timer=null; $('routine').classList.add('hidden'); $('routine').classList.remove('flex'); if(RT.lock){RT.lock.release();RT.lock=null;} }
+function rtRemaining(){ return ROUTINE.slice(RT.i).reduce((a,x)=>a+(x.sec||(x.reps?50:20)),0); }
+function rtShow(){
+  clearInterval(RT.timer); RT.timer=null; RT.paused=false;
+  if(RT.i>=ROUTINE.length) return rtFinish();
+  const st=ROUTINE[RT.i];
+  $('rtBar').style.width=(RT.i/ROUTINE.length*100)+'%';
+  $('rtStep').textContent=`Étape ${RT.i+1}/${ROUTINE.length}`;
+  $('rtLeft').textContent=`~${Math.max(1,Math.round(rtRemaining()/60))} min restantes`;
+  $('rtEmoji').textContent=st.e; $('rtTitle').textContent=st.t; $('rtDesc').textContent=st.d;
+  $('rtTitle').style.color = st.rest?'var(--blu)':'#fff';
+  $('rtExtra').innerHTML='';
+  const nx=ROUTINE[RT.i+1]; $('rtNext').textContent = nx?`Ensuite : ${nx.e} ${nx.t}`:'Dernière étape 💪';
+  if(st.kind==='weigh'){
+    $('rtBig').textContent=''; $('rtExtra').innerHTML=`<input id="rtW" type="number" step="0.1" inputmode="decimal" class="!text-4xl !font-black text-center" value="${fr(currentWeight()).replace(',','.')}"><div class="text-xs mut mt-1">kg · cible du jour ${fr(targetAt(new Date()))} kg</div>`;
+    $('rtMain').textContent='Enregistrer ✓';
+  } else if(st.kind==='water'){ $('rtBig').textContent='500 ml'; $('rtMain').textContent='J\'ai bu ✓'; }
+  else if(st.reps){ $('rtBig').textContent='×'+st.reps; $('rtMain').textContent='C\'est fait ✓'; beep(900,.12); }
+  else { RT.left=st.sec; $('rtBig').textContent=RT.left; $('rtMain').textContent='Pause ⏸'; beep(1000,.2,2);
+    if(st.shadow) $('rtExtra').innerHTML=`<div class="text-lg font-black text-[var(--ylw)]" id="rtCombo">${COMBOS[0]}</div>`;
+    RT.timer=setInterval(rtTick,1000); }
+}
+function rtTick(){
+  if(RT.paused) return;
+  RT.left--; $('rtBig').textContent=RT.left;
+  const st=ROUTINE[RT.i]; if(st.shadow && RT.left%8===0 && $('rtCombo')) $('rtCombo').textContent=COMBOS[Math.floor(Math.random()*COMBOS.length)];
+  if(RT.left<=3 && RT.left>0) beep(600,.08);
+  if(RT.left<=0){ RT.i++; rtShow(); }
+}
+function rtMainBtn(){
+  const st=ROUTINE[RT.i];
+  if(st.kind==='weigh'){ const v=parseFloat(String($('rtW').value).replace(',','.')); if(ACTIONS.LOG_WEIGHT({kg:v,type:'matin'})) toast('⚖️ '+fr(v)+' kg'); else return toast('Poids invalide'); RT.i++; return rtShow(); }
+  if(st.kind==='water'){ ACTIONS.ADD_WATER({ml:500}); RT.i++; return rtShow(); }
+  if(st.sec){ RT.paused=!RT.paused; $('rtMain').textContent=RT.paused?'Reprendre ▶':'Pause ⏸'; return; }
+  RT.i++; rtShow();
+}
+function rtSkip(){ RT.i++; rtShow(); }
+function rtPrev(){ RT.i=Math.max(0,RT.i-1); rtShow(); }
+function rtFinish(){
+  closeRoutine(); const d=today(); S.routines=S.routines||{}; S.routines[dKey()]=true;
+  ['p_norm','p_diam','p_large','p_pique','squat','fentes'].forEach(id=>d.workouts[id]=true);
+  d.extra.push({type:'séance du matin',min:15,kc:Math.round(6*currentWeight()*15/60),time:hm()});
+  save(); renderAll(); beep(1200,.4,3); speak('Séance terminée. Bravo Chahyn.');
+  openModal(`<div class="text-center"><div class="text-6xl">🏆</div><div class="text-2xl font-black mt-2">Séance validée !</div><div class="text-sm mut mt-2">Pompes, squats, fentes et gainage cochés automatiquement.<br>Maintenant : douche, protéines, et finis ta 1ère bouteille avant 14h.</div><button class="btn btn-red w-full mt-5 !py-3" onclick="closeModal()">Let's go 👊</button></div>`);
+}
+function renderToday(){
+  const now=new Date(), d=today(), t=totals(d), k=dKey(now);
+  const done=(S.routines||{})[k]; const lm=lastWeight('matin'); const weighed=lm&&lm.date===k;
+  const evs=eventsFor(now), boxe=evs.find(e=>e.type==='boxe'), nd=nextDeparture();
+  const h=now.getHours();
+  $('todayHeadline').textContent = evs.find(e=>e.type==='combat')?'🥊 JOUR DU COMBAT':boxe?`Boxe ce soir à ${boxe.start} 🥊`:evs.length?`${evs.length} cours aujourd'hui`:'Journée sans cours';
+  const items=[
+    {ok:weighed,txt:'Pesée du matin à jeun',act:"openWeigh('matin')"},
+    {ok:done,txt:'Séance du matin (15 min)',act:'openRoutine()'},
+    {ok:d.water>=waterPlan().min,txt:`Eau : ${fr(d.water/1000,2)} / ${fr(waterPlan().min/1000,1)} L`,act:'addWater(500)'},
+    {ok:t.p>=170,txt:`Protéines : ${t.p.toFixed(0)} / 190 g`,act:"go('fuel')"},
+    {ok:t.c<=30,txt:`Glucides : ${t.c.toFixed(0)} / 30 g max`,act:"go('fuel')",warn:t.c>30},
+  ];
+  if(nd && nd.date.toDateString()===now.toDateString()) items.splice(2,0,{ok:false,txt:`🚪 Départ ${nd.time} → mange à ${minus10(nd.time)}`,act:"go('plan')",info:true});
+  if(boxe) items.push({ok:hiitDone(d)||d.extra.some(e=>/boxe/i.test(e.type)),txt:`Boxe Arsenal ${boxe.start}`,act:"quickWorkout('boxe',75)"});
+  $('todayTodo').innerHTML = items.map(i=>`<button class="w-full flex items-center gap-3 text-left" onclick="${i.act}"><span class="chk ${i.ok?'on':''}" style="${i.warn?'border-color:var(--red);background:var(--red)':''}${i.info?';border-color:var(--grn)':''}">${i.ok?'✓':i.warn?'!':''}</span><span class="text-sm ${i.ok?'mut line-through':'font-bold'}">${i.txt}</span></button>`).join('');
+  $('routineBtn').textContent = done?'✅ Séance du matin faite · refaire ?':'▶ Séance du matin · 15 min';
+  $('routineBtn').className = done?'btn w-full mt-3 !py-3':'btn btn-red w-full mt-3 !py-4 !text-base';
+  $('hdrTitle').textContent = (h<12?'Bonjour':h<18?'Salut':'Bonsoir')+' Chahyn 👊';
+}
+
+/* =====================================================================
    16. MOTEUR DE NOTIFICATIONS
    ===================================================================== */
 function buildAlerts(date){
-  const dw=date.getDay(); const s=S.schedule[dw]||{}; const out=[];
-  if(s.wake) out.push({time:s.wake,key:'wake',title:'☀️ Briefing du matin',body:'Pèse-toi à jeun après les toilettes, puis lance ta 1ère bouteille de 1,5 L (500 ml tout de suite).'});
-  depsForDay(dw).forEach(dep=>out.push({time:minus10(dep.time),key:'meal'+dep.time,priority:true,title:'🚨 DÉPART DANS 10 MIN !',body:'Prends ta dose de protéines tout de suite (Poulet / Oeufs durs / Shaker Whey à l\'eau) + bois 500 ml sur ta bouteille de 1,5L. Zéro glucide !'}));
+  const out=[]; const w=wakeTime(date);
+  out.push({time:w,key:'wake',title:'☀️ Debout Chahyn !',body:'Toilettes → pesée à jeun → 500 ml d\'eau → séance du matin de 15 min (bouton rouge sur l\'accueil).'});
+  depsForDay(date).forEach(dep=>{
+    out.push({time:minus10(dep.time),key:'meal'+dep.time,priority:true,title:'🚨 DÉPART DANS 10 MIN !',body:(dep.type==='boxe'?'Boxe dans peu de temps : ':'')+'Prends ta dose de protéines tout de suite (Poulet / Oeufs durs / Shaker Whey à l\'eau) + bois 500 ml sur ta bouteille de 1,5L. Zéro glucide !'});
+    if(dep.type==='boxe') out.push({time:fromMin(toMin(dep.time)-60),key:'boxe'+dep.time,title:'🥊 Boxe ce soir',body:`Départ à ${dep.time}. Prépare ton sac (gants, bandes, protège-dents, bouteille pleine).`});
+  });
   [['11:00','b11','💧 Rappel eau 11h','Tu devrais être à ~750 ml. Avance sur la bouteille 1.'],
    ['14:00','b14','💧 Fin bouteille 1 (14h)','Objectif : 1,5 L bus. Attaque la bouteille 2.'],
    ['17:00','b17','💧 Rappel eau 17h','Tu devrais être à ~2,25 L.'],
    ['20:00','b20','💧 Fin bouteille 2 (20h)','3,0 L minimum obligatoire. Bonus : bouteille 3 pour drainer.'],
-   ['21:30','report','🌙 Rapport du soir','Pesée du soir + débrief complet avec le Coach IA.']].forEach(([t,k,ti,b])=>out.push({time:t,key:k,title:ti,body:b}));
+   ['21:30','report','🌙 Rapport du soir','Pesée du soir + raconte ta journée à ton coach.']].forEach(([t,k,ti,b])=>out.push({time:t,key:k,title:ti,body:b}));
   return out.sort((a,b)=>a.time.localeCompare(b.time));
 }
 function checkAlerts(){
@@ -1713,9 +1945,12 @@ function testNotif(){ fireAlert({key:'test',priority:true,title:'🚨 DÉPART DA
 /* =====================================================================
    17. PWA : manifest + service worker (générés à la volée)
    ===================================================================== */
+const LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3b47"/><stop offset="1" stop-color="#7a0a14"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="#0a0a0f"/><circle cx="256" cy="230" r="170" fill="url(#g)"/><path d="M175 165c0-35 30-60 70-60h45c45 0 80 35 80 80v75c0 30-20 55-50 60v30H195v-35c-12-8-20-22-20-38z" fill="#fff"/><path d="M175 215c-25 0-40 18-40 38s15 38 40 38" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round"/><rect x="190" y="340" width="150" height="34" rx="10" fill="#fff"/><text x="256" y="465" font-size="78" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" fill="#fff">CHAHYN</text></svg>';
+const LOGO = 'data:image/svg+xml,'+encodeURIComponent(LOGO_SVG);
 function setupPWA(){
-  const icon = 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#0a0a0f"/><circle cx="256" cy="256" r="170" fill="#ff3b47"/><text x="256" y="300" font-size="150" text-anchor="middle" font-family="Arial" font-weight="900" fill="#fff">CUT</text></svg>');
-  const manifest = {name:'Cut Commander',short_name:'Cut',start_url:location.href.split('#')[0],display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:icon,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
+  const icon = LOGO; if($('hdrLogo')) $('hdrLogo').src = LOGO;
+  const fav=document.createElement('link'); fav.rel='icon'; fav.href=icon; document.head.appendChild(fav);
+  const manifest = {name:'Objectif Combat – Chahyn',short_name:'Objectif Combat',lang:'fr',start_url:location.href.split('#')[0],display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:icon,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
   const l=document.createElement('link'); l.rel='manifest'; l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest)); document.head.appendChild(l);
   const al=document.createElement('link'); al.rel='apple-touch-icon'; al.href=icon; document.head.appendChild(al);
   // Service worker : seulement possible si l'app est servie en https/localhost avec un fichier sw.js à côté.
