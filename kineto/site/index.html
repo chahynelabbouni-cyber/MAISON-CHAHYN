@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinéto · Vidéos animées verticales en quelques minutes</title>
+<meta name="description" content="Crée des vidéos animées verticales (chiffres, comparaisons, tops) avec ta voix, directement dans ton navigateur.">
+<meta name="theme-color" content="#0b0820">
+<link rel="stylesheet" href="style.css">
+<script src="engine.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <a href="#home" class="logo">Kinéto</a>
+  <nav>
+    <a href="#home" data-scroll="tarifs">Tarifs</a>
+    <a href="#home" data-scroll="faq">FAQ</a>
+    <a href="#studio" class="btn btn-sm">Ouvrir le studio</a>
+  </nav>
+</header>
+
+<!-- ================= ACCUEIL ================= -->
+<main id="home" class="page">
+  <section class="hero wrap">
+    <div class="hero-text">
+      <h1>Des vidéos animées qui retiennent l'attention, <span class="hl">en quelques minutes.</span></h1>
+      <p class="lead">Réponds à 5 questions, ajuste tes scènes, enregistre ta voix, exporte. Chiffres qui montent, comparaisons, tops, sous-titres mot à mot. Tout se passe dans ton navigateur.</p>
+      <div class="row">
+        <a href="#studio" class="btn">Créer ma première vidéo</a>
+        <a href="#home" data-scroll="essai" class="btn btn-ghost">Essayer avec mon chiffre</a>
+      </div>
+      <p class="small muted">Gratuit, sans carte bancaire. Ta voix et tes vidéos restent sur ton appareil.</p>
+    </div>
+    <div class="phone"><canvas id="heroCanvas" width="540" height="960" aria-label="Démo animée (exemple fictif)"></canvas><span class="tag-fictif">Exemple fictif</span></div>
+  </section>
+
+  <section class="wrap">
+    <h2>Comment ça marche</h2>
+    <ol class="steps">
+      <li><b>1. Kino te pose des questions</b><span>Le format, ton sujet, tes chiffres, ta source.</span></li>
+      <li><b>2. Tu ajustes les scènes</b><span>Textes, valeurs, ordre, durée, style.</span></li>
+      <li><b>3. Tu enregistres ta voix</b><span>Avec un prompteur, scène par scène. Ou tu importes un audio.</span></li>
+      <li><b>4. Tu exportes</b><span>Une vidéo verticale prête pour TikTok, Reels et Shorts.</span></li>
+    </ol>
+  </section>
+
+  <section class="wrap">
+    <h2>4 styles</h2>
+    <div class="styles-grid" id="stylesGrid"></div>
+  </section>
+
+  <section class="wrap essai" id="essai">
+    <h2>Essaie avec ton chiffre</h2>
+    <form id="tryForm" class="try">
+      <input id="tryValue" required placeholder="Ton chiffre (ex. 73 %)" autocomplete="off">
+      <input id="tryPhrase" required placeholder="Ce qu'il signifie (ex. des Français lisent moins d'un livre par an)" autocomplete="off">
+      <button class="btn" type="submit">Générer la vidéo</button>
+    </form>
+  </section>
+
+  <section class="wrap" id="tarifs">
+    <h2>Tarifs</h2>
+    <div class="plans" id="plansHome"></div>
+  </section>
+
+  <section class="wrap" id="faq">
+    <h2>Questions fréquentes</h2>
+    <details><summary>Est-ce que mes enregistrements sont envoyés sur un serveur ?</summary><p>Non. Le rendu, ta voix et la vidéo restent dans ton navigateur.</p></details>
+    <details><summary>Quel format de fichier j'obtiens ?</summary><p>Du MP4 quand ton navigateur sait l'encoder (Safari, Chrome récent), sinon du WebM. Kinéto t'indique toujours si le fichier est directement compatible avec TikTok.</p></details>
+    <details><summary>Combien de temps prend l'export ?</summary><p>La durée de la vidéo : 30 secondes de vidéo = environ 30 secondes d'export. Garde l'onglet ouvert et visible pendant ce temps.</p></details>
+    <details><summary>Kinéto me garantit-il des vues ?</summary><p>Non. Kinéto t'aide à produire des vidéos plus vite. Les vues dépendent de ton sujet, de ta régularité et de la plateforme.</p></details>
+    <details><summary>Je suis responsable de mes chiffres ?</summary><p>Oui. Vérifie tes sources et cite-les : Kinéto ajoute la source à la fin de la vidéo si tu la donnes.</p></details>
+  </section>
+
+  <footer class="foot wrap">
+    <span>© Kinéto</span>
+    <a href="legal/mentions-legales.html">Mentions légales</a>
+    <a href="legal/cgv.html">CGU / CGV</a>
+    <a href="legal/confidentialite.html">Confidentialité</a>
+  </footer>
+</main>
+
+<!-- ================= STUDIO ================= -->
+<main id="studio" class="page" hidden>
+  <div class="studio wrap">
+    <div class="panel">
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="assistant" class="active">1. Kino</button>
+        <button role="tab" data-tab="scenes">2. Scènes</button>
+        <button role="tab" data-tab="voix">3. Voix</button>
+        <button role="tab" data-tab="export">4. Export</button>
+      </nav>
+
+      <section class="tab" data-panel="assistant">
+        <div id="chat" class="chat" aria-live="polite"></div>
+        <div id="chatInput" class="chat-input"></div>
+        <button id="chatRestart" class="link">Recommencer</button>
+      </section>
+
+      <section class="tab" data-panel="scenes" hidden>
+        <h3>Style</h3>
+        <div id="stylePicker" class="style-picker"></div>
+        <h3>Scènes <span class="muted small" id="totalDur"></span></h3>
+        <div id="sceneList" class="scene-list"></div>
+        <div class="row">
+          <select id="addType" aria-label="Type de scène à ajouter"></select>
+          <button id="addScene" class="btn btn-ghost btn-sm">+ Ajouter une scène</button>
+        </div>
+      </section>
+
+      <section class="tab" data-panel="voix" hidden>
+        <div class="prompter" id="prompter">
+          <div class="p-label" id="pLabel">Prompteur</div>
+          <div class="p-now" id="pNow">Appuie sur « Enregistrer » : lis le texte, puis passe à la scène suivante.</div>
+          <div class="p-next" id="pNext"></div>
+        </div>
+        <div class="row">
+          <button id="recBtn" class="btn">● Enregistrer</button>
+          <button id="nextBtn" class="btn btn-ghost" disabled>Scène suivante →</button>
+          <button id="stopBtn" class="btn btn-ghost" disabled>■ Terminer</button>
+        </div>
+        <p class="small muted">Chaque appui sur « Scène suivante » cale la durée de la scène sur ta voix.</p>
+        <div class="row">
+          <label class="btn btn-ghost btn-sm file">Importer un audio<input type="file" id="audioFile" accept="audio/*"></label>
+        </div>
+        <div id="audioBox" class="audio-box" hidden>
+          <audio id="audioEl" controls preload="metadata"></audio>
+          <div class="row">
+            <button id="fitAudio" class="btn btn-ghost btn-sm">Caler les scènes sur l'audio</button>
+            <button id="dropAudio" class="btn btn-ghost btn-sm">Supprimer la voix</button>
+          </div>
+        </div>
+        <p id="voiceMsg" class="msg" role="status"></p>
+      </section>
+
+      <section class="tab" data-panel="export" hidden>
+        <div class="quota" id="quotaBox"></div>
+        <p class="small muted" id="exportInfo"></p>
+        <div class="row">
+          <button id="exportBtn" class="btn">Exporter la vidéo</button>
+          <button id="cancelExport" class="btn btn-ghost" hidden>Annuler</button>
+        </div>
+        <div class="progress" id="progress" hidden><div id="progressBar"></div></div>
+        <p id="exportMsg" class="msg" role="status"></p>
+        <div id="result" hidden>
+          <video id="resultVideo" controls playsinline></video>
+          <a id="downloadLink" class="btn" download>Télécharger</a>
+          <p id="codecMsg" class="msg"></p>
+        </div>
+      </section>
+    </div>
+
+    <div class="preview">
+      <div class="phone"><canvas id="previewCanvas" width="540" height="960" aria-label="Aperçu de la vidéo"></canvas></div>
+      <div class="player">
+        <button id="playBtn" class="btn btn-sm" aria-label="Lecture">▶</button>
+        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Position">
+        <span id="timeLbl" class="small mono">0:00</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ================= MODALE TARIFS ================= -->
+<dialog id="pricing">
+  <form method="dialog" class="close-row"><button class="link" aria-label="Fermer">✕</button></form>
+  <h2>Passer à la vitesse supérieure</h2>
+  <p class="muted" id="pricingReason"></p>
+  <div class="plans" id="plansModal"></div>
+  <p class="small muted">Paiement en ligne bientôt disponible. Le plan Gratuit est ouvert à tous dès maintenant.</p>
+</dialog>
+</body>
+</html>
