@@ -426,7 +426,7 @@ class MainActivity : AppCompatActivity() {
         val input = EditText(this).apply { hint = "Mot à trouver"; setSingleLine() }
         val d = AlertDialog.Builder(this).setTitle("🔍 Chercher dans la page").setView(input)
             .setPositiveButton("Suivant", null).setNegativeButton("Fermer") { _, _ -> w.clearMatches() }.create()
-        w.setFindListener { _, ord, n, done -> if (done) d.setTitle(if (n == 0) "🔍 Aucun résultat" else "🔍 ${ord + 1} / $n") }
+        w.setFindListener { ord, n, done -> if (done) d.setTitle(if (n == 0) "🔍 Aucun résultat" else "🔍 ${ord + 1} / $n") }
         d.setOnShowListener {
             d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (d.window != null && input.tag == input.text.toString()) w.findNext(true)
