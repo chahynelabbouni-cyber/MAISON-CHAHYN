@@ -304,7 +304,7 @@ class MainActivity : AppCompatActivity() {
         val o = JSONObject()
             .put("title", if (t?.web?.url?.startsWith("file:") != false) "Accueil Orion" else t?.web?.title)
             .put("url", t?.web?.url ?: "").put("trust", tr).put("trustLabel", label)
-            .put("key", prefs.getString("key", "")).put("model", prefs.getString("model", "claude-opus-5-5"))
+            .put("key", prefs.getString("key", "")).put("gkey", prefs.getString("gkey", "")).put("provider", prefs.getString("provider", "gemini")).put("model", prefs.getString("model", "claude-opus-5-5"))
             .put("engine", prefs.getString("engine", "web")).put("lang", prefs.getString("lang", "fr"))
             .put("adblock", prefs.getBoolean("adblock", true)).put("autotr", prefs.getBoolean("autotr", false))
             .put("dark", prefs.getBoolean("dark", false)).put("desktop", prefs.getBoolean("desktop", false))
@@ -334,7 +334,7 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun action(a: String, b: String) = runOnUiThread { doAction(a, b) }
         @JavascriptInterface fun saveSettings(json: String) = runOnUiThread {
             val o = JSONObject(json)
-            prefs.edit().putString("key", o.optString("key")).putString("model", o.optString("model"))
+            prefs.edit().putString("key", o.optString("key")).putString("gkey", o.optString("gkey")).putString("provider", o.optString("provider")).putString("model", o.optString("model"))
                 .putString("engine", o.optString("engine")).putString("lang", o.optString("lang"))
                 .putBoolean("adblock", o.optBoolean("adblock")).putBoolean("autotr", o.optBoolean("autotr"))
                 .putBoolean("dark", o.optBoolean("dark")).putBoolean("nohist", o.optBoolean("nohist")).apply()
@@ -541,7 +541,7 @@ Règles :
             val c = if (usePage && page.isNotBlank() && pageUrl.startsWith("http")) "Page ouverte : $pageUrl\n---\n$page\n---\nQuestion : $q" else q
             chatHistory.put(JSONObject().put("role", "user").put("content", c))
             io.execute {
-                val r = runCatching { callClaude(key) }
+                val r = runCatching { if (prefs.getString("provider", "gemini") == "claude") callClaude(key) else callGemini(prefs.getString("gkey", "")!!) }
                 runOnUiThread {
                     val out = JSONObject()
                     r.onSuccess { (text, src) ->
@@ -560,6 +560,40 @@ Règles :
                 send(runCatching { JSONArray("[$raw]").getString(0) }.getOrDefault(""))
             }
         else send("")
+    }
+
+    private fun callGemini(key: String): Pair<String, List<String>> {
+        if (key.isEmpty()) throw Exception("Ajoute ta clé Gemini gratuite dans ☰ → Réglages")
+        val contents = JSONArray(); val start = maxOf(0, chatHistory.length() - 10)
+        for (i in start until chatHistory.length()) {
+            val m = chatHistory.getJSONObject(i)
+            contents.put(JSONObject().put("role", if (m.getString("role") == "assistant") "model" else "user")
+                .put("parts", JSONArray().put(JSONObject().put("text", m.getString("content")))))
+        }
+        val body = JSONObject().put("contents", contents)
+            .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", system))))
+            .put("tools", JSONArray().put(JSONObject().put("google_search", JSONObject())))
+        val model = prefs.getString("gmodel", "gemini-flash-latest")
+        val c = URL("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent").openConnection() as HttpURLConnection
+        c.requestMethod = "POST"; c.doOutput = true; c.connectTimeout = 20000; c.readTimeout = 180000
+        c.setRequestProperty("x-goog-api-key", key)
+        c.setRequestProperty("content-type", "application/json")
+        c.outputStream.use { it.write(body.toString().toByteArray()) }
+        val ok = c.responseCode in 200..299
+        val txt = (if (ok) c.inputStream else c.errorStream).bufferedReader().use { it.readText() }
+        val json = JSONObject(txt)
+        if (!ok) throw Exception(json.optJSONObject("error")?.optString("message") ?: "HTTP ${c.responseCode}")
+        val cand = json.optJSONArray("candidates")?.optJSONObject(0) ?: throw Exception("Pas de réponse")
+        val sb = StringBuilder()
+        cand.optJSONObject("content")?.optJSONArray("parts")?.let { for (i in 0 until it.length()) sb.append(it.getJSONObject(i).optString("text")) }
+        val cites = linkedSetOf<String>()
+        cand.optJSONObject("groundingMetadata")?.optJSONArray("groundingChunks")?.let {
+            for (i in 0 until it.length()) it.getJSONObject(i).optJSONObject("web")?.let { w ->
+                val u = w.optString("uri"); val t = w.optString("title")
+                if (u.isNotEmpty()) cites.add(if (t.isNotEmpty()) "$t : $u" else u)
+            }
+        }
+        return sb.toString().trim() to cites.toList()
     }
 
     private fun callClaude(key: String): Pair<String, List<String>> {
