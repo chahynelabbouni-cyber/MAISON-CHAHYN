@@ -2,6 +2,9 @@ name: Construire l'APK
 
 on:
   push:
+    paths-ignore:
+      - "orion/**"
+      - ".github/workflows/orion-apk.yml"
   workflow_dispatch:
 
 permissions:

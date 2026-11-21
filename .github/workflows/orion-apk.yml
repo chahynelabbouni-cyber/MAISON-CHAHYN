@@ -1,0 +1,52 @@
+name: Orion — construire l'APK
+
+on:
+  push:
+    paths:
+      - "orion/android/**"
+      - ".github/workflows/orion-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: orion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: orion/android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compiler
+        run: |
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          ./gradlew assembleRelease --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../../Orion.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Orion-apk
+          path: Orion.apk
+      - name: Publier l'APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: orion-latest
+          name: Orion — navigateur intelligent (dernière version)
+          prerelease: false
+          make_latest: true
+          files: Orion.apk
+          body: |
+            Télécharge **Orion.apk** depuis ton téléphone et installe-le (autorise « sources inconnues » si demandé).
+            Build n°${{ github.run_number }} — commit ${{ github.sha }}
