@@ -304,7 +304,7 @@ class MainActivity : AppCompatActivity() {
         val o = JSONObject()
             .put("title", if (t?.web?.url?.startsWith("file:") != false) "Accueil Orion" else t?.web?.title)
             .put("url", t?.web?.url ?: "").put("trust", tr).put("trustLabel", label)
-            .put("key", prefs.getString("key", "")).put("gkey", prefs.getString("gkey", "")).put("provider", prefs.getString("provider", "gemini")).put("model", prefs.getString("model", "claude-opus-5-5"))
+            .put("key", prefs.getString("key", "")).put("gkey", prefs.getString("gkey", "")).put("qkey", prefs.getString("qkey", "")).put("provider", prefs.getString("provider", "auto")).put("model", prefs.getString("model", "claude-opus-5-5"))
             .put("engine", prefs.getString("engine", "web")).put("lang", prefs.getString("lang", "fr"))
             .put("adblock", prefs.getBoolean("adblock", true)).put("autotr", prefs.getBoolean("autotr", false))
             .put("dark", prefs.getBoolean("dark", false)).put("desktop", prefs.getBoolean("desktop", false))
@@ -334,7 +334,7 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun action(a: String, b: String) = runOnUiThread { doAction(a, b) }
         @JavascriptInterface fun saveSettings(json: String) = runOnUiThread {
             val o = JSONObject(json)
-            prefs.edit().putString("key", o.optString("key")).putString("gkey", o.optString("gkey")).putString("provider", o.optString("provider")).putString("model", o.optString("model"))
+            prefs.edit().putString("key", o.optString("key")).putString("gkey", o.optString("gkey")).putString("qkey", o.optString("qkey")).putString("provider", o.optString("provider")).putString("model", o.optString("model"))
                 .putString("engine", o.optString("engine")).putString("lang", o.optString("lang"))
                 .putBoolean("adblock", o.optBoolean("adblock")).putBoolean("autotr", o.optBoolean("autotr"))
                 .putBoolean("dark", o.optBoolean("dark")).putBoolean("nohist", o.optBoolean("nohist")).apply()
@@ -541,7 +541,7 @@ Règles :
             val c = if (usePage && page.isNotBlank() && pageUrl.startsWith("http")) "Page ouverte : $pageUrl\n---\n$page\n---\nQuestion : $q" else q
             chatHistory.put(JSONObject().put("role", "user").put("content", c))
             io.execute {
-                val r = runCatching { if (prefs.getString("provider", "gemini") == "claude") callClaude(key) else callGemini(prefs.getString("gkey", "")!!) }
+                val r = runCatching { callAi(key) }
                 runOnUiThread {
                     val out = JSONObject()
                     r.onSuccess { (text, src) ->
@@ -562,6 +562,54 @@ Règles :
         else send("")
     }
 
+    // Choix automatique : Gemini gratuit, puis Groq gratuit en secours (ou Claude si choisi)
+    private fun callAi(claudeKey: String): Pair<String, List<String>> {
+        if (prefs.getString("provider", "auto") == "claude") return callClaude(claudeKey)
+        val g = prefs.getString("gkey", "")!!; val q = prefs.getString("qkey", "")!!
+        val errs = mutableListOf<String>()
+        val first = if (prefs.getString("provider", "auto") == "groq") listOf("groq", "gemini") else listOf("gemini", "groq")
+        for (p in first) {
+            try {
+                if (p == "gemini" && g.isNotEmpty()) return callGemini(g)
+                if (p == "groq" && q.isNotEmpty()) return callGroq(q)
+            } catch (e: Exception) { errs.add((if (p == "gemini") "Gemini" else "Groq") + " : " + (e.message ?: "")) }
+        }
+        if (g.isEmpty() && q.isEmpty()) throw Exception("Ajoute une clé gratuite dans ☰ → Réglages (Groq recommandé).")
+        if (q.isEmpty()) errs.add("💡 Ajoute aussi une clé Groq gratuite dans Réglages : Orion basculera dessus quand Gemini est saturé.")
+        throw Exception(errs.joinToString("\n\n"))
+    }
+
+    private fun callGroq(key: String): Pair<String, List<String>> {
+        val msgs = JSONArray().put(JSONObject().put("role", "system").put("content", system))
+        val start = maxOf(0, chatHistory.length() - 10)
+        for (i in start until chatHistory.length()) msgs.put(chatHistory.get(i))
+        var last: Exception? = null
+        for (model in listOf("groq/compound", "groq/compound-mini", "openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant")) {
+            try {
+                val body = JSONObject().put("model", model).put("messages", msgs).put("max_tokens", 2500)
+                val c = URL("https://api.groq.com/openai/v1/chat/completions").openConnection() as HttpURLConnection
+                c.requestMethod = "POST"; c.doOutput = true; c.connectTimeout = 20000; c.readTimeout = 120000
+                c.setRequestProperty("Authorization", "Bearer $key")
+                c.setRequestProperty("content-type", "application/json")
+                c.outputStream.use { it.write(body.toString().toByteArray()) }
+                val ok = c.responseCode in 200..299
+                val txt = (if (ok) c.inputStream else c.errorStream).bufferedReader().use { it.readText() }
+                val json = JSONObject(txt)
+                if (!ok) {
+                    val m = json.optJSONObject("error")?.optString("message") ?: ""
+                    if (c.responseCode == 401) throw IllegalStateException("Clé Groq invalide")
+                    throw Exception("HTTP ${c.responseCode} $m")
+                }
+                val text = json.getJSONArray("choices").getJSONObject(0).getJSONObject("message").optString("content").trim()
+                val urls = Regex("""https?://[^\s)\]>"]+""").findAll(text).map { it.value.trimEnd('.', ',') }.toSet()
+                val extra = if (model.startsWith("groq/compound")) "" else "\n\n(ℹ Réponse sans recherche web en direct)"
+                return (text + extra) to urls.filter { !text.contains(it) }.toList()
+            } catch (e: IllegalStateException) { throw Exception(e.message)
+            } catch (e: Exception) { last = e }
+        }
+        throw Exception(last?.message ?: "Groq indisponible")
+    }
+
     private fun callGemini(key: String): Pair<String, List<String>> {
         if (key.isEmpty()) throw Exception("Ajoute ta clé Gemini gratuite dans ☰ → Réglages")
         val contents = JSONArray(); val start = maxOf(0, chatHistory.length() - 10)
@@ -576,7 +624,9 @@ Règles :
         var err: Exception? = null
         for (withSearch in listOf(true, false)) for (m in order) {
             try {
-                val r = geminiOnce(key, m, contents, withSearch)
+                val r = try { geminiOnce(key, m, contents, withSearch) } catch (e: Exception) {
+                    if ((e.message ?: "").contains("503")) { Thread.sleep(1500); geminiOnce(key, m, contents, withSearch) } else throw e
+                }
                 prefs.edit().putString("gmodel_ok", m).apply()
                 return if (withSearch) r else (r.first + "\n\n(ℹ Réponse sans recherche web : quota de recherche gratuit épuisé pour aujourd'hui)") to r.second
             } catch (e: Exception) {
@@ -585,7 +635,7 @@ Règles :
                 if (!(msg.contains("quota", true) || msg.contains("429") || msg.contains("not found", true) || msg.contains("not supported", true) || msg.contains("404") || msg.contains("RESOURCE_EXHAUSTED") || msg.contains("overloaded", true) || msg.contains("503"))) throw e
             }
         }
-        throw Exception("Quota gratuit Gemini épuisé pour le moment sur tous les modèles. Réessaie dans quelques minutes (limite par minute) ou demain (limite par jour). Détail : " + (err?.message ?: ""))
+        throw Exception("saturé ou quota épuisé (" + (err?.message ?: "").take(120) + ")")
     }
 
     private fun geminiOnce(key: String, model: String, contents: JSONArray, withSearch: Boolean): Pair<String, List<String>> {

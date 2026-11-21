@@ -151,7 +151,9 @@ label.f input,label.f select{display:block;width:100%;margin-top:5px;background:
 <div class="sheet full" id="settings"><div class="grab"></div>
  <div class="head"><h3>⚙ Réglages</h3><button class="x" onclick="closeAll()">✕</button></div>
  <div class="body">
-  <label class="f">Intelligence artificielle<select id="s_provider"><option value="gemini">Google Gemini — GRATUIT</option><option value="claude">Claude — payant, plus poussé</option></select></label>
+  <label class="f">Intelligence artificielle<select id="s_provider"><option value="auto">Automatique gratuit (Gemini → Groq)</option><option value="groq">Groq d'abord (gratuit, rapide)</option><option value="claude">Claude — payant, plus poussé</option></select></label>
+  <label class="f">Clé Groq gratuite (recommandée)<input id="s_qkey" type="password" placeholder="gsk_…"></label>
+  <div class="row" style="margin-top:6px"><button class="btn" onclick="act('open','https://console.groq.com/keys')">🔑 Obtenir ma clé Groq gratuite</button></div>
   <label class="f">Clé Gemini gratuite<input id="s_gkey" type="password" placeholder="AIza…"></label>
   <div class="row" style="margin-top:6px"><button class="btn" onclick="act('open','https://aistudio.google.com/apikey')">🔑 Obtenir ma clé gratuite</button></div>
   <label class="f">Clé API Claude (optionnel, payant)<input id="s_key" type="password" placeholder="sk-ant-…"></label>
@@ -202,11 +204,11 @@ function drawVpn(){
  $("o_tor").classList.toggle("on",S.vpn=="tor");$("o_custom").classList.toggle("on",S.vpn=="custom");
 }
 function drawSettings(){
- $("s_key").value=S.key||"";$("s_gkey").value=S.gkey||"";$("s_provider").value=S.provider||"gemini";$("s_model").value=S.model;$("s_engine").value=S.engine;$("s_lang").value=S.lang;
+ $("s_key").value=S.key||"";$("s_gkey").value=S.gkey||"";$("s_qkey").value=S.qkey||"";$("s_provider").value=(S.provider=="gemini"?"auto":S.provider)||"auto";$("s_model").value=S.model;$("s_engine").value=S.engine;$("s_lang").value=S.lang;
  ["adblock","autotr","dark","nohist"].forEach(k=>$("s_"+k).checked=!!S[k]);
 }
 function saveSettings(){
- const o={gkey:$("s_gkey").value.trim(),provider:$("s_provider").value,key:$("s_key").value.trim(),model:$("s_model").value,engine:$("s_engine").value,lang:$("s_lang").value};
+ const o={qkey:$("s_qkey").value.trim(),gkey:$("s_gkey").value.trim(),provider:$("s_provider").value,key:$("s_key").value.trim(),model:$("s_model").value,engine:$("s_engine").value,lang:$("s_lang").value};
  ["adblock","autotr","dark","nohist"].forEach(k=>o[k]=$("s_"+k).checked);
  Orion.saveSettings(JSON.stringify(o));closeAll();
 }
@@ -226,7 +228,7 @@ const PROMPTS={
  action:"À partir de cette page, propose-moi un plan d'action concret et des opportunités à saisir."
 };
 const CHIPS=[["📝 Résumer","resume"],["✅ Vérifier","verif"],["🇺🇸 Veille USA","veille"],["⚖ Autres avis","compare"],["🚀 Plan d'action","action"]];
-function hasKey(){return (S.provider||"gemini")=="claude"?!!S.key:!!S.gkey}
+function hasKey(){return S.provider=="claude"?!!S.key:!!(S.gkey||S.qkey)}
 function drawAi(){
  $("chips").innerHTML=CHIPS.map(([l,k])=>`<button class="chip" onclick="ask(PROMPTS.${k},true)">${l}</button>`).join("");
  if(!$("chat").children.length) addMsg("b",hasKey()?"Salut ! Je suis Orion. Je cherche sur le web, je croise les sources fiables et je te réponds en français. Pose ta question ou utilise un raccourci.":"Pour m'activer gratuitement : ⚙ Réglages → « Obtenir ma clé gratuite » (Google Gemini), connecte-toi avec ton compte Google, crée la clé, copie-la et colle-la dans Réglages.");
@@ -236,7 +238,7 @@ function linkify(t){return esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(
 function addMsg(who,text,raw){const d=document.createElement("div");d.className="msg "+who;d.innerHTML=raw?text:linkify(text);$("chat").appendChild(d);$("chatBox").scrollTop=1e9;return d}
 let pending=null;
 function ask(q,page){
- if(!hasKey()){addMsg("b","Ajoute d'abord ta clé dans ⚙ Réglages (Gemini = gratuit).");return}
+ if(!hasKey()){addMsg("b","Ajoute d'abord une clé gratuite dans ⚙ Réglages (Groq ou Gemini).");return}
  addMsg("u",q);pending=addMsg("b",'<span class="typing"><span></span><span></span><span></span></span>',true);
  Orion.ask(q,page===undefined?$("usePage").checked:page);
 }
