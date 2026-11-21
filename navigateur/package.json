@@ -1,0 +1,14 @@
+{
+  "name": "orion-navigateur",
+  "version": "1.0.0",
+  "description": "Navigateur intelligent avec IA Claude, proxy/VPN intégré et traduction de page",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "build": { "appId": "fr.chahyn.orion", "productName": "Orion" },
+  "devDependencies": { "electron": "33.2.1", "electron-builder": "25.1.8" }
+}

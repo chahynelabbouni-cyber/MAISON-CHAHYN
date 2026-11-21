@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Orion</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src * data:">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="bar">
+    <div class="logo">◉ ORION</div>
+    <button id="back" title="Retour">‹</button>
+    <button id="fwd" title="Suivant">›</button>
+    <button id="reload" title="Recharger">⟳</button>
+    <div id="omni">
+      <span id="trust" title="Fiabilité de la source">•</span>
+      <input id="url" placeholder="Rechercher ou saisir une adresse…" autocomplete="off">
+      <select id="engine" title="Moteur">
+        <option value="us">Google 🇺🇸</option>
+        <option value="ddg">DuckDuckGo</option>
+        <option value="brave">Brave</option>
+        <option value="scholar">Scholar</option>
+        <option value="wiki">Wikipedia EN</option>
+      </select>
+    </div>
+    <button id="translate" class="pill">⇄ Traduire</button>
+    <button id="vpnBtn" class="pill"><span id="vpnDot"></span><span id="vpnLabel">VPN off</span></button>
+    <button id="aiBtn" class="pill glow">✦ IA</button>
+    <button id="setBtn" title="Réglages">⚙</button>
+  </header>
+
+  <div id="tabs"><button id="newTab">＋</button></div>
+
+  <main>
+    <section id="views"></section>
+    <aside id="ai" class="hidden">
+      <div class="ai-head">✦ Assistant <small>sources fiables d'abord</small></div>
+      <div id="chat"></div>
+      <div class="quick">
+        <button data-q="Résume cette page en français en 5 points.">Résumer</button>
+        <button data-q="Cette page est-elle fiable ? Vérifie avec d'autres sources reconnues.">Vérifier</button>
+        <button data-q="Quelles sont les idées/innovations américaines récentes sur ce sujet ? Donne les sources.">Veille 🇺🇸</button>
+      </div>
+      <form id="ask"><textarea id="q" rows="2" placeholder="Pose ta question (la page ouverte sert de contexte)…"></textarea><button>➤</button></form>
+    </aside>
+  </main>
+
+  <dialog id="settings">
+    <h2>Réglages</h2>
+    <label>Clé API Claude (console.anthropic.com)<input id="apiKey" type="password" placeholder="sk-ant-…"></label>
+    <label>Modèle<input id="model" value="claude-opus-5-5"></label>
+    <label>Proxy / VPN (ex : socks5://127.0.0.1:1080 ou http://us.monvpn.com:8080)<input id="proxy" placeholder="socks5://hôte:port"></label>
+    <label>Langue de traduction<input id="lang" value="fr"></label>
+    <p class="hint">Astuce : avec un VPN installé sur le PC (Proton, Mullvad…) réglé sur les États-Unis, tout Orion passe déjà par les USA. Le champ proxy permet de ne faire passer <i>que</i> Orion par un serveur US.</p>
+    <div class="row"><button id="checkIp" type="button">Tester mon IP</button><span id="ipOut"></span></div>
+    <div class="row"><button id="saveSet" class="glow">Enregistrer</button><button id="closeSet" type="button">Fermer</button></div>
+  </dialog>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
