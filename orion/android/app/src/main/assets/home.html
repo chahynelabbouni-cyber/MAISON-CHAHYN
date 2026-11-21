@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Orion</title>
+<style>
+:root{--bg:#05060f;--neon:#5ef0ff;--vio:#a66bff;--txt:#e6e9ff;--mut:#8a90b8;--line:rgba(140,160,255,.16)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,Roboto,sans-serif}
+body{background:radial-gradient(500px 380px at 85% -5%,#2a1a6e 0,transparent 65%),radial-gradient(420px 360px at -10% 40%,#063447 0,transparent 65%),var(--bg);padding:28px 16px 40px}
+.orb{width:84px;height:84px;margin:18px auto 10px;border-radius:50%;background:conic-gradient(from 0deg,var(--neon),var(--vio),#ff5ec8,var(--neon));animation:spin 8s linear infinite;filter:blur(.3px);position:relative;box-shadow:0 0 40px rgba(94,240,255,.35)}
+.orb::after{content:"";position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#1c2050,#05060f 70%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{text-align:center;margin:0;font-size:30px;letter-spacing:.32em;font-weight:800;background:linear-gradient(90deg,var(--neon),var(--vio));-webkit-background-clip:text;color:transparent}
+.sub{text-align:center;color:var(--mut);font-size:13px;margin:6px 0 22px}
+form{display:flex;align-items:center;gap:8px;background:rgba(10,12,30,.8);border:1px solid rgba(94,240,255,.35);border-radius:22px;padding:6px 6px 6px 16px;box-shadow:0 0 0 4px rgba(94,240,255,.06),0 10px 40px rgba(0,0,0,.5)}
+input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:16px;padding:10px 0}
+form button{border:0;border-radius:16px;width:46px;height:42px;background:linear-gradient(135deg,var(--neon),var(--vio));color:#05060f;font-size:18px;font-weight:700}
+.modes{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 6px;scrollbar-width:none}
+.modes::-webkit-scrollbar{display:none}
+.mode{flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:13px;color:var(--txt)}
+.mode.on{border-color:var(--neon);background:rgba(94,240,255,.14);box-shadow:0 0 14px rgba(94,240,255,.25)}
+.hint{color:var(--mut);font-size:12px;margin:4px 4px 18px;min-height:16px}
+h2{font-size:12px;letter-spacing:.18em;color:var(--mut);margin:22px 4px 10px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--txt);font-size:11px;text-align:center}
+.ic{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;font-size:22px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.02));border:1px solid var(--line)}
+.cards{display:grid;gap:10px}
+.card{display:block;padding:14px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(94,240,255,.08),rgba(166,107,255,.08));text-decoration:none;color:var(--txt)}
+.card b{display:block;margin-bottom:4px}.card span{color:var(--mut);font-size:12px}
+</style></head>
+<body>
+<div class="orb"></div>
+<h1>ORION</h1>
+<div class="sub">Recherche intelligente · sans frontières</div>
+
+<form id="f"><input id="q" placeholder="Que veux-tu savoir ?" autocomplete="off" enterkeyhint="search"><button>➤</button></form>
+<div class="modes" id="modes"></div>
+<div class="hint" id="hint"></div>
+
+<h2>MODULES ORION</h2>
+<div class="cards">
+  <a class="card" href="orion://ai"><b>✦ Recherche IA</b><span>Pose une question : Orion cherche sur le web, croise les sources fiables et te répond en français avec les liens.</span></a>
+  <a class="card" href="orion://veille"><b>🇺🇸 Veille USA</b><span>Les dernières idées, innovations et tendances américaines sur le sujet de ton choix, traduites.</span></a>
+  <a class="card" href="orion://vpn"><b>🛡 VPN gratuit</b><span>Passe par les États-Unis gratuitement (Tor / Proton) et vérifie ton pays.</span></a>
+</div>
+
+<h2>SOURCES AMÉRICAINES EN AVANCE</h2>
+<div class="grid">
+  <a class="tile" href="https://news.ycombinator.com"><div class="ic">🧠</div>Hacker News</a>
+  <a class="tile" href="https://www.producthunt.com"><div class="ic">🚀</div>Product Hunt</a>
+  <a class="tile" href="https://www.technologyreview.com"><div class="ic">🔬</div>MIT Tech</a>
+  <a class="tile" href="https://techcrunch.com"><div class="ic">⚡</div>TechCrunch</a>
+  <a class="tile" href="https://www.reddit.com/r/Entrepreneur/"><div class="ic">💬</div>Reddit</a>
+  <a class="tile" href="https://arxiv.org/list/cs.AI/recent"><div class="ic">📄</div>arXiv IA</a>
+  <a class="tile" href="https://www.ycombinator.com/companies"><div class="ic">🟧</div>Y Combinator</a>
+  <a class="tile" href="https://www.wired.com"><div class="ic">🛰</div>Wired</a>
+</div>
+
+<h2>SOURCES FIABLES</h2>
+<div class="grid">
+  <a class="tile" href="https://apnews.com"><div class="ic">📰</div>AP News</a>
+  <a class="tile" href="https://www.reuters.com"><div class="ic">🌐</div>Reuters</a>
+  <a class="tile" href="https://pubmed.ncbi.nlm.nih.gov"><div class="ic">🧬</div>PubMed</a>
+  <a class="tile" href="https://en.wikipedia.org"><div class="ic">📚</div>Wikipedia</a>
+</div>
+
+<script>
+const MODES=[["web","🔎 Web","Recherche classique"],["us","🇺🇸 USA","Résultats américains en anglais, à traduire d'un geste"],["ai","✦ IA","Réponse directe d'Orion avec sources"],["fiable","✅ Fiable","Uniquement sites officiels, universités, grands médias"],["science","🔬 Science","Publications scientifiques (Scholar)"],["actu","📰 Actu US","Google News USA"],["reddit","💬 Avis","Ce qu'en pensent les vrais gens (Reddit)"],["video","▶ Vidéos","YouTube"],["code","⌨ Code","GitHub"],["shop","🛒 Prix","Comparateur de prix"],["prive","🕶 Privé","DuckDuckGo, sans pistage"]];
+let mode=localStorage.getItem("mode")||"web";
+const box=document.getElementById("modes"),hint=document.getElementById("hint");
+function draw(){box.innerHTML="";MODES.forEach(([k,l,h])=>{const b=document.createElement("button");b.className="mode"+(k==mode?" on":"");b.textContent=l;b.onclick=()=>{mode=k;localStorage.setItem("mode",k);draw()};box.appendChild(b);if(k==mode)hint.textContent=h})}
+draw();
+document.getElementById("f").onsubmit=e=>{e.preventDefault();const q=document.getElementById("q").value.trim();if(!q)return;location.href="orion://search?m="+mode+"&q="+encodeURIComponent(q)};
+</script>
+</body></html>

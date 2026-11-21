@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<style>
+:root{--bg:#070818;--neon:#5ef0ff;--vio:#a66bff;--txt:#e6e9ff;--mut:#8a90b8;--line:rgba(140,160,255,.16);--ok:#3dff9a;--warn:#ffc04d;--bad:#ff5470}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:transparent;color:var(--txt);font-family:system-ui,Roboto,sans-serif;overflow:hidden}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);opacity:0;transition:.2s}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88%;display:flex;flex-direction:column;background:linear-gradient(180deg,#11143a,#070818 40%);border:1px solid rgba(94,240,255,.25);border-bottom:0;border-radius:26px 26px 0 0;transform:translateY(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1);box-shadow:0 -10px 50px rgba(94,240,255,.12)}
+.sheet.full{height:88%}
+body.open #scrim{opacity:1}body.open .sheet.cur{transform:none}
+.grab{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:10px auto 4px}
+.head{display:flex;align-items:center;padding:6px 18px 10px;gap:10px}
+.head h3{flex:1;margin:0;font-size:17px;background:linear-gradient(90deg,var(--neon),var(--vio));-webkit-background-clip:text;color:transparent}
+.x{border:0;background:rgba(255,255,255,.07);color:var(--txt);width:34px;height:34px;border-radius:50%;font-size:15px}
+.body{overflow:auto;padding:0 14px 18px;flex:1}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 6px}
+.m{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;color:var(--txt);font-size:11px;line-height:1.15;padding:0}
+.m .ic{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:22px;background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.02));border:1px solid var(--line)}
+.m.on .ic{border-color:var(--neon);box-shadow:0 0 14px rgba(94,240,255,.35);background:rgba(94,240,255,.14)}
+.sec{font-size:11px;letter-spacing:.16em;color:var(--mut);margin:16px 4px 10px}
+.pagebar{display:flex;align-items:center;gap:10px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);margin-bottom:6px}
+.dot{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
+.pagebar div{min-width:0}.pagebar b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.pagebar small{color:var(--mut);font-size:12px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tab{position:relative;height:120px;border-radius:16px;padding:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);overflow:hidden}
+.tab.act{border-color:var(--neon);box-shadow:0 0 16px rgba(94,240,255,.25)}
+.tab.priv{background:rgba(166,107,255,.12)}
+.tab b{display:block;font-size:13px;max-height:52px;overflow:hidden}.tab small{display:block;color:var(--mut);font-size:11px;margin-top:6px;word-break:break-all;max-height:28px;overflow:hidden}
+.tab .c{position:absolute;right:6px;top:6px;border:0;background:rgba(0,0,0,.35);color:var(--txt);border-radius:50%;width:26px;height:26px}
+.row{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);border-radius:14px;padding:12px;font-size:14px}
+.btn.g{background:linear-gradient(135deg,rgba(94,240,255,.25),rgba(166,107,255,.3));border-color:rgba(166,107,255,.6)}
+#chat{display:flex;flex-direction:column;gap:10px;padding-bottom:6px}
+.msg{padding:11px 13px;border-radius:16px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;user-select:text}
+.msg.u{align-self:flex-end;background:rgba(94,240,255,.14);max-width:88%;border-bottom-right-radius:4px}
+.msg.b{background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg a{color:var(--neon);word-break:break-all}
+.msg.b .tools{display:flex;gap:6px;margin-top:8px}.msg.b .tools button{border:1px solid var(--line);background:none;color:var(--mut);border-radius:10px;padding:4px 9px;font-size:12px}
+.typing span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--neon);animation:b 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes b{50%{transform:translateY(-5px);opacity:.4}}
+.chips{display:flex;gap:7px;overflow-x:auto;padding:8px 14px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);border-radius:999px;padding:7px 12px;font-size:12.5px}
+.ctx{display:flex;align-items:center;gap:8px;padding:0 16px 6px;color:var(--mut);font-size:12px}
+.ctx input{accent-color:var(--neon)}
+.ask{display:flex;gap:8px;padding:8px 12px 14px;align-items:flex-end}
+.ask textarea{flex:1;resize:none;max-height:120px;background:rgba(0,0,0,.4);border:1px solid rgba(94,240,255,.3);border-radius:18px;padding:11px 14px;color:var(--txt);font:15px system-ui;outline:0}
+.ask button{border:0;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--neon),var(--vio));font-size:18px;color:#05060f}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.04);margin-bottom:10px}
+.opt.on{border-color:var(--ok);box-shadow:0 0 14px rgba(61,255,154,.2)}
+.opt .ic{font-size:24px}.opt div{flex:1}.opt b{display:block;margin-bottom:3px}.opt small{color:var(--mut);font-size:12px;line-height:1.4;display:block}
+.opt .act{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.opt .act button{border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--txt);border-radius:10px;padding:7px 10px;font-size:12px}
+.status{padding:12px;border-radius:14px;background:rgba(0,0,0,.35);font-size:13px;margin-bottom:12px;text-align:center}
+label.f{display:block;margin:12px 2px 0;color:var(--mut);font-size:12px}
+label.f input,label.f select{display:block;width:100%;margin-top:5px;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:12px;padding:11px;color:var(--txt);font-size:14px}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.sw small{display:block;color:var(--mut);font-size:11px}
+.sw input{width:44px;height:24px;accent-color:var(--neon)}
+.list a{display:block;padding:11px 6px;border-bottom:1px solid var(--line);color:var(--txt);text-decoration:none;font-size:14px}
+.list a small{display:block;color:var(--mut);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{color:var(--mut);text-align:center;padding:30px}
+</style></head>
+<body>
+<div id="scrim" onclick="closeAll()"></div>
+
+<!-- MENU / MODULES -->
+<div class="sheet" id="menu"><div class="grab"></div>
+ <div class="body">
+  <div class="pagebar" id="pagebar"></div>
+  <div class="sec">INTELLIGENCE</div>
+  <div class="grid">
+   <button class="m" onclick="aiQuick('resume')"><div class="ic">📝</div>Résumer</button>
+   <button class="m" onclick="aiQuick('verif')"><div class="ic">✅</div>Fact-check</button>
+   <button class="m" onclick="aiQuick('simple')"><div class="ic">💡</div>Expliquer</button>
+   <button class="m" onclick="aiQuick('points')"><div class="ic">🎯</div>Points clés</button>
+   <button class="m" onclick="aiQuick('veille')"><div class="ic">🇺🇸</div>Veille USA</button>
+   <button class="m" onclick="aiQuick('compare')"><div class="ic">⚖</div>Autres avis</button>
+   <button class="m" onclick="aiQuick('action')"><div class="ic">🚀</div>Plan d'action</button>
+   <button class="m" onclick="show('ai')"><div class="ic">✦</div>Chat IA</button>
+  </div>
+  <div class="sec">PAGE</div>
+  <div class="grid">
+   <button class="m" onclick="act('translate')"><div class="ic">🌍</div>Traduire</button>
+   <button class="m" onclick="act('reader')"><div class="ic">📖</div>Lecture</button>
+   <button class="m" onclick="act('speak')"><div class="ic">🔊</div>Écouter</button>
+   <button class="m" onclick="act('find')"><div class="ic">🔍</div>Chercher</button>
+   <button class="m" onclick="act('archive')"><div class="ic">🏛</div>Archive</button>
+   <button class="m" onclick="act('multi')"><div class="ic">🔀</div>Multi-moteur</button>
+   <button class="m" onclick="act('bookmark')"><div class="ic">⭐</div>Favori</button>
+   <button class="m" onclick="act('share')"><div class="ic">📤</div>Partager</button>
+  </div>
+  <div class="sec">NAVIGATION</div>
+  <div class="grid">
+   <button class="m" id="t_vpn" onclick="show('vpn')"><div class="ic">🛡</div>VPN</button>
+   <button class="m" id="t_adblock" onclick="act('toggle','adblock')"><div class="ic">🚫</div>Anti-pub</button>
+   <button class="m" id="t_autotr" onclick="act('toggle','autotr')"><div class="ic">⚡</div>Auto-trad.</button>
+   <button class="m" id="t_desktop" onclick="act('toggle','desktop')"><div class="ic">🖥</div>Mode PC</button>
+   <button class="m" id="t_dark" onclick="act('toggle','dark')"><div class="ic">🌙</div>Tout sombre</button>
+   <button class="m" onclick="act('private')"><div class="ic">🕶</div>Onglet privé</button>
+   <button class="m" onclick="show('list','bookmarks')"><div class="ic">📑</div>Favoris</button>
+   <button class="m" onclick="show('list','history')"><div class="ic">🕘</div>Historique</button>
+   <button class="m" onclick="act('voice')"><div class="ic">🎙</div>Vocal</button>
+   <button class="m" onclick="act('ip')"><div class="ic">📍</div>Mon IP</button>
+   <button class="m" onclick="act('clear')"><div class="ic">🧹</div>Effacer</button>
+   <button class="m" onclick="show('settings')"><div class="ic">⚙</div>Réglages</button>
+  </div>
+ </div>
+</div>
+
+<!-- ONGLETS -->
+<div class="sheet full" id="tabs"><div class="grab"></div>
+ <div class="head"><h3 id="tabsTitle">Onglets</h3><button class="x" onclick="closeAll()">✕</button></div>
+ <div class="body"><div class="tabs" id="tabList"></div>
+  <div class="row"><button class="btn" onclick="act('private')">🕶 Privé</button><button class="btn g" onclick="act('newtab')">＋ Nouvel onglet</button></div>
+  <div class="row"><button class="btn" onclick="act('closeall')">Tout fermer</button></div>
+ </div>
+</div>
+
+<!-- IA -->
+<div class="sheet full" id="ai"><div class="grab"></div>
+ <div class="head"><h3>✦ Orion IA</h3><button class="x" onclick="newChat()" title="Nouvelle discussion">↺</button><button class="x" onclick="closeAll()">✕</button></div>
+ <div class="body" id="chatBox"><div id="chat"></div></div>
+ <div class="chips" id="chips"></div>
+ <label class="ctx"><input type="checkbox" id="usePage" checked> Utiliser la page ouverte comme contexte</label>
+ <div class="ask"><textarea id="q" rows="1" placeholder="Demande n'importe quoi…"></textarea><button onclick="send()">➤</button></div>
+</div>
+
+<!-- VPN -->
+<div class="sheet full" id="vpn"><div class="grab"></div>
+ <div class="head"><h3>🛡 VPN & accès international</h3><button class="x" onclick="closeAll()">✕</button></div>
+ <div class="body">
+  <div class="status" id="vpnStatus"></div>
+  <div class="opt" id="o_tor"><div class="ic">🧅</div><div><b>Tor USA — gratuit, illimité</b>
+   <small>Orion passe par le réseau Tor avec une sortie aux États-Unis. 100 % gratuit, sans compte. Nécessite l'appli gratuite <b>Orbot</b> (une fois). Un peu plus lent.</small>
+   <div class="act"><button onclick="act('tor_install')">1. Installer Orbot</button><button onclick="act('tor_start')">2. Démarrer Orbot</button><button onclick="act('vpn','tor')">3. Activer dans Orion</button></div>
+   <small style="margin-top:8px">Dans Orbot, choisis « États-Unis » comme pays de sortie (⚙ › Pays de sortie).</small></div></div>
+  <div class="opt"><div class="ic">🔒</div><div><b>Proton VPN — gratuit, rapide</b>
+   <small>VPN gratuit sans limite de données, serveurs aux USA. Protège tout le téléphone. Orion n'a rien à régler.</small>
+   <div class="act"><button onclick="act('proton')">Installer Proton VPN</button></div></div></div>
+  <div class="opt" id="o_custom"><div class="ic">⚙</div><div><b>Proxy personnalisé</b>
+   <small>Si tu as un serveur ou un proxy (socks5://hôte:port ou http://hôte:port).</small>
+   <label class="f">Adresse<input id="proxyIn" placeholder="socks5://hôte:1080"></label>
+   <div class="act"><button onclick="act('vpn','custom:'+document.getElementById('proxyIn').value)">Activer</button></div></div></div>
+  <div class="row"><button class="btn" onclick="act('vpn','off')">Désactiver</button><button class="btn g" onclick="act('ip')">📍 Vérifier mon pays</button></div>
+ </div>
+</div>
+
+<!-- RÉGLAGES -->
+<div class="sheet full" id="settings"><div class="grab"></div>
+ <div class="head"><h3>⚙ Réglages</h3><button class="x" onclick="closeAll()">✕</button></div>
+ <div class="body">
+  <label class="f">Clé API Claude (console.anthropic.com) — pour l'IA<input id="s_key" type="password" placeholder="sk-ant-…"></label>
+  <label class="f">Modèle IA<select id="s_model"><option value="claude-opus-5-5">Claude Opus 5.5 (le plus intelligent)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (rapide, moins cher)</option><option value="claude-haiku-5-5">Claude Haiku 5.5 (ultra rapide)</option></select></label>
+  <label class="f">Moteur par défaut (barre d'adresse)<select id="s_engine"><option value="web">Google</option><option value="us">Google USA 🇺🇸</option><option value="fiable">Sources fiables</option><option value="prive">DuckDuckGo</option><option value="ai">Orion IA</option></select></label>
+  <label class="f">Langue de traduction<select id="s_lang"><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option><option value="ar">العربية</option></select></label>
+  <div class="sw"><span>Bloqueur de pubs & traqueurs</span><input type="checkbox" id="s_adblock"></div>
+  <div class="sw"><span>Traduction automatique<small>Les pages étrangères s'ouvrent traduites</small></span><input type="checkbox" id="s_autotr"></div>
+  <div class="sw"><span>Tout en mode sombre</span><input type="checkbox" id="s_dark"></div>
+  <div class="sw"><span>Ne pas garder l'historique</span><input type="checkbox" id="s_nohist"></div>
+  <div class="row"><button class="btn g" onclick="saveSettings()">Enregistrer</button></div>
+ </div>
+</div>
+
+<!-- LISTE (favoris / historique) -->
+<div class="sheet full" id="list"><div class="grab"></div>
+ <div class="head"><h3 id="listTitle"></h3><button class="x" onclick="closeAll()">✕</button></div>
+ <div class="body list" id="listBody"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let S={};
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function refresh(){S=JSON.parse(Orion.state())}
+function act(a,b){Orion.action(a,b||"")}
+function closeAll(){document.body.classList.remove("open");setTimeout(()=>Orion.close(),230)}
+function show(id,arg){
+ refresh();
+ document.querySelectorAll(".sheet").forEach(s=>s.classList.remove("cur"));
+ const el=$(id);el.classList.add("cur");
+ ({menu:drawMenu,tabs:drawTabs,ai:drawAi,vpn:drawVpn,settings:drawSettings,list:()=>drawList(arg)})[id]?.();
+ requestAnimationFrame(()=>document.body.classList.add("open"));
+}
+function color(t){return {ok:"var(--ok)",warn:"var(--warn)",bad:"var(--bad)"}[t]||"var(--mut)"}
+function drawMenu(){
+ $("pagebar").innerHTML=`<span class="dot" style="background:${color(S.trust)}"></span><div><b>${esc(S.title||"Accueil Orion")}</b><small>${esc(S.trustLabel)}</small></div>`;
+ ["adblock","autotr","desktop","dark"].forEach(k=>$("t_"+k).classList.toggle("on",!!S[k]));
+ $("t_vpn").classList.toggle("on",S.vpn!="off");
+}
+function drawTabs(){
+ $("tabsTitle").textContent=S.tabs.length+" onglet"+(S.tabs.length>1?"s":"");
+ $("tabList").innerHTML=S.tabs.map(t=>`<div class="tab ${t.active?"act":""} ${t.private?"priv":""}" onclick="act('switch','${t.i}')"><button class="c" onclick="event.stopPropagation();act('closetab','${t.i}')">✕</button><b>${t.private?"🕶 ":""}${esc(t.title||"Accueil")}</b><small>${esc(t.url)}</small></div>`).join("");
+}
+function drawVpn(){
+ const m={off:"⚪ VPN désactivé — connexion directe",tor:"🟢 Tor actif — sortie États-Unis (via Orbot)",custom:"🟢 Proxy personnalisé actif"};
+ $("vpnStatus").textContent=m[S.vpn]||m.off;$("proxyIn").value=S.proxy||"";
+ $("o_tor").classList.toggle("on",S.vpn=="tor");$("o_custom").classList.toggle("on",S.vpn=="custom");
+}
+function drawSettings(){
+ $("s_key").value=S.key||"";$("s_model").value=S.model;$("s_engine").value=S.engine;$("s_lang").value=S.lang;
+ ["adblock","autotr","dark","nohist"].forEach(k=>$("s_"+k).checked=!!S[k]);
+}
+function saveSettings(){
+ const o={key:$("s_key").value.trim(),model:$("s_model").value,engine:$("s_engine").value,lang:$("s_lang").value};
+ ["adblock","autotr","dark","nohist"].forEach(k=>o[k]=$("s_"+k).checked);
+ Orion.saveSettings(JSON.stringify(o));closeAll();
+}
+function drawList(kind){
+ $("listTitle").textContent=kind=="bookmarks"?"⭐ Favoris":"🕘 Historique";
+ const L=S[kind]||[];
+ $("listBody").innerHTML=L.length?L.map(x=>`<a href="#" onclick="act('open',${esc(JSON.stringify(x.url))});return false">${esc(x.title||x.url)}<small>${esc(x.url)}</small></a>`).join(""):'<div class="empty">Rien pour l\'instant</div>';
+}
+// ---- IA ----
+const PROMPTS={
+ resume:"Résume cette page en français : un TL;DR d'une phrase puis 5 points essentiels.",
+ verif:"Fact-check : cette page est-elle fiable ? Vérifie les affirmations principales avec des sources reconnues et donne un score de fiabilité sur 10.",
+ simple:"Explique le contenu de cette page très simplement, comme à quelqu'un qui découvre le sujet.",
+ points:"Donne les chiffres, faits et informations clés de cette page sous forme de liste.",
+ veille:"Quelles sont les idées, innovations, startups et tendances américaines les plus récentes sur ce sujet ? Ce qu'on ne trouve pas encore en France. Avec sources.",
+ compare:"Que disent les autres sources (y compris américaines) sur ce sujet ? Montre les points d'accord et de désaccord.",
+ action:"À partir de cette page, propose-moi un plan d'action concret et des opportunités à saisir."
+};
+const CHIPS=[["📝 Résumer","resume"],["✅ Vérifier","verif"],["🇺🇸 Veille USA","veille"],["⚖ Autres avis","compare"],["🚀 Plan d'action","action"]];
+function drawAi(){
+ $("chips").innerHTML=CHIPS.map(([l,k])=>`<button class="chip" onclick="ask(PROMPTS.${k},true)">${l}</button>`).join("");
+ if(!$("chat").children.length) addMsg("b",S.key?"Salut ! Je suis Orion. Je cherche sur le web, je croise les sources fiables et je te réponds en français. Pose ta question ou utilise un raccourci.":"Pour m'activer, ajoute ta clé API Claude dans ⚙ Réglages (console.anthropic.com).");
+ setTimeout(()=>$("q").focus(),300);
+}
+function linkify(t){return esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(https?:\/\/[^\s)\]<]+)/g,u=>`<a href="#" onclick="act('open','${u.replace(/'/g,"%27")}');return false">${u}</a>`)}
+function addMsg(who,text,raw){const d=document.createElement("div");d.className="msg "+who;d.innerHTML=raw?text:linkify(text);$("chat").appendChild(d);$("chatBox").scrollTop=1e9;return d}
+let pending=null;
+function ask(q,page){
+ if(!S.key){addMsg("b","Ajoute d'abord ta clé API Claude dans ⚙ Réglages.");return}
+ addMsg("u",q);pending=addMsg("b",'<span class="typing"><span></span><span></span><span></span></span>',true);
+ Orion.ask(q,page===undefined?$("usePage").checked:page);
+}
+function send(){const q=$("q").value.trim();if(!q)return;$("q").value="";ask(q)}
+$("q").addEventListener("keydown",e=>{if(e.key=="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+window.onAnswer=function(r){
+ if(pending){pending.remove();pending=null}
+ if(r.error){addMsg("b","⚠ "+r.error);return}
+ const d=addMsg("b",r.text+(r.sources&&r.sources.length?"\n\n📚 Sources :\n"+r.sources.join("\n"):""));
+ const t=document.createElement("div");t.className="tools";
+ t.innerHTML='<button>📋 Copier</button><button>🔊 Écouter</button>';
+ t.children[0].onclick=()=>act("copy",r.text);t.children[1].onclick=()=>act("say",r.text);d.appendChild(t);
+};
+function newChat(){$("chat").innerHTML="";act("newchat");drawAi()}
+function aiQuick(k){show("ai");ask(PROMPTS[k],true)}
+window.openPanel=(id,arg,q)=>{show(id,arg);if(q)setTimeout(()=>ask(q,false),350)};
+</script>
+</body></html>

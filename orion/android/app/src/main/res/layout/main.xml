@@ -1,68 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="@color/bg">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/bg">
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:padding="8dp" android:background="@color/panel">
-        <TextView android:id="@+id/trust" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="●" android:textSize="18sp" android:textColor="@color/mut" android:paddingEnd="6dp"/>
-        <EditText android:id="@+id/url" android:layout_width="0dp" android:layout_weight="1"
-            android:layout_height="44dp" android:background="@drawable/field" android:paddingHorizontal="14dp"
-            android:hint="Rechercher ou saisir une adresse…" android:textColorHint="@color/mut"
-            android:textColor="@color/txt" android:textSize="14sp" android:singleLine="true"
-            android:inputType="textUri" android:imeOptions="actionGo" android:selectAllOnFocus="true"/>
-        <TextView android:id="@+id/menu" android:layout_width="40dp" android:layout_height="44dp"
-            android:gravity="center" android:text="⋮" android:textSize="22sp" android:textColor="@color/neon"/>
-    </LinearLayout>
+    <LinearLayout android:id="@+id/main" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <ProgressBar android:id="@+id/progress" style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent" android:layout_height="3dp" android:max="100"
-        android:progressTint="@color/neon" android:visibility="gone"/>
+        <FrameLayout android:id="@+id/content" android:layout_width="match_parent"
+            android:layout_height="0dp" android:layout_weight="1"/>
 
-    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
-        <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="match_parent"/>
+        <ProgressBar android:id="@+id/progress" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent" android:layout_height="2dp" android:max="100"
+            android:progressTint="@color/neon" android:progressBackgroundTint="@android:color/transparent"
+            android:visibility="invisible"/>
 
-        <LinearLayout android:id="@+id/ai" android:layout_width="match_parent" android:layout_height="match_parent"
-            android:orientation="vertical" android:background="#F2080A1C" android:visibility="gone">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-                    android:text="✦ Assistant — sources fiables d'abord" android:textColor="@color/neon"
-                    android:textStyle="bold" android:textSize="16sp"/>
-                <TextView android:id="@+id/aiClose" android:layout_width="40dp" android:layout_height="40dp"
-                    android:gravity="center" android:text="✕" android:textColor="@color/txt" android:textSize="18sp"/>
+        <LinearLayout android:id="@+id/bar" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bar"
+            android:layout_marginHorizontal="8dp" android:layout_marginBottom="6dp" android:layout_marginTop="4dp"
+            android:paddingHorizontal="8dp" android:paddingTop="8dp" android:paddingBottom="2dp">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
+                android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/omni"
+                android:paddingStart="14dp" android:paddingEnd="4dp">
+                <View android:id="@+id/trust" android:layout_width="9dp" android:layout_height="9dp"
+                    android:background="@drawable/dot"/>
+                <EditText android:id="@+id/url" android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_height="match_parent" android:background="@null" android:paddingHorizontal="10dp"
+                    android:hint="Rechercher ou saisir une adresse" android:textColorHint="@color/mut"
+                    android:textColor="@color/txt" android:textSize="15sp" android:singleLine="true"
+                    android:inputType="textUri" android:imeOptions="actionGo" android:selectAllOnFocus="true"/>
+                <TextView android:id="@+id/mic" android:layout_width="36dp" android:layout_height="36dp"
+                    android:gravity="center" android:text="🎙" android:textSize="16sp"/>
+                <TextView android:id="@+id/aiBtn" android:layout_width="36dp" android:layout_height="36dp"
+                    android:background="@drawable/orb" android:gravity="center" android:text="✦"
+                    android:textColor="#05060F" android:textSize="17sp" android:textStyle="bold"/>
             </LinearLayout>
-            <ScrollView android:id="@+id/chatScroll" android:layout_width="match_parent"
-                android:layout_height="0dp" android:layout_weight="1" android:paddingHorizontal="12dp">
-                <LinearLayout android:id="@+id/chat" android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:orientation="vertical"/>
-            </ScrollView>
-            <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:scrollbars="none" android:paddingHorizontal="8dp">
-                <LinearLayout android:id="@+id/quick" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:orientation="horizontal"/>
-            </HorizontalScrollView>
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:padding="8dp" android:gravity="center_vertical">
-                <EditText android:id="@+id/q" android:layout_width="0dp" android:layout_weight="1"
-                    android:layout_height="wrap_content" android:minHeight="44dp" android:maxLines="4"
-                    android:background="@drawable/field" android:padding="10dp" android:textColor="@color/txt"
-                    android:textColorHint="@color/mut" android:hint="Pose ta question…" android:textSize="14sp"/>
-                <TextView android:id="@+id/send" android:layout_width="48dp" android:layout_height="44dp"
-                    android:layout_marginStart="6dp" android:background="@drawable/pill" android:gravity="center"
-                    android:text="➤" android:textColor="@color/txt" android:textSize="18sp"/>
+                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="2dp">
+                <TextView android:id="@+id/back" style="@style/Nav" android:text="‹" android:textSize="30sp"/>
+                <TextView android:id="@+id/fwd" style="@style/Nav" android:text="›" android:textSize="30sp"/>
+                <TextView android:id="@+id/home" style="@style/Nav" android:text="⌂" android:textSize="24sp"/>
+                <FrameLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp">
+                    <TextView android:id="@+id/tabs" android:layout_width="26dp" android:layout_height="26dp"
+                        android:layout_gravity="center" android:background="@drawable/count" android:gravity="center"
+                        android:text="1" android:textColor="@color/neon" android:textSize="12sp" android:textStyle="bold"/>
+                </FrameLayout>
+                <TextView android:id="@+id/menu" style="@style/Nav" android:text="☰" android:textSize="22sp"/>
             </LinearLayout>
         </LinearLayout>
-    </FrameLayout>
-
-    <LinearLayout android:id="@+id/bottom" android:layout_width="match_parent" android:layout_height="54dp"
-        android:orientation="horizontal" android:background="@color/panel" android:gravity="center">
-        <TextView android:id="@+id/back" style="@style/Btn" android:text="‹"/>
-        <TextView android:id="@+id/home" style="@style/Btn" android:text="⌂"/>
-        <TextView android:id="@+id/translate" style="@style/Btn" android:text="⇄" android:textSize="20sp"/>
-        <TextView android:id="@+id/vpn" style="@style/Btn" android:text="VPN" android:textSize="12sp" android:textStyle="bold"/>
-        <TextView android:id="@+id/aiBtn" style="@style/Btn" android:text="✦" android:textColor="@color/vio"/>
     </LinearLayout>
-</LinearLayout>
+
+    <WebView android:id="@+id/panel" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:visibility="gone"/>
+</FrameLayout>

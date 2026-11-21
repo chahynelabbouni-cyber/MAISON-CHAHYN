@@ -1,5 +1,16 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:strokeColor="#5EF0FF" android:strokeWidth="5" android:pathData="M54,30a24,24 0,1 1,-0.1 0z"/>
-    <path android:strokeColor="#A66BFF" android:strokeWidth="3" android:pathData="M24,62C40,44 70,40 86,46"/>
-    <path android:fillColor="#E6E9FF" android:pathData="M54,47a7,7 0,1 1,-0.1 0z"/>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- anneau principal "O" -->
+    <path android:pathData="M54,33a21,21 0,1 1,0 42a21,21 0,1 1,0 -42z" android:strokeWidth="7" android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:type="linear" android:startX="33" android:startY="33" android:endX="75" android:endY="75">
+                <item android:offset="0" android:color="#FF5EF0FF"/>
+                <item android:offset="1" android:color="#FFA66BFF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- point central -->
+    <path android:pathData="M54,49a5,5 0,1 1,0 10a5,5 0,1 1,0 -10z" android:fillColor="#FFE6F9FF"/>
+    <!-- étoile / étincelle -->
+    <path android:pathData="M73,28 L75,34 L81,36 L75,38 L73,44 L71,38 L65,36 L71,34 Z" android:fillColor="#FFFFFFFF"/>
 </vector>
