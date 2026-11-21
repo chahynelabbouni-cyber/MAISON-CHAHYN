@@ -556,7 +556,7 @@ Règles :
             }
         }
         if (usePage && w != null && pageUrl.startsWith("http"))
-            w.evaluateJavascript("(document.body?document.body.innerText:'').slice(0,12000)") { raw ->
+            w.evaluateJavascript("(document.body?document.body.innerText:'').slice(0,8000)") { raw ->
                 send(runCatching { JSONArray("[$raw]").getString(0) }.getOrDefault(""))
             }
         else send("")
@@ -570,10 +570,28 @@ Règles :
             contents.put(JSONObject().put("role", if (m.getString("role") == "assistant") "model" else "user")
                 .put("parts", JSONArray().put(JSONObject().put("text", m.getString("content")))))
         }
+        val models = listOf("gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-flash-latest")
+        val last = prefs.getString("gmodel_ok", null)
+        val order = (listOfNotNull(last) + models).distinct()
+        var err: Exception? = null
+        for (withSearch in listOf(true, false)) for (m in order) {
+            try {
+                val r = geminiOnce(key, m, contents, withSearch)
+                prefs.edit().putString("gmodel_ok", m).apply()
+                return if (withSearch) r else (r.first + "\n\n(ℹ Réponse sans recherche web : quota de recherche gratuit épuisé pour aujourd'hui)") to r.second
+            } catch (e: Exception) {
+                err = e
+                val msg = e.message ?: ""
+                if (!(msg.contains("quota", true) || msg.contains("429") || msg.contains("not found", true) || msg.contains("not supported", true) || msg.contains("404") || msg.contains("RESOURCE_EXHAUSTED") || msg.contains("overloaded", true) || msg.contains("503"))) throw e
+            }
+        }
+        throw Exception("Quota gratuit Gemini épuisé pour le moment sur tous les modèles. Réessaie dans quelques minutes (limite par minute) ou demain (limite par jour). Détail : " + (err?.message ?: ""))
+    }
+
+    private fun geminiOnce(key: String, model: String, contents: JSONArray, withSearch: Boolean): Pair<String, List<String>> {
         val body = JSONObject().put("contents", contents)
             .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", system))))
-            .put("tools", JSONArray().put(JSONObject().put("google_search", JSONObject())))
-        val model = prefs.getString("gmodel", "gemini-flash-latest")
+        if (withSearch) body.put("tools", JSONArray().put(JSONObject().put("google_search", JSONObject())))
         val c = URL("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent").openConnection() as HttpURLConnection
         c.requestMethod = "POST"; c.doOutput = true; c.connectTimeout = 20000; c.readTimeout = 180000
         c.setRequestProperty("x-goog-api-key", key)
@@ -582,7 +600,7 @@ Règles :
         val ok = c.responseCode in 200..299
         val txt = (if (ok) c.inputStream else c.errorStream).bufferedReader().use { it.readText() }
         val json = JSONObject(txt)
-        if (!ok) throw Exception(json.optJSONObject("error")?.optString("message") ?: "HTTP ${c.responseCode}")
+        if (!ok) throw Exception("HTTP ${c.responseCode} " + (json.optJSONObject("error")?.optString("message") ?: ""))
         val cand = json.optJSONArray("candidates")?.optJSONObject(0) ?: throw Exception("Pas de réponse")
         val sb = StringBuilder()
         cand.optJSONObject("content")?.optJSONArray("parts")?.let { for (i in 0 until it.length()) sb.append(it.getJSONObject(i).optString("text")) }
